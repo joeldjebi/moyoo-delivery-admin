@@ -1,0 +1,3328 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "API MOYOO Fleet - Delivery & Notifications",
+        "description": "API complète pour l'application MOYOO Fleet incluant la gestion des livraisons, ramassages et notifications push Firebase",
+        "contact": {
+            "name": "Support MOYOO",
+            "email": "support@moyoo.com"
+        },
+        "license": {
+            "name": "MIT",
+            "url": "https://opensource.org/licenses/MIT"
+        },
+        "version": "2.0.0"
+    },
+    "servers": [
+        {
+            "url": "http://192.168.1.9:8000",
+            "description": "Serveur de développement"
+        },
+        {
+            "url": "http://192.168.1.9:8000"
+        }
+    ],
+    "paths": {
+        "/api/livreur/fcm-token": {
+            "post": {
+                "tags": [
+                    "FCM Token"
+                ],
+                "summary": "Mettre à jour le token FCM d'un livreur",
+                "operationId": "0bf579b0a2453e60143062390e1f8979",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "fcm_token"
+                                ],
+                                "properties": {
+                                    "fcm_token": {
+                                        "description": "Token FCM du livreur",
+                                        "type": "string"
+                                    },
+                                    "device_type": {
+                                        "description": "Type d'appareil (android/ios)",
+                                        "type": "string",
+                                        "example": "android"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Token FCM mis à jour avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Token FCM mis à jour avec succès"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "livreur_id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "fcm_token": {
+                                                    "type": "string",
+                                                    "example": "fcm_token_example"
+                                                },
+                                                "updated_at": {
+                                                    "type": "string",
+                                                    "format": "datetime"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Données invalides",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Données invalides"
+                                        },
+                                        "errors": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non authentifié",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Token d'authentification invalide"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "FCM Token"
+                ],
+                "summary": "Supprimer le token FCM d'un livreur",
+                "operationId": "bf948edfbce20bb106230954046f2312",
+                "responses": {
+                    "200": {
+                        "description": "Token FCM supprimé avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Token FCM supprimé avec succès"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/marchand/fcm-token": {
+            "post": {
+                "tags": [
+                    "FCM Token"
+                ],
+                "summary": "Mettre à jour le token FCM d'un marchand",
+                "operationId": "66e8332de1615089bbf1ade86b27d64d",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "fcm_token"
+                                ],
+                                "properties": {
+                                    "fcm_token": {
+                                        "description": "Token FCM du marchand",
+                                        "type": "string"
+                                    },
+                                    "device_type": {
+                                        "description": "Type d'appareil (android/ios)",
+                                        "type": "string",
+                                        "example": "android"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Token FCM mis à jour avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Token FCM mis à jour avec succès"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "marchand_id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "fcm_token": {
+                                                    "type": "string",
+                                                    "example": "fcm_token_example"
+                                                },
+                                                "updated_at": {
+                                                    "type": "string",
+                                                    "format": "datetime"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "FCM Token"
+                ],
+                "summary": "Supprimer le token FCM d'un marchand",
+                "operationId": "1eacd16b436f14fc77d0cd332503e0d8",
+                "responses": {
+                    "200": {
+                        "description": "Token FCM supprimé avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Token FCM supprimé avec succès"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/firebase/test-notification": {
+            "post": {
+                "tags": [
+                    "Firebase Notifications"
+                ],
+                "summary": "Tester l'envoi de notification Firebase",
+                "description": "Envoie une notification de test pour vérifier la configuration Firebase",
+                "operationId": "0ccf64db20af774b612818d92a38bf9a",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "token",
+                                    "title",
+                                    "body"
+                                ],
+                                "properties": {
+                                    "token": {
+                                        "description": "Token FCM de destination",
+                                        "type": "string",
+                                        "example": "fcm_token_example"
+                                    },
+                                    "title": {
+                                        "description": "Titre de la notification",
+                                        "type": "string",
+                                        "example": "Test MOYOO"
+                                    },
+                                    "body": {
+                                        "description": "Corps de la notification",
+                                        "type": "string",
+                                        "example": "Ceci est un test de notification Firebase"
+                                    },
+                                    "data": {
+                                        "description": "Données supplémentaires",
+                                        "type": "object",
+                                        "example": {
+                                            "type": "test",
+                                            "app": "moyoo_fleet"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Notification envoyée avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Notification de test envoyée avec succès"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "notification_sent": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "firebase_response": {
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Données invalides",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Données invalides"
+                                        },
+                                        "errors": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Erreur Firebase",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Erreur lors de l'envoi de la notification"
+                                        },
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Firebase Server Key non configuré"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/firebase/status": {
+            "get": {
+                "tags": [
+                    "Firebase Notifications"
+                ],
+                "summary": "Vérifier le statut de la configuration Firebase",
+                "description": "Vérifie si Firebase est correctement configuré et accessible",
+                "operationId": "54f28fa483f193956a05e6fd0fb26374",
+                "responses": {
+                    "200": {
+                        "description": "Statut Firebase récupéré avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Configuration Firebase vérifiée"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "project_id": {
+                                                    "type": "string",
+                                                    "example": "moyoo-fleet"
+                                                },
+                                                "service_configured": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "access_token_available": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "configuration_status": {
+                                                    "type": "string",
+                                                    "example": "OK"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Erreur de configuration Firebase",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Configuration Firebase manquante"
+                                        },
+                                        "error": {
+                                            "type": "string",
+                                            "example": "FIREBASE_PROJECT_ID non configuré"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/firebase/send-to-livreur": {
+            "post": {
+                "tags": [
+                    "Firebase Notifications"
+                ],
+                "summary": "Envoyer une notification à un livreur",
+                "description": "Envoie une notification personnalisée à un livreur spécifique",
+                "operationId": "e5861b3fd8925b73bbf3a8afb3330333",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "livreur_id",
+                                    "title",
+                                    "body"
+                                ],
+                                "properties": {
+                                    "livreur_id": {
+                                        "description": "ID du livreur",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "title": {
+                                        "description": "Titre de la notification",
+                                        "type": "string",
+                                        "example": "Nouvelle mission"
+                                    },
+                                    "body": {
+                                        "description": "Corps de la notification",
+                                        "type": "string",
+                                        "example": "Vous avez une nouvelle mission assignée"
+                                    },
+                                    "data": {
+                                        "description": "Données supplémentaires",
+                                        "type": "object",
+                                        "example": {
+                                            "type": "mission",
+                                            "mission_id": 123
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Notification envoyée avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Notification envoyée au livreur"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "livreur_id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "notification_sent": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Livreur non trouvé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Livreur non trouvé ou token FCM manquant"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/firebase/send-to-marchand": {
+            "post": {
+                "tags": [
+                    "Firebase Notifications"
+                ],
+                "summary": "Envoyer une notification à un marchand",
+                "description": "Envoie une notification personnalisée à un marchand spécifique",
+                "operationId": "e34d2eca9015b9c4004080aae98033b6",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "marchand_id",
+                                    "title",
+                                    "body"
+                                ],
+                                "properties": {
+                                    "marchand_id": {
+                                        "description": "ID du marchand",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "title": {
+                                        "description": "Titre de la notification",
+                                        "type": "string",
+                                        "example": "Colis livré"
+                                    },
+                                    "body": {
+                                        "description": "Corps de la notification",
+                                        "type": "string",
+                                        "example": "Votre colis a été livré avec succès"
+                                    },
+                                    "data": {
+                                        "description": "Données supplémentaires",
+                                        "type": "object",
+                                        "example": {
+                                            "type": "delivery",
+                                            "colis_id": 123
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Notification envoyée avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Notification envoyée au marchand"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "marchand_id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "notification_sent": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Marchand non trouvé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Marchand non trouvé ou token FCM manquant"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/livreur/login": {
+            "post": {
+                "tags": [
+                    "Authentification Livreur"
+                ],
+                "summary": "Connexion du livreur",
+                "description": "Authentification d'un livreur avec son mobile et mot de passe",
+                "operationId": "774aee7f6666bb598e7c93b7a63be9c6",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "mobile",
+                                    "password"
+                                ],
+                                "properties": {
+                                    "mobile": {
+                                        "description": "Numéro de mobile du livreur",
+                                        "type": "string",
+                                        "example": "1234567890"
+                                    },
+                                    "password": {
+                                        "description": "Mot de passe du livreur",
+                                        "type": "string",
+                                        "example": "password123"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Connexion réussie",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Connexion réussie"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "token": {
+                                                    "type": "string",
+                                                    "example": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."
+                                                },
+                                                "refresh_token": {
+                                                    "type": "string",
+                                                    "example": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."
+                                                },
+                                                "token_type": {
+                                                    "type": "string",
+                                                    "example": "bearer"
+                                                },
+                                                "expires_in": {
+                                                    "type": "integer",
+                                                    "example": 172800
+                                                },
+                                                "refresh_expires_in": {
+                                                    "type": "integer",
+                                                    "example": 259200
+                                                },
+                                                "livreur": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 5
+                                                        },
+                                                        "nom_complet": {
+                                                            "type": "string",
+                                                            "example": "Test Livreur"
+                                                        },
+                                                        "mobile": {
+                                                            "type": "string",
+                                                            "example": "1234567890"
+                                                        },
+                                                        "email": {
+                                                            "type": "string",
+                                                            "example": null
+                                                        },
+                                                        "status": {
+                                                            "type": "string",
+                                                            "example": "actif"
+                                                        },
+                                                        "photo": {
+                                                            "type": "string",
+                                                            "example": null
+                                                        },
+                                                        "engin": {
+                                                            "properties": {
+                                                                "id": {
+                                                                    "type": "integer",
+                                                                    "example": 1
+                                                                },
+                                                                "nom": {
+                                                                    "type": "string",
+                                                                    "example": null
+                                                                },
+                                                                "type": {
+                                                                    "type": "string",
+                                                                    "example": "Moto"
+                                                                }
+                                                            },
+                                                            "type": "object"
+                                                        },
+                                                        "zone_activite": {
+                                                            "type": "object",
+                                                            "example": null
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Identifiants incorrects",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Identifiants incorrects"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Compte inactif",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Votre compte est inactif. Contactez votre administrateur."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Données de validation invalides",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Données de validation invalides"
+                                        },
+                                        "errors": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/livreur/logout": {
+            "post": {
+                "tags": [
+                    "Authentification Livreur"
+                ],
+                "summary": "Déconnexion du livreur",
+                "description": "Déconnexion d'un livreur et invalidation du token JWT",
+                "operationId": "37f5b8d0f5c23eb12d2c240fa841a4c4",
+                "responses": {
+                    "200": {
+                        "description": "Déconnexion réussie",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Déconnexion réussie"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Token invalide ou expiré",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Token invalide"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/livreur/refresh": {
+            "post": {
+                "tags": [
+                    "Authentification Livreur"
+                ],
+                "summary": "Rafraîchir le token JWT",
+                "description": "Rafraîchit le token JWT du livreur connecté",
+                "operationId": "7288b12a30bc3dc3a83a7dd26fe14217",
+                "responses": {
+                    "200": {
+                        "description": "Token rafraîchi avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Token rafraîchi avec succès"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "token": {
+                                                    "type": "string",
+                                                    "example": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."
+                                                },
+                                                "refresh_token": {
+                                                    "type": "string",
+                                                    "example": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."
+                                                },
+                                                "token_type": {
+                                                    "type": "string",
+                                                    "example": "bearer"
+                                                },
+                                                "expires_in": {
+                                                    "type": "integer",
+                                                    "example": 172800
+                                                },
+                                                "refresh_expires_in": {
+                                                    "type": "integer",
+                                                    "example": 259200
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Token invalide ou expiré",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Impossible de rafraîchir le token"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/livreur/profile": {
+            "get": {
+                "tags": [
+                    "Profil Livreur"
+                ],
+                "summary": "Obtenir le profil du livreur",
+                "description": "Récupère les informations complètes du livreur connecté",
+                "operationId": "3481b3f5d629da9c53fe5471e1e54a22",
+                "responses": {
+                    "200": {
+                        "description": "Profil récupéré avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Profil récupéré avec succès"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 5
+                                                },
+                                                "nom_complet": {
+                                                    "type": "string",
+                                                    "example": "Test Livreur"
+                                                },
+                                                "first_name": {
+                                                    "type": "string",
+                                                    "example": "Test"
+                                                },
+                                                "last_name": {
+                                                    "type": "string",
+                                                    "example": "Livreur"
+                                                },
+                                                "mobile": {
+                                                    "type": "string",
+                                                    "example": "1234567890"
+                                                },
+                                                "email": {
+                                                    "type": "string",
+                                                    "example": null
+                                                },
+                                                "adresse": {
+                                                    "type": "string",
+                                                    "example": null
+                                                },
+                                                "permis": {
+                                                    "type": "string",
+                                                    "example": null
+                                                },
+                                                "status": {
+                                                    "type": "string",
+                                                    "example": "actif"
+                                                },
+                                                "photo": {
+                                                    "type": "string",
+                                                    "example": null
+                                                },
+                                                "engin": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "nom": {
+                                                            "type": "string",
+                                                            "example": null
+                                                        },
+                                                        "type": {
+                                                            "type": "string",
+                                                            "example": "Moto"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "zone_activite": {
+                                                    "type": "object",
+                                                    "example": null
+                                                },
+                                                "communes": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "created_at": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                },
+                                                "updated_at": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Token invalide ou expiré",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Token invalide"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Livreur non trouvé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Livreur non trouvé"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Profil Livreur"
+                ],
+                "summary": "Mettre à jour le profil du livreur",
+                "description": "Met à jour les informations du profil du livreur connecté",
+                "operationId": "33a4cda2dbf95ee3ca84f27236303283",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "properties": {
+                                    "first_name": {
+                                        "description": "Prénom du livreur",
+                                        "type": "string",
+                                        "example": "Jean"
+                                    },
+                                    "last_name": {
+                                        "description": "Nom du livreur",
+                                        "type": "string",
+                                        "example": "Dupont"
+                                    },
+                                    "email": {
+                                        "description": "Email du livreur",
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "jean.dupont@example.com"
+                                    },
+                                    "adresse": {
+                                        "description": "Adresse du livreur",
+                                        "type": "string",
+                                        "example": "123 Rue de la Paix"
+                                    },
+                                    "photo": {
+                                        "description": "Photo de profil (fichier image)",
+                                        "type": "string",
+                                        "format": "binary"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Profil mis à jour avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Profil mis à jour avec succès"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 5
+                                                },
+                                                "nom_complet": {
+                                                    "type": "string",
+                                                    "example": "Jean Dupont"
+                                                },
+                                                "first_name": {
+                                                    "type": "string",
+                                                    "example": "Jean"
+                                                },
+                                                "last_name": {
+                                                    "type": "string",
+                                                    "example": "Dupont"
+                                                },
+                                                "mobile": {
+                                                    "type": "string",
+                                                    "example": "1234567890"
+                                                },
+                                                "email": {
+                                                    "type": "string",
+                                                    "example": "jean.dupont@example.com"
+                                                },
+                                                "adresse": {
+                                                    "type": "string",
+                                                    "example": "123 Rue de la Paix"
+                                                },
+                                                "photo": {
+                                                    "type": "string",
+                                                    "example": "http://192.168.1.9:8000/storage/livreurs/photo.jpg"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Token invalide ou expiré",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Token invalide"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Données de validation invalides",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Données de validation invalides"
+                                        },
+                                        "errors": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/livreur/change-password": {
+            "post": {
+                "tags": [
+                    "Profil Livreur"
+                ],
+                "summary": "Changer le mot de passe",
+                "description": "Permet au livreur de changer son mot de passe",
+                "operationId": "91ccb1e1c06d07fbef8e88da63ab9ea7",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "current_password",
+                                    "new_password",
+                                    "new_password_confirmation"
+                                ],
+                                "properties": {
+                                    "current_password": {
+                                        "description": "Mot de passe actuel",
+                                        "type": "string",
+                                        "example": "ancienMotDePasse123"
+                                    },
+                                    "new_password": {
+                                        "description": "Nouveau mot de passe (minimum 8 caractères)",
+                                        "type": "string",
+                                        "example": "nouveauMotDePasse123"
+                                    },
+                                    "new_password_confirmation": {
+                                        "description": "Confirmation du nouveau mot de passe",
+                                        "type": "string",
+                                        "example": "nouveauMotDePasse123"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Mot de passe modifié avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Mot de passe modifié avec succès"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Mot de passe actuel incorrect",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Mot de passe actuel incorrect"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Token invalide ou expiré",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Token invalide"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Données de validation invalides",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Données de validation invalides"
+                                        },
+                                        "errors": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/livreur/colis-assignes": {
+            "get": {
+                "tags": [
+                    "Livraison Livreur"
+                ],
+                "summary": "Liste des colis assignés au livreur",
+                "description": "Récupère la liste des colis assignés au livreur connecté avec filtrage par statut",
+                "operationId": "c3a4cbdf7929d18feace26faf31171e2",
+                "parameters": [
+                    {
+                        "name": "statut",
+                        "in": "query",
+                        "description": "Filtrer par statut du colis",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "en_attente",
+                                "en_cours",
+                                "livre",
+                                "annule"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Liste des colis assignés récupérée avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Colis assignés récupérés avec succès"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "code": {
+                                                        "type": "string",
+                                                        "example": "CLIS-000001"
+                                                    },
+                                                    "status": {
+                                                        "type": "integer",
+                                                        "example": 0
+                                                    },
+                                                    "nom_client": {
+                                                        "type": "string",
+                                                        "example": "Jean Dupont"
+                                                    },
+                                                    "telephone_client": {
+                                                        "type": "string",
+                                                        "example": "0123456789"
+                                                    },
+                                                    "adresse_client": {
+                                                        "type": "string",
+                                                        "example": "123 Rue de la Paix"
+                                                    },
+                                                    "montant_a_encaisse": {
+                                                        "type": "number",
+                                                        "format": "float",
+                                                        "example": 50000
+                                                    },
+                                                    "prix_de_vente": {
+                                                        "type": "number",
+                                                        "format": "float",
+                                                        "example": 45000
+                                                    },
+                                                    "date_livraison_prevue": {
+                                                        "type": "string",
+                                                        "format": "date",
+                                                        "example": "2025-10-13"
+                                                    },
+                                                    "ordre_livraison": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "livreur_id": {
+                                                        "type": "integer",
+                                                        "example": 5
+                                                    },
+                                                    "engin_id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "poids_id": {
+                                                        "type": "integer",
+                                                        "example": 4
+                                                    },
+                                                    "mode_livraison_id": {
+                                                        "type": "integer",
+                                                        "example": 2
+                                                    },
+                                                    "temp_id": {
+                                                        "type": "integer",
+                                                        "example": 2
+                                                    },
+                                                    "commune": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "nom": {
+                                                                "type": "string",
+                                                                "example": "Cocody"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    },
+                                                    "livreur": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 5
+                                                            },
+                                                            "nom_complet": {
+                                                                "type": "string",
+                                                                "example": "Jean Dupont"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    },
+                                                    "engin": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "libelle": {
+                                                                "type": "string",
+                                                                "example": "Moto"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    },
+                                                    "poids": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 4
+                                                            },
+                                                            "libelle": {
+                                                                "type": "string",
+                                                                "example": "5-10 kg"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    },
+                                                    "modeLivraison": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 2
+                                                            },
+                                                            "libelle": {
+                                                                "type": "string",
+                                                                "example": "Express"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    },
+                                                    "temp": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 2
+                                                            },
+                                                            "libelle": {
+                                                                "type": "string",
+                                                                "example": "Urgent"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    },
+                                                    "livraison": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "numero_de_livraison": {
+                                                                "type": "string",
+                                                                "example": "LIV-000001"
+                                                            },
+                                                            "code_validation": {
+                                                                "type": "string",
+                                                                "example": "ABC123"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "statistiques": {
+                                            "properties": {
+                                                "colis_en_attente": {
+                                                    "description": "Nombre de colis en attente",
+                                                    "type": "integer",
+                                                    "example": 5
+                                                },
+                                                "colis_en_cours": {
+                                                    "description": "Nombre de colis en cours de livraison",
+                                                    "type": "integer",
+                                                    "example": 3
+                                                },
+                                                "colis_livres": {
+                                                    "description": "Nombre de colis livrés",
+                                                    "type": "integer",
+                                                    "example": 12
+                                                },
+                                                "colis_annules": {
+                                                    "description": "Nombre de colis annulés",
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "total": {
+                                                    "description": "Total des colis",
+                                                    "type": "integer",
+                                                    "example": 21
+                                                },
+                                                "montant_total_encaisse": {
+                                                    "description": "Montant total à encaisser",
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 1250000
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non autorisé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Token invalide"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/livreur/colis/{id}/details": {
+            "get": {
+                "tags": [
+                    "Livraison Livreur"
+                ],
+                "summary": "Détails d'un colis",
+                "description": "Récupère les détails complets d'un colis spécifique",
+                "operationId": "684998ce69ed4fc4822bda237c4fc288",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID du colis",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Détails du colis récupérés avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Détails du colis récupérés avec succès"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "code": {
+                                                    "type": "string",
+                                                    "example": "CLIS-000001"
+                                                },
+                                                "status": {
+                                                    "type": "integer",
+                                                    "example": 0
+                                                },
+                                                "nom_client": {
+                                                    "type": "string",
+                                                    "example": "Jean Dupont"
+                                                },
+                                                "telephone_client": {
+                                                    "type": "string",
+                                                    "example": "0123456789"
+                                                },
+                                                "adresse_client": {
+                                                    "type": "string",
+                                                    "example": "123 Rue de la Paix"
+                                                },
+                                                "montant_a_encaisse": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 50000
+                                                },
+                                                "prix_de_vente": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 45000
+                                                },
+                                                "note_client": {
+                                                    "type": "string",
+                                                    "example": "Fragile"
+                                                },
+                                                "instructions_livraison": {
+                                                    "type": "string",
+                                                    "example": "Sonner 2 fois"
+                                                },
+                                                "date_livraison_prevue": {
+                                                    "type": "string",
+                                                    "format": "date",
+                                                    "example": "2025-10-13"
+                                                },
+                                                "ordre_livraison": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "commune": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "nom": {
+                                                            "type": "string",
+                                                            "example": "Cocody"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "temp": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 2
+                                                        },
+                                                        "entreprise_id": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "libelle": {
+                                                            "type": "string",
+                                                            "example": "Nuit (18h-6h)"
+                                                        },
+                                                        "description": {
+                                                            "type": "string",
+                                                            "example": "Période de nuit"
+                                                        },
+                                                        "heure_debut": {
+                                                            "type": "string",
+                                                            "example": "18:00"
+                                                        },
+                                                        "heure_fin": {
+                                                            "type": "string",
+                                                            "example": "06:00"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "mode_livraison": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 2
+                                                        },
+                                                        "libelle": {
+                                                            "type": "string",
+                                                            "example": "Livraison express"
+                                                        },
+                                                        "description": {
+                                                            "type": "string",
+                                                            "example": "Dans la journée ou en 2–6 heures"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "poids": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "libelle": {
+                                                            "type": "string",
+                                                            "example": "1 Kg"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "type_colis": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "libelle": {
+                                                            "type": "string",
+                                                            "example": "Document"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "conditionnement_colis": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "libelle": {
+                                                            "type": "string",
+                                                            "example": "Enveloppe"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "delai": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "libelle": {
+                                                            "type": "string",
+                                                            "example": "24h"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "livreur": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 5
+                                                        },
+                                                        "nom": {
+                                                            "type": "string",
+                                                            "example": "Jean"
+                                                        },
+                                                        "prenom": {
+                                                            "type": "string",
+                                                            "example": "Dupont"
+                                                        },
+                                                        "telephone": {
+                                                            "type": "string",
+                                                            "example": "0123456789"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "engin": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "libelle": {
+                                                            "type": "string",
+                                                            "example": "Moto"
+                                                        },
+                                                        "type_engin": {
+                                                            "properties": {
+                                                                "id": {
+                                                                    "type": "integer",
+                                                                    "example": 1
+                                                                },
+                                                                "libelle": {
+                                                                    "type": "string",
+                                                                    "example": "Moto"
+                                                                }
+                                                            },
+                                                            "type": "object"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "marchand": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "nom": {
+                                                            "type": "string",
+                                                            "example": "Boutique Test"
+                                                        },
+                                                        "telephone": {
+                                                            "type": "string",
+                                                            "example": "0123456789"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "boutique": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "nom": {
+                                                            "type": "string",
+                                                            "example": "Boutique Centre"
+                                                        },
+                                                        "adresse": {
+                                                            "type": "string",
+                                                            "example": "123 Rue Commerce"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "livraison": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "numero_de_livraison": {
+                                                            "type": "string",
+                                                            "example": "LIV-000001"
+                                                        },
+                                                        "code_validation": {
+                                                            "type": "string",
+                                                            "example": "ABC123"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "historique_livraison": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "status": {
+                                                            "type": "string",
+                                                            "example": "en_attente"
+                                                        },
+                                                        "date_livraison_effective": {
+                                                            "type": "string",
+                                                            "format": "date-time",
+                                                            "example": "2025-10-13T14:30:00Z"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Colis non trouvé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Colis non trouvé"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/livreur/colis/{id}/start-delivery": {
+            "post": {
+                "tags": [
+                    "Livraison Livreur"
+                ],
+                "summary": "Démarrer une livraison",
+                "description": "Marque un colis comme étant en cours de livraison",
+                "operationId": "a2151d39fabf6202fd1ba73ae9e31b1b",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID du colis",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Livraison démarrée avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Livraison démarrée avec succès"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "status": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "status_label": {
+                                                    "type": "string",
+                                                    "example": "En cours"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Erreur de validation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Ce colis n'est pas disponible pour la livraison"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/livreur/colis/{id}/complete-delivery": {
+            "post": {
+                "tags": [
+                    "Livraison Livreur"
+                ],
+                "summary": "Finaliser une livraison",
+                "description": "Finalise une livraison avec les preuves (code de validation, photo, signature, GPS)",
+                "operationId": "3016d5a7a2f4013bb0a23043e94f34b7",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID du colis",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "properties": {
+                                    "code_validation": {
+                                        "description": "Code de validation du colis",
+                                        "type": "string",
+                                        "example": "ABC123"
+                                    },
+                                    "photo_proof": {
+                                        "description": "Photo de preuve de livraison",
+                                        "type": "string",
+                                        "format": "binary"
+                                    },
+                                    "signature_data": {
+                                        "description": "Signature du client (base64)",
+                                        "type": "string",
+                                        "example": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA..."
+                                    },
+                                    "note_livraison": {
+                                        "description": "Note du livreur",
+                                        "type": "string",
+                                        "example": "Livraison effectuée avec succès"
+                                    },
+                                    "latitude": {
+                                        "description": "Latitude GPS",
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 5.359952
+                                    },
+                                    "longitude": {
+                                        "description": "Longitude GPS",
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": -4.008256
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Livraison finalisée avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Livraison finalisée avec succès"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "status": {
+                                                    "type": "integer",
+                                                    "example": 2
+                                                },
+                                                "status_label": {
+                                                    "type": "string",
+                                                    "example": "Livré"
+                                                },
+                                                "date_livraison_effective": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-10-13T14:30:00Z"
+                                                },
+                                                "photo_proof_url": {
+                                                    "type": "string",
+                                                    "example": "http://192.168.1.9:8000/storage/livraisons/proofs/colis_1_1760357729.jpg"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Données de validation invalides",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Données de validation invalides"
+                                        },
+                                        "errors": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/livreur/colis/{id}/cancel-delivery": {
+            "post": {
+                "tags": [
+                    "Livraison Livreur"
+                ],
+                "summary": "Annuler une livraison",
+                "description": "Annule une livraison avec motif d'annulation",
+                "operationId": "770ecb2fce99e9201189a1db0a9a0bec",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID du colis",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "motif_annulation": {
+                                        "description": "Motif de l'annulation",
+                                        "type": "string",
+                                        "example": "Client absent"
+                                    },
+                                    "note_livraison": {
+                                        "description": "Note du livreur",
+                                        "type": "string",
+                                        "example": "Client non joignable"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Livraison annulée avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Livraison annulée avec succès"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "status": {
+                                                    "type": "integer",
+                                                    "example": 4
+                                                },
+                                                "status_label": {
+                                                    "type": "string",
+                                                    "example": "Annulé par le livreur"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/livreur/delivery/stats": {
+            "get": {
+                "tags": [
+                    "Livraison Livreur"
+                ],
+                "summary": "Statistiques de livraison",
+                "description": "Récupère les statistiques de livraison du livreur pour une période donnée",
+                "operationId": "ea76dd929d42f2a26a48d977fc0f2ec8",
+                "parameters": [
+                    {
+                        "name": "date_debut",
+                        "in": "query",
+                        "description": "Date de début (YYYY-MM-DD)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date",
+                            "example": "2025-10-01"
+                        }
+                    },
+                    {
+                        "name": "date_fin",
+                        "in": "query",
+                        "description": "Date de fin (YYYY-MM-DD)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date",
+                            "example": "2025-10-31"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Statistiques récupérées avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Statistiques récupérées avec succès"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "periode": {
+                                                    "properties": {
+                                                        "debut": {
+                                                            "type": "string",
+                                                            "format": "date",
+                                                            "example": "2025-10-01"
+                                                        },
+                                                        "fin": {
+                                                            "type": "string",
+                                                            "format": "date",
+                                                            "example": "2025-10-31"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "statistiques": {
+                                                    "properties": {
+                                                        "total_colis": {
+                                                            "type": "integer",
+                                                            "example": 50
+                                                        },
+                                                        "colis_livres": {
+                                                            "type": "integer",
+                                                            "example": 45
+                                                        },
+                                                        "colis_annules": {
+                                                            "type": "integer",
+                                                            "example": 5
+                                                        },
+                                                        "taux_reussite": {
+                                                            "type": "number",
+                                                            "format": "float",
+                                                            "example": 90
+                                                        },
+                                                        "montant_total_encaisse": {
+                                                            "type": "number",
+                                                            "format": "float",
+                                                            "example": 2250000
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/livreur/ramassages": {
+            "get": {
+                "tags": [
+                    "Ramassage Livreur"
+                ],
+                "summary": "Liste des ramassages assignés au livreur",
+                "description": "Récupère la liste des ramassages assignés au livreur connecté",
+                "operationId": "9bdf49a8cde12aad0128eaaa860a5162",
+                "parameters": [
+                    {
+                        "name": "statut",
+                        "in": "query",
+                        "description": "Filtrer par statut (planifie, en_cours, termine)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "planifie",
+                                "en_cours",
+                                "termine"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Liste des ramassages récupérée avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Ramassages récupérés avec succès"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "code_ramassage": {
+                                                        "type": "string",
+                                                        "example": "RAM-000001"
+                                                    },
+                                                    "statut": {
+                                                        "type": "string",
+                                                        "example": "planifie"
+                                                    },
+                                                    "date_planifiee": {
+                                                        "type": "string",
+                                                        "format": "date",
+                                                        "example": "2025-10-13"
+                                                    },
+                                                    "adresse_ramassage": {
+                                                        "type": "string",
+                                                        "example": "123 Rue de la Paix"
+                                                    },
+                                                    "contact_ramassage": {
+                                                        "type": "string",
+                                                        "example": "Jean Dupont"
+                                                    },
+                                                    "telephone_contact": {
+                                                        "type": "string",
+                                                        "example": "0123456789"
+                                                    },
+                                                    "nombre_colis_estime": {
+                                                        "type": "integer",
+                                                        "example": 5
+                                                    },
+                                                    "nombre_colis_reel": {
+                                                        "type": "integer",
+                                                        "example": 0
+                                                    },
+                                                    "montant_total": {
+                                                        "type": "number",
+                                                        "format": "float",
+                                                        "example": 50000
+                                                    },
+                                                    "marchand": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "nom_complet": {
+                                                                "type": "string",
+                                                                "example": "Marchand Test"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    },
+                                                    "boutique": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "libelle": {
+                                                                "type": "string",
+                                                                "example": "Boutique Centre"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "statistiques": {
+                                            "properties": {
+                                                "colis_termines": {
+                                                    "description": "Nombre de ramassages terminés",
+                                                    "type": "integer",
+                                                    "example": 5
+                                                },
+                                                "colis_en_attente": {
+                                                    "description": "Nombre de ramassages en attente (planifiés)",
+                                                    "type": "integer",
+                                                    "example": 3
+                                                },
+                                                "colis_en_cours": {
+                                                    "description": "Nombre de ramassages en cours",
+                                                    "type": "integer",
+                                                    "example": 2
+                                                },
+                                                "colis_annules": {
+                                                    "description": "Nombre de ramassages annulés",
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "total": {
+                                                    "description": "Total des ramassages",
+                                                    "type": "integer",
+                                                    "example": 11
+                                                },
+                                                "montant_total_encaisse": {
+                                                    "description": "Montant total encaissé des ramassages terminés",
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 125000
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non autorisé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Token invalide"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/livreur/ramassages/{id}/details": {
+            "get": {
+                "tags": [
+                    "Ramassage Livreur"
+                ],
+                "summary": "Détails d'un ramassage",
+                "description": "Récupère les détails complets d'un ramassage spécifique",
+                "operationId": "06733bc89c2711251ef387f3ebbf6061",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID du ramassage",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Détails du ramassage récupérés avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Détails du ramassage récupérés avec succès"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "code_ramassage": {
+                                                    "type": "string",
+                                                    "example": "RAM-000001"
+                                                },
+                                                "statut": {
+                                                    "type": "string",
+                                                    "example": "planifie"
+                                                },
+                                                "date_planifiee": {
+                                                    "type": "string",
+                                                    "format": "date",
+                                                    "example": "2025-10-13"
+                                                },
+                                                "adresse_ramassage": {
+                                                    "type": "string",
+                                                    "example": "123 Rue de la Paix"
+                                                },
+                                                "contact_ramassage": {
+                                                    "type": "string",
+                                                    "example": "Jean Dupont"
+                                                },
+                                                "telephone_contact": {
+                                                    "type": "string",
+                                                    "example": "0123456789"
+                                                },
+                                                "nombre_colis_estime": {
+                                                    "type": "integer",
+                                                    "example": 5
+                                                },
+                                                "nombre_colis_reel": {
+                                                    "type": "integer",
+                                                    "example": 0
+                                                },
+                                                "montant_total": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 50000
+                                                },
+                                                "notes": {
+                                                    "type": "string",
+                                                    "example": "Notes spéciales"
+                                                },
+                                                "marchand": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "nom_complet": {
+                                                            "type": "string",
+                                                            "example": "Marchand Test"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "boutique": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "libelle": {
+                                                            "type": "string",
+                                                            "example": "Boutique Centre"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "colis": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "code": {
+                                                                "type": "string",
+                                                                "example": "CLIS-000001"
+                                                            },
+                                                            "nom_client": {
+                                                                "type": "string",
+                                                                "example": "Client Test"
+                                                            },
+                                                            "telephone_client": {
+                                                                "type": "string",
+                                                                "example": "0123456789"
+                                                            },
+                                                            "adresse_client": {
+                                                                "type": "string",
+                                                                "example": "Adresse Client"
+                                                            },
+                                                            "montant_a_encaisse": {
+                                                                "type": "number",
+                                                                "format": "float",
+                                                                "example": 10000
+                                                            },
+                                                            "prix_de_vente": {
+                                                                "type": "number",
+                                                                "format": "float",
+                                                                "example": 10000
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Ramassage non trouvé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Ramassage non trouvé"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/livreur/ramassages/{id}/start": {
+            "post": {
+                "tags": [
+                    "Ramassage Livreur"
+                ],
+                "summary": "Démarrer un ramassage",
+                "description": "Marque un ramassage comme en cours et met à jour la planification",
+                "operationId": "ac6bfaf6c3590c8688507533646b0f88",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID du ramassage",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Ramassage démarré avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Ramassage démarré avec succès"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "statut": {
+                                                    "type": "string",
+                                                    "example": "en_cours"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Ramassage non disponible",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Ce ramassage n'est pas disponible pour le démarrage"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/livreur/ramassages/{id}/complete": {
+            "post": {
+                "tags": [
+                    "Ramassage Livreur"
+                ],
+                "summary": "Finaliser un ramassage",
+                "description": "Marque un ramassage comme terminé avec les détails de ramassage",
+                "operationId": "b853b96674418ac4f801564f9f730d69",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID du ramassage",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "properties": {
+                                    "nombre_colis_reel": {
+                                        "description": "Nombre réel de colis ramassés",
+                                        "type": "integer",
+                                        "example": 2
+                                    },
+                                    "notes_ramassage": {
+                                        "description": "Notes du livreur (optionnel)",
+                                        "type": "string",
+                                        "example": "Notes sur le ramassage"
+                                    },
+                                    "raison_difference": {
+                                        "description": "Raison de la différence entre colis estimés et réels (optionnel)",
+                                        "type": "string",
+                                        "example": "Client n'avait qu'un seul colis prêt"
+                                    },
+                                    "photos_colis": {
+                                        "description": "Photos des colis ramassés (obligatoire - une photo par colis)",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "format": "binary"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Ramassage finalisé avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Ramassage finalisé avec succès"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "statut": {
+                                                    "type": "string",
+                                                    "example": "termine"
+                                                },
+                                                "date_effectuee": {
+                                                    "type": "string",
+                                                    "format": "date",
+                                                    "example": "2025-10-13"
+                                                },
+                                                "nombre_colis_estime": {
+                                                    "type": "integer",
+                                                    "example": 2
+                                                },
+                                                "nombre_colis_reel": {
+                                                    "type": "integer",
+                                                    "example": 2
+                                                },
+                                                "photos_colis": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "filename": {
+                                                                "type": "string",
+                                                                "example": "colis_1_1760355000_1.jpg"
+                                                            },
+                                                            "url": {
+                                                                "type": "string",
+                                                                "example": "http://192.168.1.9:8000/storage/ramassages/photos/colis_1_1760355000_1.jpg"
+                                                            },
+                                                            "path": {
+                                                                "type": "string",
+                                                                "example": "ramassages/photos/colis_1_1760355000_1.jpg"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "difference_info": {
+                                                    "properties": {
+                                                        "colis_estimes": {
+                                                            "type": "integer",
+                                                            "example": 2
+                                                        },
+                                                        "colis_reels": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "difference": {
+                                                            "type": "integer",
+                                                            "example": -1
+                                                        },
+                                                        "type_difference": {
+                                                            "type": "string",
+                                                            "example": "moins"
+                                                        },
+                                                        "raison": {
+                                                            "type": "string",
+                                                            "example": "Client n'avait qu'un seul colis prêt"
+                                                        }
+                                                    },
+                                                    "type": "object",
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Données de validation invalides",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Données de validation invalides"
+                                        },
+                                        "errors": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/livreur/ramassages/stats/daily": {
+            "get": {
+                "tags": [
+                    "Ramassage Livreur"
+                ],
+                "summary": "Statistiques quotidiennes de ramassage",
+                "description": "Récupère les statistiques de ramassage du livreur pour la journée",
+                "operationId": "ad10682f56687cd5b0946f114256acad",
+                "responses": {
+                    "200": {
+                        "description": "Statistiques récupérées avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Statistiques récupérées avec succès"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "date": {
+                                                    "type": "string",
+                                                    "format": "date",
+                                                    "example": "2025-10-13"
+                                                },
+                                                "ramassages_planifies": {
+                                                    "type": "integer",
+                                                    "example": 3
+                                                },
+                                                "ramassages_en_cours": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "ramassages_termines": {
+                                                    "type": "integer",
+                                                    "example": 2
+                                                },
+                                                "total_colis_ramasses": {
+                                                    "type": "integer",
+                                                    "example": 15
+                                                },
+                                                "montant_total_ramasse": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 150000
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/test": {
+            "get": {
+                "tags": [
+                    "Test"
+                ],
+                "summary": "Test de l'API",
+                "description": "Endpoint de test pour vérifier que l'API fonctionne",
+                "operationId": "fcf2e96a68d62874a47abb5f7fb1cdd5",
+                "responses": {
+                    "200": {
+                        "description": "API fonctionnelle",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "API fonctionnelle"
+                                        },
+                                        "timestamp": {
+                                            "type": "string",
+                                            "format": "date-time"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "securitySchemes": {
+            "bearerAuth": {
+                "type": "http",
+                "description": "Authentification JWT pour les livreurs",
+                "bearerFormat": "JWT",
+                "scheme": "bearer"
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "FCM Token",
+            "description": "Gestion des tokens FCM pour les notifications push"
+        },
+        {
+            "name": "Firebase Notifications",
+            "description": "Gestion des notifications push Firebase pour MOYOO Fleet"
+        },
+        {
+            "name": "Authentification Livreur",
+            "description": "Endpoints d'authentification pour les livreurs"
+        },
+        {
+            "name": "Ramassage Livreur",
+            "description": "Endpoints de gestion des ramassages pour les livreurs"
+        },
+        {
+            "name": "Test",
+            "description": "Endpoints de test et vérification"
+        },
+        {
+            "name": "Profil Livreur",
+            "description": "Profil Livreur"
+        },
+        {
+            "name": "Livraison Livreur",
+            "description": "Livraison Livreur"
+        }
+    ]
+}

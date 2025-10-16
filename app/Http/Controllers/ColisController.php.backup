@@ -1,0 +1,1761 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Colis;
+use App\Models\PackageColis;
+use App\Models\Zone;
+use App\Models\Commune;
+use App\Models\Livreur;
+use App\Models\Engin;
+use App\Models\Type_colis;
+use App\Models\Conditionnement_colis;
+use App\Models\Poid;
+use App\Models\Mode_livraison;
+use App\Models\Delais;
+use App\Models\Marchand;
+use App\Models\Boutique;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+
+class ColisController extends Controller
+{
+    /**
+     * Display a listing of the resource.
+     */
+    public function index(Request $request)
+    {
+        try {
+            $data['menu'] = 'colis';
+            $data['title'] = 'Liste des Colis';
+
+            $data['user'] = Auth::user();
+            if(empty($data['user'])){
+                return redirect()->route('auth.login')
+                    ->withErrors(['error' => 'Veuillez vous connecter pour accéder à cette page.']);
+            }
+
+            // Construire la requête avec les filtres et toutes les relations nécessaires
+            $query = Colis::with([
+                'zone.communes', // Pour récupérer les données du client depuis commune_zone
+                'commune',
+                'livreur',
+                'engin.typeEngin', // Pour le calcul du coût
+                'entreprise', // Pour le calcul du coût
+                'poids',
+                'modeLivraison', // Pour le calcul du coût
+                'temp' // Pour le calcul du coût
+            ]);
+
+            // Filtre par recherche (code, client, téléphone)
+            if ($request->filled('search')) {
+                $search = $request->get('search');
+                $query->where(function($q) use ($search) {
+                    $q->where('code', 'like', "%{$search}%")
+                      ->orWhere('uuid', 'like', "%{$search}%")
+                      ->orWhereHas('zone', function($subQ) use ($search) {
+                          $subQ->where('nom', 'like', "%{$search}%");
+                      })
+                      ->orWhereHas('commune', function($subQ) use ($search) {
+                          $subQ->where('libelle', 'like', "%{$search}%");
+                      });
+                });
+            }
+
+            // Filtre par statut
+            if ($request->filled('status')) {
+                $query->where('status', $request->get('status'));
+            }
+
+            // Filtre par zone
+            if ($request->filled('zone_id')) {
+                $query->where('zone_id', $request->get('zone_id'));
+            }
+
+            // Filtre par livreur
+            if ($request->filled('livreur_id')) {
+                $query->where('livreur_id', $request->get('livreur_id'));
+            }
+
+            $data['colis'] = $query->orderBy('created_at', 'desc')->paginate(15)->appends($request->query());
+
+            // Ajouter les données nécessaires pour les filtres
+            $data['zones'] = Zone::where('actif', true)->orderBy('nom')->get();
+            $data['livreurs'] = Livreur::where('status', 'actif')->orderBy('first_name')->get();
+            $data['engins'] = Engin::where('status', 'actif')->orderBy('libelle')->get();
+
+            return view('colis.index', $data);
+        } catch (\Exception $e) {
+            Log::error('Erreur lors de la récupération des colis: ' . $e->getMessage());
+            Log::error('Stack trace: ' . $e->getTraceAsString());
+            return redirect()->back()->with('error', 'Erreur lors de la récupération des colis: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Show the form for creating a new resource.
+     */
+    public function create()
+    {
+        try {
+            $data['menu'] = 'colis';
+            $data['title'] = 'Ajouter un Colis';
+
+            $data['user'] = Auth::user();
+            if(empty($data['user'])){
+                return redirect()->route('auth.login')
+                    ->withErrors(['error' => 'Veuillez vous connecter pour accéder à cette page.']);
+            }
+
+            // Récupérer les données nécessaires
+            $data['marchands'] = Marchand::orderBy('first_name')->get();
+            $data['zones'] = Zone::where('actif', true)->orderBy('nom')->get();
+            $data['livreurs'] = Livreur::where('status', 'actif')->orderBy('last_name')->get();
+            $data['engins'] = Engin::where('status', 'actif')->orderBy('libelle')->get();
+            $data['type_colis'] = Type_colis::orderBy('libelle')->get();
+            $data['conditionnement_colis'] = Conditionnement_colis::orderBy('libelle')->get();
+            $data['poids'] = Poid::orderBy('libelle')->get();
+            $data['mode_livraisons'] = Mode_livraison::orderBy('libelle')->get();
+            $data['delais'] = Delais::orderBy('libelle')->get();
+            $data['temps'] = \App\Models\Temp::orderBy('libelle')->get();
+            $data['communes'] = Commune::orderBy('libelle')->get();
+
+            return view('colis.create', $data);
+        } catch (\Exception $e) {
+            Log::error('Erreur lors du chargement du formulaire de création: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Erreur lors du chargement du formulaire.');
+        }
+    }
+
+    /**
+     * Store a newly created resource in storage.
+     */
+    public function store(Request $request)
+    {
+        try {
+
+            $user = Auth::user();
+            if(empty($user)){
+                return redirect()->route('auth.login')
+                    ->withErrors(['error' => 'Veuillez vous connecter pour accéder à cette page.']);
+            }
+
+            // Validation des données générales
+            $request->validate([
+                'nombre_colis' => 'required|integer|min:1|max:20',
+                'marchand_id' => 'required|exists:marchands,id',
+                'boutique_id' => 'required|exists:boutiques,id',
+                'livreur_id' => 'nullable|exists:livreurs,id',
+                'engin_id' => 'nullable|exists:engins,id',
+                'colis' => 'required|array|min:1',
+                'colis.*.nom_client' => 'required|string|max:255',
+                'colis.*.telephone_client' => 'required|string|max:20',
+                'colis.*.adresse_client' => 'required|string|max:500',
+                'colis.*.montant_a_encaisse' => 'nullable|integer|min:0',
+                'colis.*.prix_de_vente' => 'nullable|integer|min:0',
+                'colis.*.numero_facture' => 'nullable|string|max:255',
+                'colis.*.note_client' => 'nullable|string|max:1000',
+                'colis.*.commune_id' => 'required|exists:communes,id',
+                'colis.*.type_colis_id' => 'nullable|exists:type_colis,id',
+                'colis.*.conditionnement_colis_id' => 'nullable|exists:conditionnement_colis,id',
+                'colis.*.poids_id' => 'required|exists:poids,id',
+                'colis.*.delai_id' => 'nullable|exists:delais,id',
+                'colis.*.mode_livraison_id' => 'required|exists:mode_livraisons,id',
+                'colis.*.temp_id' => 'required|exists:temps,id'
+            ]);
+
+            // Récupérer les communes depuis les formulaires de colis
+            $communesSelected = [];
+            foreach ($request->colis as $colisData) {
+                if (!empty($colisData['commune_id'])) {
+                    $communesSelected[] = $colisData['commune_id'];
+                }
+            }
+            $communesSelected = array_unique($communesSelected); // Supprimer les doublons
+
+            if (empty($communesSelected)) {
+                return redirect()->back()
+                    ->with('error', 'Veuillez sélectionner une zone de livraison pour chaque colis.')
+                    ->withInput();
+            }
+
+            DB::beginTransaction();
+
+            // 1. Créer le package de colis (sans colis_ids pour l'instant)
+            $packageColis = PackageColis::create([
+                'numero_package' => PackageColis::generatePackageNumber(),
+                'marchand_id' => $request->marchand_id,
+                'boutique_id' => $request->boutique_id,
+                'nombre_colis' => $request->nombre_colis,
+                'communes_selected' => $communesSelected,
+                'colis_ids' => [], // Sera mis à jour après création des colis
+                'livreur_id' => $request->livreur_id,
+                'engin_id' => $request->engin_id,
+                'statut' => 'en_attente',
+                'created_by' => $user->id
+            ]);
+
+            $createdColis = [];
+            $createdLivraisons = [];
+            $createdZones = [];
+            $colisIndex = 0;
+
+            // 2. Traiter chaque colis avec la commune sélectionnée dans le formulaire
+            foreach ($request->colis as $index => $colisData) {
+                // Récupérer la commune directement depuis le formulaire
+                $communeId = $colisData['commune_id'];
+
+                if (!$communeId) {
+                    DB::rollBack();
+                    return redirect()->back()
+                        ->with('error', "Veuillez sélectionner une zone de livraison pour le colis " . ($index + 1))
+                        ->withInput();
+                }
+
+                $colisIndex++;
+
+                // Récupérer les informations de la commune
+                $commune = Commune::find($communeId);
+                if (!$commune) {
+                    DB::rollBack();
+                    return redirect()->back()
+                        ->with('error', "Commune introuvable pour le colis " . ($index + 1))
+                        ->withInput();
+                }
+
+                // Créer ou récupérer la zone de livraison pour cette commune
+                $zone = Zone::firstOrCreate(
+                    ['nom' => $commune->libelle],
+                    [
+                        'nom' => $commune->libelle,
+                        'actif' => true,
+                        'created_by' => $user->id
+                    ]
+                );
+
+                if (!in_array($zone->id, $createdZones)) {
+                    $createdZones[] = $zone->id;
+                }
+
+                // Récupérer l'adresse de la boutique pour l'adresse de ramassage
+                $boutique = Boutique::find($request->boutique_id);
+                $adresseRamassage = $boutique ? $boutique->adresse : '';
+
+                // Générer le numéro de ramassage automatiquement
+                $numeroRamassage = 'RAM-' . str_pad(DB::table('commune_zone')->count() + 1, 6, '0', STR_PAD_LEFT);
+
+                // Créer l'entrée dans commune_zone (sans commune_id car nullable)
+                $communeZone = \DB::table('commune_zone')->insertGetId([
+                    'zone_id' => $zone->id,
+                    'commune_id' => null, // Nullable comme demandé
+                    'ordre' => $colisIndex,
+                    'nom_client' => $colisData['nom_client'],
+                    'telephone_client' => $colisData['telephone_client'],
+                    'adresse_client' => $colisData['adresse_client'],
+                    'marchand_id' => $request->marchand_id,
+                    'boutique_id' => $request->boutique_id,
+                    'montant_a_encaisse' => $colisData['montant_a_encaisse'] ?? null,
+                    'prix_de_vente' => $colisData['prix_de_vente'] ?? null,
+                    'numero_facture' => $colisData['numero_facture'] ?? null,
+                    'type_colis_id' => $colisData['type_colis_id'] ?? null,
+                    'conditionnement_colis_id' => $colisData['conditionnement_colis_id'] ?? null,
+                    'poids_id' => $colisData['poids_id'] ?? null,
+                    'delai_id' => $colisData['delai_id'] ?? null,
+                    'mode_livraison_id' => $colisData['mode_livraison_id'] ?? null,
+                    'numero_de_ramassage' => $numeroRamassage,
+                    'adresse_de_ramassage' => $adresseRamassage,
+                    'created_at' => now(),
+                    'updated_at' => now()
+                ]);
+
+                // Récupérer l'entreprise de l'utilisateur
+                $entreprise = \App\Models\Entreprise::getEntrepriseByUser($user->id);
+                if (!$entreprise) {
+                    DB::rollBack();
+                    return redirect()->back()
+                        ->with('error', 'Aucune entreprise trouvée pour cet utilisateur. Veuillez créer une entreprise d\'abord.')
+                        ->withInput();
+                }
+
+                // Créer le colis avec référence au package
+                $colis = Colis::create([
+                    'entreprise_id' => $entreprise->id,
+                    'uuid' => \Str::uuid(),
+                    'code' => $this->generateColisCode($zone->id, $communeId),
+                    'montant_a_encaisse' => $colisData['montant_a_encaisse'] ?? 0,
+                    'prix_de_vente' => $colisData['prix_de_vente'] ?? 0,
+                    'numero_facture' => $colisData['numero_facture'] ?? '',
+                    'nom_client' => $colisData['nom_client'],
+                    'telephone_client' => $colisData['telephone_client'],
+                    'adresse_client' => $colisData['adresse_client'],
+                    'note_client' => $colisData['note_client'] ?? '',
+                    'numero_de_ramassage' => '',
+                    'adresse_de_ramassage' => '',
+                    'status' => 0, // En attente
+                    'marchand_id' => $request->marchand_id,
+                    'boutique_id' => $request->boutique_id,
+                    'zone_id' => $zone->id,
+                    'commune_id' => $communeId, // Renseigner la commune pour le calcul des coûts
+                    'package_colis_id' => $packageColis->id, // Référence au package
+                    'livreur_id' => $request->livreur_id,
+                    'engin_id' => $request->engin_id,
+                    'poids_id' => $colisData['poids_id'] ?? null, // Ajouter le poids
+                    'mode_livraison_id' => $colisData['mode_livraison_id'] ?? null, // Ajouter le mode de livraison
+                    'temp_id' => $colisData['temp_id'] ?? null, // Ajouter la période temporelle
+                    'created_by' => $user->id
+                ]);
+
+                $createdColis[] = $colis;
+
+                // Créer la livraison si un livreur est assigné
+                if ($request->livreur_id) {
+                    $livraison = \DB::table('livraisons')->insertGetId([
+                        'uuid' => \Str::uuid(),
+                        'numero_de_livraison' => $this->generateLivraisonNumber(),
+                        'colis_id' => $colis->id,
+                        'adresse_de_livraison' => $colisData['adresse_client'],
+                        'status' => 0, // En attente
+                        'note_livraison' => $colisData['note_client'] ?? '',
+                        'code_validation' => $this->generateValidationCode(),
+                        'created_by' => $user->id,
+                        'created_at' => now(),
+                        'updated_at' => now()
+                    ]);
+
+                    $createdLivraisons[] = $livraison;
+                }
+            }
+
+            // 3. Mettre à jour le package avec les IDs des colis créés
+            $colisIds = array_map(function($colis) {
+                return $colis->id;
+            }, $createdColis);
+
+            $packageColis->update([
+                'colis_ids' => $colisIds
+            ]);
+
+            DB::commit();
+
+            Log::info('Package de colis créé avec succès', [
+                'package_id' => $packageColis->id,
+                'numero_package' => $packageColis->numero_package,
+                'nombre_colis' => count($createdColis),
+                'colis_ids' => $colisIds,
+                'communes_selected' => $communesSelected,
+                'zones_created' => $createdZones,
+                'user_id' => $user->id
+            ]);
+
+            $message = 'Package ' . $packageColis->numero_package . ' créé avec succès : ' . count($createdColis) . ' colis pour ' . count($communesSelected) . ' commune(s)';
+            if (count($createdZones) > 0) {
+                $message .= ' - ' . count($createdZones) . ' zone(s) de livraison créée(s)';
+            }
+            if (count($createdLivraisons) > 0) {
+                $message .= ' et ' . count($createdLivraisons) . ' livraison(s) assignée(s)';
+            }
+
+            return redirect()->route('colis.index')->with('success', $message);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            DB::rollBack();
+            return redirect()->back()
+                           ->withErrors($e->validator)
+                           ->withInput();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Erreur lors de la création du colis: ' . $e->getMessage());
+            return redirect()->back()
+                           ->with('error', 'Erreur lors de la création du colis.')
+                           ->withInput();
+        }
+    }
+
+    /**
+     * Générer un code de colis
+     */
+    private function generateColisCode($zoneId, $communeId)
+    {
+        $zone = Zone::find($zoneId);
+        $commune = Commune::find($communeId);
+
+        $zoneInitiales = $zone ? substr(str_replace(' ', '', $zone->nom), 0, 3) : 'ZON';
+        $communeInitiales = $commune ? substr(str_replace(' ', '', $commune->libelle), 0, 3) : 'COM';
+
+        $count = Colis::count() + 1;
+        $numero = str_pad($count, 6, '0', STR_PAD_LEFT);
+
+        return "CLIS-{$numero}-{$zoneInitiales}{$communeInitiales}";
+    }
+
+    /**
+     * Générer un numéro de livraison
+     */
+    private function generateLivraisonNumber()
+    {
+        $count = \DB::table('livraisons')->count() + 1;
+        return 'LIV-' . str_pad($count, 6, '0', STR_PAD_LEFT);
+    }
+
+    /**
+     * Générer un code de validation
+     */
+    private function generateValidationCode()
+    {
+        return strtoupper(substr(md5(uniqid()), 0, 8));
+    }
+
+    /**
+     * Récupérer les boutiques d'un marchand (AJAX)
+     */
+    public function getBoutiquesByMarchand($marchandId)
+    {
+        try {
+            $boutiques = Boutique::where('marchand_id', $marchandId)
+                ->orderBy('libelle')
+                ->get(['id', 'libelle', 'adresse']);
+
+            return response()->json([
+                'success' => true,
+                'boutiques' => $boutiques
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Erreur lors de la récupération des boutiques'
+            ], 500);
+        }
+    }
+
+    /**
+     * Récupérer les communes d'une zone (AJAX)
+     */
+    public function getCommunesByZone($zoneId)
+    {
+        try {
+            $communes = Zone::find($zoneId)
+                ->communes()
+                ->orderBy('commune_zone.ordre')
+                ->get(['communes.id', 'communes.libelle']);
+
+            return response()->json($communes);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Erreur lors de la récupération des communes'], 500);
+        }
+    }
+
+    /**
+     * Display the specified resource.
+     */
+    public function show(Colis $colis)
+    {
+        try {
+            $data['menu'] = 'colis';
+            $data['title'] = 'Détails du Colis';
+
+            $data['user'] = Auth::user();
+            if(empty($data['user'])){
+                return redirect()->route('auth.login')
+                    ->withErrors(['error' => 'Veuillez vous connecter pour accéder à cette page.']);
+            }
+
+            $data['colis'] = $colis->load([
+                'zone',
+                'commune',
+                'livreur',
+                'engin.typeEngin', // Pour le calcul du coût
+                'marchand',
+                'boutique',
+                'entreprise', // Pour le calcul du coût
+                'poids', // Pour le calcul du coût
+                'modeLivraison', // Pour le calcul du coût
+                'temp', // Pour le calcul du coût
+                'zone.commune_zones.typeColis',
+                'zone.commune_zones.conditionnementColis',
+                'zone.commune_zones.modeLivraison',
+                'zone.commune_zones.poids',
+                'zone.commune_zones.delai'
+            ]);
+            return view('colis.show', $data);
+        } catch (\Exception $e) {
+            Log::error('Erreur lors de l\'affichage du colis: ' . $e->getMessage());
+            Log::error('Stack trace: ' . $e->getTraceAsString());
+            return redirect()->back()->with('error', 'Erreur lors de l\'affichage du colis: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Show the form for editing the specified resource.
+     */
+    public function edit(Colis $colis)
+    {
+        try {
+            $data['menu'] = 'colis';
+            $data['title'] = 'Modifier le Colis';
+
+            $data['user'] = Auth::user();
+            if(empty($data['user'])){
+                return redirect()->route('auth.login')
+                    ->withErrors(['error' => 'Veuillez vous connecter pour accéder à cette page.']);
+            }
+
+            $data['colis'] = $colis->load(['zone', 'commune', 'livreur', 'engin', 'marchand', 'boutique', 'poids', 'modeLivraison', 'temp', 'entreprise']);
+
+            $data['marchands'] = Marchand::orderBy('first_name')->get();
+            $data['communes'] = Commune::orderBy('libelle')->get();
+            $data['livreurs'] = Livreur::where('status', 'actif')->orderBy('last_name')->get();
+            $data['engins'] = Engin::where('status', 'actif')->orderBy('libelle')->get();
+            $data['type_colis'] = Type_colis::orderBy('libelle')->get();
+            $data['conditionnement_colis'] = Conditionnement_colis::orderBy('libelle')->get();
+            $data['poids'] = Poid::orderBy('libelle')->get();
+            $data['delais'] = Delais::orderBy('libelle')->get();
+            $data['mode_livraisons'] = Mode_livraison::orderBy('libelle')->get();
+            $data['temps'] = \App\Models\Temp::orderBy('libelle')->get();
+
+            return view('colis.edit', $data);
+        } catch (\Exception $e) {
+            Log::error('Erreur lors du chargement du formulaire d\'édition: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Erreur lors du chargement du formulaire.');
+        }
+    }
+
+    /**
+     * Update the specified resource in storage.
+     */
+    public function update(Request $request, Colis $colis)
+    {
+        try {
+            $data['menu'] = 'colis';
+            $data['title'] = 'Modifier le Colis';
+
+            $data['user'] = Auth::user();
+            if(empty($data['user'])){
+                return redirect()->route('auth.login')
+                    ->withErrors(['error' => 'Veuillez vous connecter pour accéder à cette page.']);
+            }
+
+            // Validation des données
+            $request->validate([
+                'marchand_id' => 'required|exists:marchands,id',
+                'boutique_id' => 'required|exists:boutiques,id',
+                'livreur_id' => 'nullable|exists:livreurs,id',
+                'engin_id' => 'nullable|exists:engins,id',
+                'note_client' => 'nullable|string|max:1000',
+                'instructions_livraison' => 'nullable|string|max:1000',
+                'colis' => 'required|array|min:1',
+                'colis.*.nom_client' => 'required|string|max:255',
+                'colis.*.telephone_client' => 'required|string|max:20',
+                'colis.*.adresse_client' => 'required|string|max:500',
+                'colis.*.montant_a_encaisse' => 'nullable|numeric|min:0',
+                'colis.*.prix_de_vente' => 'nullable|numeric|min:0',
+                'colis.*.numero_facture' => 'nullable|string|max:255',
+                'colis.*.note_client' => 'nullable|string|max:1000',
+                'colis.*.livreur_id' => 'nullable|exists:livreurs,id',
+                'colis.*.engin_id' => 'nullable|exists:engins,id',
+                'colis.*.type_colis_id' => 'nullable|exists:type_colis,id',
+                'colis.*.conditionnement_colis_id' => 'nullable|exists:conditionnement_colis,id',
+                'colis.*.poids_id' => 'required|exists:poids,id',
+                'colis.*.delai_id' => 'nullable|exists:delais,id',
+                'colis.*.mode_livraison_id' => 'required|exists:mode_livraisons,id',
+                'colis.*.temp_id' => 'required|exists:temps,id',
+                'colis.*.commune_id' => 'required|exists:communes,id'
+            ]);
+
+            // Récupérer les communes sélectionnées depuis les formulaires de colis
+            $communesSelected = [];
+            foreach ($request->colis as $colisData) {
+                if (!empty($colisData['commune_id'])) {
+                    $communesSelected[] = $colisData['commune_id'];
+                }
+            }
+
+            if (empty($communesSelected)) {
+                return redirect()->back()
+                    ->withErrors(['colis' => 'Veuillez sélectionner une zone de livraison pour chaque colis.'])
+                    ->withInput();
+            }
+
+            DB::beginTransaction();
+
+            // Mettre à jour le colis avec les nouvelles informations
+            $colis->update([
+                'note_client' => $request->note_client,
+                'instructions_livraison' => $request->instructions_livraison,
+                'livreur_id' => $request->livreur_id,
+                'engin_id' => $request->engin_id
+            ]);
+
+            // Supprimer les anciens enregistrements commune_zone pour toutes les zones qui seront utilisées
+            $zonesToDelete = [];
+            foreach ($request->colis as $index => $colisData) {
+                $communeId = $colisData['commune_id'] ?? null;
+                if ($communeId) {
+                    $commune = Commune::find($communeId);
+                    if ($commune) {
+                        $zone = Zone::firstOrCreate(
+                            ['nom' => $commune->libelle],
+                            [
+                                'nom' => $commune->libelle,
+                                'actif' => true,
+                                'created_by' => Auth::id()
+                            ]
+                        );
+                        $zonesToDelete[] = $zone->id;
+                    }
+                }
+            }
+
+            // Supprimer les enregistrements commune_zone pour toutes les zones concernées
+            if (!empty($zonesToDelete)) {
+                DB::table('commune_zone')->whereIn('zone_id', $zonesToDelete)->delete();
+            }
+
+            // Récupérer le package_colis_id du colis original
+            $packageColisId = $colis->package_colis_id;
+
+            // Traiter chaque colis du formulaire
+            foreach ($request->colis as $index => $colisData) {
+                $communeId = $colisData['commune_id'] ?? null;
+
+                if ($communeId) {
+                    // Récupérer les informations de la commune
+                    $commune = Commune::find($communeId);
+                    if (!$commune) {
+                        DB::rollBack();
+                        return redirect()->back()
+                                       ->with('error', "Commune introuvable pour le colis " . ($index + 1))
+                                       ->withInput();
+                    }
+
+                    // Créer ou récupérer la zone de livraison pour cette commune
+                    $zone = Zone::firstOrCreate(
+                        ['nom' => $commune->libelle],
+                        [
+                            'nom' => $commune->libelle,
+                            'actif' => true,
+                            'created_by' => Auth::id()
+                        ]
+                    );
+
+                    if ($index == 1) {
+                        // Mettre à jour le colis existant (premier formulaire)
+                        $colis->update([
+                            'zone_id' => $zone->id,
+                            'commune_id' => $communeId,
+                            'livreur_id' => $colisData['livreur_id'] ?? $request->livreur_id,
+                            'engin_id' => $colisData['engin_id'] ?? $request->engin_id,
+                            'note_client' => $colisData['note_client'] ?? '',
+                            'poids_id' => $colisData['poids_id'] ?? null,
+                            'mode_livraison_id' => $colisData['mode_livraison_id'] ?? null,
+                            'temp_id' => $colisData['temp_id'] ?? null
+                        ]);
+                    } else {
+                        // Récupérer l'entreprise de l'utilisateur
+                        $entreprise = \App\Models\Entreprise::getEntrepriseByUser(Auth::id());
+                        if (!$entreprise) {
+                            DB::rollBack();
+                            return redirect()->back()
+                                ->with('error', 'Aucune entreprise trouvée pour cet utilisateur. Veuillez créer une entreprise d\'abord.')
+                                ->withInput();
+                        }
+
+                        // Créer de nouveaux colis pour les formulaires supplémentaires
+                        $newColis = Colis::create([
+                            'entreprise_id' => $entreprise->id,
+                            'uuid' => \Illuminate\Support\Str::uuid(),
+                            'code' => $this->generateColisCode($zone->id, $communeId),
+                            'status' => 0,
+                            'note_client' => $colisData['note_client'] ?? '',
+                            'instructions_livraison' => $request->instructions_livraison,
+                            'zone_id' => $zone->id,
+                            'commune_id' => $communeId,
+                            'package_colis_id' => $packageColisId, // Même package que le colis original
+                            'livreur_id' => $colisData['livreur_id'] ?? $request->livreur_id,
+                            'engin_id' => $colisData['engin_id'] ?? $request->engin_id,
+                            'poids_id' => $colisData['poids_id'] ?? null, // Ajouter le poids
+                            'mode_livraison_id' => $colisData['mode_livraison_id'] ?? null, // Ajouter le mode de livraison
+                            'temp_id' => $colisData['temp_id'] ?? null, // Ajouter la période temporelle
+                            'created_by' => Auth::id()
+                        ]);
+                    }
+
+                    // Récupérer l'adresse de la boutique pour l'adresse de ramassage
+                    $boutique = Boutique::find($request->boutique_id);
+                    $adresseRamassage = $boutique ? $boutique->adresse : '';
+
+                    // Générer le numéro de ramassage automatiquement
+                    $numeroRamassage = 'RAM-' . str_pad(DB::table('commune_zone')->count() + 1, 6, '0', STR_PAD_LEFT);
+
+                    // Créer l'enregistrement commune_zone pour chaque colis
+                    DB::table('commune_zone')->insert([
+                        'zone_id' => $zone->id,
+                        'commune_id' => $communeId,
+                        'ordre' => $index,
+                        'nom_client' => $colisData['nom_client'],
+                        'telephone_client' => $colisData['telephone_client'],
+                        'adresse_client' => $colisData['adresse_client'],
+                        'marchand_id' => $request->marchand_id,
+                        'boutique_id' => $request->boutique_id,
+                        'montant_a_encaisse' => $colisData['montant_a_encaisse'],
+                        'prix_de_vente' => $colisData['prix_de_vente'],
+                        'numero_facture' => $colisData['numero_facture'],
+                        'type_colis_id' => $colisData['type_colis_id'] ?? null,
+                        'conditionnement_colis_id' => $colisData['conditionnement_colis_id'] ?? null,
+                        'poids_id' => $colisData['poids_id'] ?? null,
+                        'delai_id' => $colisData['delai_id'] ?? null,
+                        'mode_livraison_id' => $colisData['mode_livraison_id'] ?? null,
+                        'numero_de_ramassage' => $numeroRamassage,
+                        'adresse_de_ramassage' => $adresseRamassage,
+                        'created_at' => now(),
+                        'updated_at' => now()
+                    ]);
+                }
+            }
+
+            // Mettre à jour le package avec tous les colis (y compris les nouveaux créés)
+            if ($packageColisId) {
+                $package = PackageColis::find($packageColisId);
+                if ($package) {
+                    $allColisIds = Colis::where('package_colis_id', $packageColisId)->pluck('id')->toArray();
+                    $package->update([
+                        'colis_ids' => $allColisIds,
+                        'nombre_colis' => count($allColisIds)
+                    ]);
+                }
+            }
+
+            DB::commit();
+
+            Log::info('Colis mis à jour avec succès', [
+                'colis_id' => $colis->id,
+                'code' => $colis->code,
+                'user_id' => Auth::id()
+            ]);
+
+            return redirect()->route('colis.show', $colis->id)
+                           ->with('success', "Colis mis à jour avec succès. Code: {$colis->code}");
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            DB::rollBack();
+            return redirect()->back()
+                           ->withErrors($e->validator)
+                           ->withInput();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Erreur lors de la mise à jour du colis: ' . $e->getMessage());
+            return redirect()->back()
+                           ->with('error', 'Erreur lors de la mise à jour du colis.')
+                           ->withInput();
+        }
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     */
+    public function destroy(Colis $colis)
+    {
+        try {
+            $data['menu'] = 'colis';
+            $data['title'] = 'Supprimer le Colis';
+
+            $data['user'] = Auth::user();
+            if(empty($data['user'])){
+                return redirect()->route('auth.login')
+                    ->withErrors(['error' => 'Veuillez vous connecter pour accéder à cette page.']);
+            }
+
+            // Vérifier si le colis peut être supprimé
+            if ($colis->status === Colis::STATUS_EN_COURS) {
+                return redirect()->back()
+                               ->with('error', 'Impossible de supprimer un colis en cours de livraison.');
+            }
+
+            if ($colis->status === Colis::STATUS_LIVRE) {
+                return redirect()->back()
+                               ->with('error', 'Impossible de supprimer un colis déjà livré.');
+            }
+
+            DB::beginTransaction();
+
+            // Supprimer le colis (soft delete)
+            $colis->delete();
+
+            DB::commit();
+
+            Log::info('Colis supprimé avec succès', [
+                'colis_id' => $colis->id,
+                'code' => $colis->code,
+                'user_id' => Auth::id()
+            ]);
+
+            return redirect()->route('colis.index')
+                           ->with('success', "Colis supprimé avec succès. Code: {$colis->code}");
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Erreur lors de la suppression du colis: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Erreur lors de la suppression du colis.');
+        }
+    }
+
+    /**
+     * Toggle the status of the colis
+     */
+    public function toggleStatus(Colis $colis)
+    {
+        try {
+            $data['menu'] = 'colis';
+            $data['title'] = 'Changer le Statut du Colis';
+
+            $data['user'] = Auth::user();
+            if(empty($data['user'])){
+                return redirect()->route('auth.login')
+                    ->withErrors(['error' => 'Veuillez vous connecter pour accéder à cette page.']);
+            }
+
+            $newStatus = $colis->status === Colis::STATUS_EN_ATTENTE
+                        ? Colis::STATUS_EN_COURS
+                        : Colis::STATUS_EN_ATTENTE;
+
+            $colis->update(['status' => $newStatus]);
+
+            $statusLabel = $colis->status_label;
+
+            Log::info("Statut du colis changé", [
+                'colis_id' => $colis->id,
+                'code' => $colis->code,
+                'new_status' => $statusLabel,
+                'user_id' => Auth::id()
+            ]);
+
+            return redirect()->back()
+                           ->with('success', "Statut du colis changé: {$statusLabel}");
+
+        } catch (\Exception $e) {
+            Log::error('Erreur lors du changement de statut: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Erreur lors du changement de statut.');
+        }
+    }
+
+    /**
+     * Assign a livreur to the colis
+     */
+    public function assignLivreur(Request $request, Colis $colis)
+    {
+        try {
+            $data['menu'] = 'colis';
+            $data['title'] = 'Assigner un Livreur au Colis';
+
+            $data['user'] = Auth::user();
+            if(empty($data['user'])){
+                return redirect()->route('auth.login')
+                    ->withErrors(['error' => 'Veuillez vous connecter pour accéder à cette page.']);
+            }
+
+            $request->validate([
+                'livreur_id' => 'required|exists:livreurs,id',
+                'engin_id' => 'nullable|exists:engins,id'
+            ]);
+
+            $colis->update([
+                'livreur_id' => $request->livreur_id,
+                'engin_id' => $request->engin_id,
+                'status' => Colis::STATUS_EN_COURS
+            ]);
+
+            Log::info('Livreur assigné au colis', [
+                'colis_id' => $colis->id,
+                'code' => $colis->code,
+                'livreur_id' => $request->livreur_id,
+                'engin_id' => $request->engin_id,
+                'user_id' => Auth::id()
+            ]);
+
+            return redirect()->back()
+                           ->with('success', 'Livreur assigné avec succès.');
+
+        } catch (\Exception $e) {
+            Log::error('Erreur lors de l\'assignation du livreur: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Erreur lors de l\'assignation du livreur.');
+        }
+    }
+
+    /**
+     * Assigner un livreur à plusieurs colis (assignation en masse)
+     */
+    public function showAssignPage(Request $request)
+    {
+        try {
+            $data['menu'] = 'colis';
+            $data['title'] = 'Assignation en masse des Colis';
+
+            $data['user'] = Auth::user();
+            if(empty($data['user'])){
+                return redirect()->route('auth.login')
+                    ->withErrors(['error' => 'Veuillez vous connecter pour accéder à cette page.']);
+            }
+
+            // Récupérer les IDs des colis depuis la requête
+            $colisIds = $request->get('colis_ids', '');
+
+            if (empty($colisIds)) {
+                return redirect()->route('colis.index')
+                    ->with('error', 'Aucun colis sélectionné pour l\'assignation.');
+            }
+
+            // Convertir la chaîne d'IDs en tableau
+            $colisIdsArray = array_filter(explode(',', $colisIds));
+
+            // Récupérer les colis sélectionnés
+            $data['selectedColis'] = Colis::whereIn('id', $colisIdsArray)
+                ->where('status', Colis::STATUS_EN_ATTENTE)
+                ->whereNull('livreur_id')
+                ->with(['zone.communes', 'commune', 'poids', 'modeLivraison', 'temp'])
+                ->get();
+
+            if ($data['selectedColis']->count() !== count($colisIdsArray)) {
+                return redirect()->route('colis.index')
+                    ->with('error', 'Certains colis ne peuvent pas être assignés (déjà assignés ou statut incorrect).');
+            }
+
+            // Récupérer les livreurs disponibles
+            $data['livreurs'] = Livreur::where('status', 'actif')
+                ->orderBy('first_name')
+                ->get();
+
+            // Récupérer les engins disponibles
+            $data['engins'] = Engin::where('status', 'actif')
+                ->with('typeEngin')
+                ->orderBy('libelle')
+                ->get();
+
+            $data['colisIds'] = $colisIds;
+
+            return view('colis.assign', $data);
+
+        } catch (\Exception $e) {
+            Log::error('Erreur lors de l\'affichage de la page d\'assignation: ' . $e->getMessage());
+            return redirect()->route('colis.index')
+                ->with('error', 'Erreur lors du chargement de la page d\'assignation.');
+        }
+    }
+
+    public function bulkAssignLivreur(Request $request)
+    {
+        try {
+            $data['menu'] = 'colis';
+            $data['title'] = 'Assignation en masse des Colis';
+
+            $data['user'] = Auth::user();
+            if(empty($data['user'])){
+                return redirect()->route('auth.login')
+                    ->withErrors(['error' => 'Veuillez vous connecter pour accéder à cette page.']);
+            }
+
+            $request->validate([
+                'colis_ids' => 'required|string',
+                'livreur_id' => 'required|exists:livreurs,id',
+                'engin_id' => 'nullable|exists:engins,id'
+            ]);
+
+            // Convertir la chaîne d'IDs en tableau
+            $colisIds = array_filter(explode(',', $request->colis_ids));
+
+            if (empty($colisIds)) {
+                return redirect()->back()->with('error', 'Aucun colis sélectionné.');
+            }
+
+            // Vérifier que tous les colis existent et sont assignables
+            $colis = Colis::whereIn('id', $colisIds)
+                         ->where('status', Colis::STATUS_EN_ATTENTE)
+                         ->whereNull('livreur_id')
+                         ->get();
+
+            if ($colis->count() !== count($colisIds)) {
+                return redirect()->back()->with('error', 'Certains colis ne peuvent pas être assignés (déjà assignés ou statut incorrect).');
+            }
+
+            DB::beginTransaction();
+
+            // Assigner le livreur à tous les colis
+            $updatedCount = 0;
+            foreach ($colis as $colisItem) {
+                $colisItem->update([
+                    'livreur_id' => $request->livreur_id,
+                    'engin_id' => $request->engin_id,
+                    'status' => Colis::STATUS_EN_COURS
+                ]);
+                $updatedCount++;
+            }
+
+            DB::commit();
+
+            Log::info('Assignation en masse réussie', [
+                'user_id' => $data['user']->id,
+                'livreur_id' => $request->livreur_id,
+                'engin_id' => $request->engin_id,
+                'colis_count' => $updatedCount,
+                'colis_ids' => $colisIds
+            ]);
+
+            return redirect()->route('colis.index')
+                           ->with('success', "{$updatedCount} colis ont été assignés avec succès au livreur.");
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Erreur lors de l\'assignation en masse: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Erreur lors de l\'assignation en masse des colis.');
+        }
+    }
+
+    /**
+     * Mark colis as delivered
+     */
+    public function markAsDelivered(Colis $colis)
+    {
+        try {
+            if ($colis->status !== Colis::STATUS_EN_COURS) {
+                return redirect()->back()
+                               ->with('error', 'Seuls les colis en cours peuvent être marqués comme livrés.');
+            }
+
+            $colis->update(['status' => Colis::STATUS_LIVRE]);
+
+            Log::info('Colis marqué comme livré', [
+                'colis_id' => $colis->id,
+                'code' => $colis->code,
+                'user_id' => Auth::id()
+            ]);
+
+            return redirect()->back()
+                           ->with('success', 'Colis marqué comme livré avec succès.');
+
+        } catch (\Exception $e) {
+            Log::error('Erreur lors du marquage comme livré: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Erreur lors du marquage comme livré.');
+        }
+    }
+
+    /**
+     * Search colis
+     */
+    public function search(Request $request)
+    {
+        try {
+            $query = $request->get('q');
+
+            if (empty($query)) {
+                return redirect()->route('colis.index');
+            }
+
+            $colis = Colis::where('code', 'like', "%{$query}%")
+                         ->orWhere('uuid', 'like', "%{$query}%")
+                         ->orWhereHas('zone', function($q) use ($query) {
+                             $q->where('nom', 'like', "%{$query}%");
+                         })
+                         ->orWhereHas('commune', function($q) use ($query) {
+                             $q->where('libelle', 'like', "%{$query}%");
+                         })
+                         ->with(['zone', 'commune', 'livreur', 'engin'])
+                         ->orderBy('created_at', 'desc')
+                         ->paginate(15);
+
+            $data = [
+                'colis' => $colis,
+                'query' => $query,
+                'menu' => 'colis'
+            ];
+
+            return view('colis.index', $data);
+        } catch (\Exception $e) {
+            Log::error('Erreur lors de la recherche: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Erreur lors de la recherche.');
+        }
+    }
+
+    /**
+     * Filter colis by status
+     */
+    public function filterByStatus(Request $request)
+    {
+        try {
+            $status = $request->get('status');
+
+            if (!in_array($status, [0, 1, 2, 3, 4, 5])) {
+                return redirect()->route('colis.index');
+            }
+
+            $colis = Colis::where('status', $status)
+                         ->with(['zone', 'commune', 'livreur', 'engin'])
+                         ->orderBy('created_at', 'desc')
+                         ->paginate(15);
+
+            $statusLabel = match($status) {
+                0 => 'En attente',
+                1 => 'En cours',
+                2 => 'Livré',
+                3 => 'Annulé par le client',
+                4 => 'Annulé par le livreur',
+                5 => 'Annulé par le marchand',
+                default => 'Statut inconnu'
+            };
+
+            $data = [
+                'colis' => $colis,
+                'filter_status' => $status,
+                'status_label' => $statusLabel,
+                'menu' => 'colis'
+            ];
+
+            return view('colis.index', $data);
+        } catch (\Exception $e) {
+            Log::error('Erreur lors du filtrage: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Erreur lors du filtrage.');
+        }
+    }
+
+
+    /**
+     * Show assignment interface for multiple colis
+     */
+    public function showAssignmentInterface()
+    {
+        try {
+            $availableColis = Colis::where('status', Colis::STATUS_EN_ATTENTE)
+                                  ->whereNull('livreur_id')
+                                  ->with(['zone', 'commune'])
+                                  ->orderBy('created_at', 'asc')
+                                  ->get()
+                                  ->groupBy('zone_id');
+
+            $livreurs = Livreur::where('actif', true)
+                              ->orderBy('nom')
+                              ->get();
+
+            $engins = Engin::where('actif', true)
+                          ->orderBy('libelle')
+                          ->get();
+
+            $data = [
+                'available_colis' => $availableColis,
+                'livreurs' => $livreurs,
+                'engins' => $engins,
+                'menu' => 'colis'
+            ];
+
+            return view('colis.assignment', $data);
+        } catch (\Exception $e) {
+            Log::error('Erreur lors du chargement de l\'interface d\'assignation: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Erreur lors du chargement de l\'interface.');
+        }
+    }
+
+    /**
+     * Assign multiple colis to a livreur across different zones
+     */
+    public function assignMultipleColis(Request $request)
+    {
+        try {
+            $request->validate([
+                'colis_ids' => 'required|array|min:1',
+                'colis_ids.*' => 'exists:colis,id',
+                'livreur_id' => 'required|exists:livreurs,id',
+                'engin_id' => 'nullable|exists:engins,id'
+            ]);
+
+            DB::beginTransaction();
+
+            $colis = Colis::whereIn('id', $request->colis_ids)
+                         ->where('status', Colis::STATUS_EN_ATTENTE)
+                         ->get();
+
+            if ($colis->isEmpty()) {
+                return redirect()->back()
+                               ->with('error', 'Aucun colis en attente trouvé.');
+            }
+
+            // Grouper par zone pour optimiser les tournées
+            $colisByZone = $colis->groupBy('zone_id');
+
+            foreach ($colisByZone as $zoneId => $zoneColis) {
+                // Calculer l'ordre optimal pour cette zone
+                $this->optimizeDeliveryOrder($zoneColis, $zoneId);
+
+                // Assigner le livreur
+                foreach ($zoneColis as $colisItem) {
+                    $colisItem->update([
+                        'livreur_id' => $request->livreur_id,
+                        'engin_id' => $request->engin_id,
+                        'status' => Colis::STATUS_EN_COURS
+                    ]);
+                }
+            }
+
+            DB::commit();
+
+            Log::info('Colis multiples assignés', [
+                'colis_count' => $colis->count(),
+                'zones_count' => $colisByZone->count(),
+                'livreur_id' => $request->livreur_id,
+                'user_id' => Auth::id()
+            ]);
+
+            return redirect()->back()
+                           ->with('success', "{$colis->count()} colis assignés au livreur dans {$colisByZone->count()} zones.");
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Erreur lors de l\'assignation multiple: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Erreur lors de l\'assignation multiple.');
+        }
+    }
+
+    /**
+     * Optimize delivery order for colis in a zone
+     */
+    private function optimizeDeliveryOrder($colis, $zoneId)
+    {
+        $zone = Zone::find($zoneId);
+        if (!$zone) return;
+
+        // Récupérer l'ordre des communes dans la zone
+        $communeOrder = $zone->communes()->orderBy('commune_zone.ordre')->pluck('commune_id')->toArray();
+
+        // Grouper les colis par commune
+        $colisByCommune = $colis->groupBy('commune_id');
+
+        $order = 1;
+
+        // Assigner l'ordre selon l'ordre des communes dans la zone
+        foreach ($communeOrder as $communeId) {
+            if (isset($colisByCommune[$communeId])) {
+                foreach ($colisByCommune[$communeId] as $colisItem) {
+                    $colisItem->update(['ordre_livraison' => $order++]);
+                }
+            }
+        }
+    }
+
+    /**
+     * Get colis available for assignment (en attente)
+     */
+    public function getAvailableColis(Request $request)
+    {
+        try {
+            $colis = Colis::where('status', Colis::STATUS_EN_ATTENTE)
+                         ->whereNull('livreur_id')
+                         ->with(['zone', 'commune'])
+                         ->orderBy('created_at', 'asc')
+                         ->get();
+
+            // Grouper par zone pour faciliter l'affichage
+            $colisByZone = $colis->groupBy('zone_id');
+
+            return response()->json([
+                'colis' => $colis,
+                'colis_by_zone' => $colisByZone,
+                'total_count' => $colis->count()
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Erreur lors de la récupération des colis disponibles: ' . $e->getMessage());
+            return response()->json(['error' => 'Erreur lors de la récupération des colis.'], 500);
+        }
+    }
+
+    /**
+     * Get livreur's current assignments across zones
+     */
+    public function getLivreurAssignments(Livreur $livreur)
+    {
+        try {
+            $colis = Colis::where('livreur_id', $livreur->id)
+                         ->whereIn('status', [Colis::STATUS_EN_COURS, Colis::STATUS_EN_ATTENTE])
+                         ->with(['zone', 'commune'])
+                         ->orderBy('zone_id')
+                         ->orderBy('ordre_livraison')
+                         ->get();
+
+            // Grouper par zone
+            $assignmentsByZone = $colis->groupBy('zone_id');
+
+            // Calculer les statistiques
+            $stats = [
+                'total_colis' => $colis->count(),
+                'zones_count' => $assignmentsByZone->count(),
+                'estimated_duration' => $this->calculateEstimatedDuration($assignmentsByZone),
+                'estimated_distance' => $this->calculateEstimatedDistance($assignmentsByZone)
+            ];
+
+            return response()->json([
+                'assignments' => $assignmentsByZone,
+                'stats' => $stats
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Erreur lors de la récupération des assignations: ' . $e->getMessage());
+            return response()->json(['error' => 'Erreur lors de la récupération des assignations.'], 500);
+        }
+    }
+
+    /**
+     * Calculate estimated duration for multiple zones
+     */
+    private function calculateEstimatedDuration($assignmentsByZone)
+    {
+        $totalDuration = 0;
+
+        foreach ($assignmentsByZone as $zoneId => $colis) {
+            $zone = Zone::find($zoneId);
+            if ($zone && $zone->duree_estimee_minutes) {
+                $totalDuration += $zone->duree_estimee_minutes;
+            }
+        }
+
+        return $totalDuration;
+    }
+
+    /**
+     * Calculate estimated distance for multiple zones
+     */
+    private function calculateEstimatedDistance($assignmentsByZone)
+    {
+        $totalDistance = 0;
+
+        foreach ($assignmentsByZone as $zoneId => $colis) {
+            $zone = Zone::find($zoneId);
+            if ($zone && $zone->distance_km) {
+                $totalDistance += $zone->distance_km;
+            }
+        }
+
+        return $totalDistance;
+    }
+
+    /**
+     * Optimize delivery routes for a livreur
+     */
+    public function optimizeDeliveryRoutes(Livreur $livreur)
+    {
+        try {
+            $colis = Colis::where('livreur_id', $livreur->id)
+                         ->where('status', Colis::STATUS_EN_COURS)
+                         ->with(['zone', 'commune'])
+                         ->get();
+
+            // Grouper par zone
+            $colisByZone = $colis->groupBy('zone_id');
+
+            $optimizedRoutes = [];
+
+            foreach ($colisByZone as $zoneId => $zoneColis) {
+                $zone = Zone::find($zoneId);
+
+                // Trier par ordre des communes dans la zone
+                $sortedColis = $this->sortColisByZoneOrder($zoneColis, $zone);
+
+                $optimizedRoutes[] = [
+                    'zone' => $zone,
+                    'colis' => $sortedColis,
+                    'estimated_duration' => $zone->duree_estimee_minutes,
+                    'estimated_distance' => $zone->distance_km
+                ];
+            }
+
+            return response()->json([
+                'livreur' => $livreur,
+                'routes' => $optimizedRoutes,
+                'total_colis' => $colis->count(),
+                'total_zones' => $colisByZone->count()
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Erreur lors de l\'optimisation des tournées: ' . $e->getMessage());
+            return response()->json(['error' => 'Erreur lors de l\'optimisation des tournées.'], 500);
+        }
+    }
+
+    /**
+     * Sort colis by zone order
+     */
+    private function sortColisByZoneOrder($colis, $zone)
+    {
+        if (!$zone) return $colis;
+
+        $communeOrder = $zone->communes()->orderBy('commune_zone.ordre')->pluck('commune_id')->toArray();
+
+        return $colis->sortBy(function($colis) use ($communeOrder) {
+            $index = array_search($colis->commune_id, $communeOrder);
+            return $index !== false ? $index : 999;
+        });
+    }
+
+    /**
+     * Get colis by livreur and zone
+     */
+    public function getColisByLivreurAndZone(Request $request)
+    {
+        try {
+            $livreurId = $request->get('livreur_id');
+            $zoneId = $request->get('zone_id');
+
+            $query = Colis::with(['zone', 'commune']);
+
+            if ($livreurId) {
+                $query->where('livreur_id', $livreurId);
+            }
+
+            if ($zoneId) {
+                $query->where('zone_id', $zoneId);
+            }
+
+            $colis = $query->orderBy('zone_id')
+                          ->orderBy('ordre_livraison')
+                          ->get();
+
+            // Grouper par zone
+            $colisByZone = $colis->groupBy('zone_id');
+
+            return response()->json([
+                'colis' => $colis,
+                'colis_by_zone' => $colisByZone,
+                'total_count' => $colis->count()
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Erreur lors de la récupération des colis par livreur et zone: ' . $e->getMessage());
+            return response()->json(['error' => 'Erreur lors de la récupération des colis.'], 500);
+        }
+    }
+
+    /**
+     * Bulk update colis status
+     */
+    public function bulkUpdateStatus(Request $request)
+    {
+        try {
+            $request->validate([
+                'colis_ids' => 'required|array|min:1',
+                'colis_ids.*' => 'exists:colis,id',
+                'status' => 'required|integer|in:0,1,2,3,4,5'
+            ]);
+
+            DB::beginTransaction();
+
+            $colis = Colis::whereIn('id', $request->colis_ids)->get();
+
+            foreach ($colis as $colisItem) {
+                $colisItem->update(['status' => $request->status]);
+            }
+
+            DB::commit();
+
+            $statusLabel = match($request->status) {
+                0 => 'En attente',
+                1 => 'En cours',
+                2 => 'Livré',
+                3 => 'Annulé par le client',
+                4 => 'Annulé par le livreur',
+                5 => 'Annulé par le marchand',
+                default => 'Statut inconnu'
+            };
+
+            Log::info('Statut de colis multiples mis à jour', [
+                'colis_count' => $colis->count(),
+                'new_status' => $statusLabel,
+                'user_id' => Auth::id()
+            ]);
+
+            return redirect()->back()
+                           ->with('success', "Statut de {$colis->count()} colis mis à jour: {$statusLabel}");
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Erreur lors de la mise à jour en masse: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Erreur lors de la mise à jour en masse.');
+        }
+    }
+
+    /**
+     * Afficher la liste des packages de colis
+     */
+    public function packages()
+    {
+        try {
+            $data['menu'] = 'colis';
+            $data['packages'] = PackageColis::with(['marchand', 'boutique', 'livreur', 'engin', 'createdBy', 'colis'])
+                ->orderBy('created_at', 'desc')
+                ->paginate(20);
+
+            return view('colis.packages', $data);
+        } catch (\Exception $e) {
+            Log::error('Erreur lors de l\'affichage des packages: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Erreur lors de l\'affichage des packages.');
+        }
+    }
+
+    /**
+     * Afficher les détails d'un package
+     */
+    public function showPackage($id)
+    {
+        try {
+            $data['menu'] = 'colis';
+            $data['package'] = PackageColis::with(['marchand', 'boutique', 'livreur', 'engin', 'createdBy', 'colis.zone', 'colis.commune', 'colis.zone.commune_zones'])
+                ->findOrFail($id);
+
+            return view('colis.package-details', $data);
+        } catch (\Exception $e) {
+            Log::error('Erreur lors de l\'affichage du package: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Package introuvable.');
+        }
+    }
+
+    /**
+     * Créer des colis pour plusieurs boutiques (Workflow par étapes)
+     * Option 1 : Workflow par Étapes + Option 3 : Packages Séparés
+     */
+    public function storeMultiBoutiques(Request $request)
+    {
+        try {
+            $user = Auth::user();
+            if(empty($user)){
+                return redirect()->route('auth.login')
+                    ->withErrors(['error' => 'Veuillez vous connecter pour accéder à cette page.']);
+            }
+
+            // Validation des données multi-boutiques
+            $request->validate([
+                'marchand_id' => 'required|exists:marchands,id',
+                'boutiques' => 'required|array|min:1|max:10',
+                'boutiques.*.boutique_id' => 'required|exists:boutiques,id',
+                'boutiques.*.nombre_colis' => 'required|integer|min:1|max:20',
+                'boutiques.*.livreur_id' => 'nullable|exists:livreurs,id',
+                'boutiques.*.engin_id' => 'nullable|exists:engins,id',
+                'boutiques.*.colis' => 'required|array|min:1',
+                'boutiques.*.colis.*.nom_client' => 'required|string|max:255',
+                'boutiques.*.colis.*.telephone_client' => 'required|string|max:20',
+                'boutiques.*.colis.*.adresse_client' => 'required|string|max:500',
+                'boutiques.*.colis.*.commune_id' => 'required|exists:communes,id',
+                'boutiques.*.colis.*.montant_a_encaisse' => 'nullable|integer|min:0',
+                'boutiques.*.colis.*.prix_de_vente' => 'nullable|integer|min:0',
+                'boutiques.*.colis.*.numero_facture' => 'nullable|string|max:255',
+                'boutiques.*.colis.*.note_client' => 'nullable|string|max:1000',
+                'boutiques.*.colis.*.type_colis_id' => 'nullable|exists:type_colis,id',
+                'boutiques.*.colis.*.conditionnement_colis_id' => 'nullable|exists:conditionnement_colis,id',
+                'boutiques.*.colis.*.poids_id' => 'required|exists:poids,id',
+                'boutiques.*.colis.*.delai_id' => 'nullable|exists:delais,id',
+                'boutiques.*.colis.*.mode_livraison_id' => 'required|exists:mode_livraisons,id',
+                'boutiques.*.colis.*.temp_id' => 'required|exists:temps,id'
+            ]);
+
+            DB::beginTransaction();
+
+            $createdPackages = [];
+            $totalColisCreated = 0;
+
+            // Récupérer l'entreprise de l'utilisateur
+            $entreprise = \App\Models\Entreprise::getEntrepriseByUser($user->id);
+            if (!$entreprise) {
+                DB::rollBack();
+                return redirect()->back()
+                    ->with('error', 'Aucune entreprise trouvée pour cet utilisateur. Veuillez créer une entreprise d\'abord.')
+                    ->withInput();
+            }
+
+            // Traiter chaque boutique séparément (Option 3 : Packages Séparés)
+            foreach ($request->boutiques as $boutiqueIndex => $boutiqueData) {
+
+                // Récupérer les communes uniques utilisées dans les colis de cette boutique
+                $communesUsed = collect($boutiqueData['colis'])->pluck('commune_id')->unique()->filter()->toArray();
+
+                if (empty($communesUsed)) {
+                    DB::rollBack();
+                    return redirect()->back()
+                        ->with('error', "Veuillez sélectionner au moins une commune pour la boutique " . ($boutiqueIndex + 1))
+                        ->withInput();
+                }
+
+                // 1. Créer un package séparé pour chaque boutique
+                $packageColis = PackageColis::create([
+                    'numero_package' => PackageColis::generatePackageNumber(),
+                    'marchand_id' => $request->marchand_id,
+                    'boutique_id' => $boutiqueData['boutique_id'],
+                    'nombre_colis' => $boutiqueData['nombre_colis'],
+                    'communes_selected' => implode(',', $communesUsed),
+                    'colis_ids' => [], // Sera mis à jour après création des colis
+                    'livreur_id' => $boutiqueData['livreur_id'],
+                    'engin_id' => $boutiqueData['engin_id'],
+                    'statut' => 'en_attente',
+                    'created_by' => $user->id
+                ]);
+
+                $createdColis = [];
+                $createdLivraisons = [];
+                $createdZones = [];
+                $colisIndex = 0;
+
+                // 2. Traiter chaque colis de cette boutique
+                foreach ($boutiqueData['colis'] as $index => $colisData) {
+                    // Utiliser directement la commune sélectionnée pour ce colis
+                    $communeId = $colisData['commune_id'];
+
+                    if (!$communeId) {
+                        DB::rollBack();
+                        return redirect()->back()
+                            ->with('error', "Erreur de répartition pour le colis " . ($index + 1) . " de la boutique " . ($boutiqueIndex + 1))
+                            ->withInput();
+                    }
+
+                    $colisIndex++;
+
+                    // Récupérer les informations de la commune
+                    $commune = Commune::find($communeId);
+                    if (!$commune) {
+                        DB::rollBack();
+                        return redirect()->back()
+                            ->with('error', "Commune introuvable pour le colis " . ($index + 1) . " de la boutique " . ($boutiqueIndex + 1))
+                            ->withInput();
+                    }
+
+                    // Créer ou récupérer la zone de livraison pour cette commune
+                    $zone = Zone::firstOrCreate(
+                        ['nom' => $commune->libelle],
+                        [
+                            'nom' => $commune->libelle,
+                            'actif' => true,
+                            'created_by' => $user->id
+                        ]
+                    );
+
+                    if (!in_array($zone->id, $createdZones)) {
+                        $createdZones[] = $zone->id;
+                    }
+
+                    // Récupérer l'adresse de la boutique pour l'adresse de ramassage
+                    $boutique = Boutique::find($boutiqueData['boutique_id']);
+                    $adresseRamassage = $boutique ? $boutique->adresse : '';
+
+                    // Générer le numéro de ramassage automatiquement
+                    $numeroRamassage = 'RAM-' . str_pad(DB::table('commune_zone')->count() + 1, 6, '0', STR_PAD_LEFT);
+
+                    // Créer l'entrée dans commune_zone
+                    $communeZone = \DB::table('commune_zone')->insertGetId([
+                        'zone_id' => $zone->id,
+                        'commune_id' => null, // Nullable comme demandé
+                        'ordre' => $colisIndex,
+                        'nom_client' => $colisData['nom_client'],
+                        'telephone_client' => $colisData['telephone_client'],
+                        'adresse_client' => $colisData['adresse_client'],
+                        'marchand_id' => $request->marchand_id,
+                        'boutique_id' => $boutiqueData['boutique_id'],
+                        'montant_a_encaisse' => $colisData['montant_a_encaisse'] ?? null,
+                        'prix_de_vente' => $colisData['prix_de_vente'] ?? null,
+                        'numero_facture' => $colisData['numero_facture'] ?? null,
+                        'type_colis_id' => $colisData['type_colis_id'] ?? null,
+                        'conditionnement_colis_id' => $colisData['conditionnement_colis_id'] ?? null,
+                        'poids_id' => $colisData['poids_id'] ?? null,
+                        'delai_id' => $colisData['delai_id'] ?? null,
+                        'mode_livraison_id' => $colisData['mode_livraison_id'] ?? null,
+                        'numero_de_ramassage' => $numeroRamassage,
+                        'adresse_de_ramassage' => $adresseRamassage,
+                        'created_at' => now(),
+                        'updated_at' => now()
+                    ]);
+
+                    // Créer le colis avec référence au package de cette boutique
+                    $colis = Colis::create([
+                        'entreprise_id' => $entreprise->id,
+                        'uuid' => \Str::uuid(),
+                        'code' => $this->generateColisCode($zone->id, $communeId),
+                        'nom_client' => $colisData['nom_client'],
+                        'telephone_client' => $colisData['telephone_client'],
+                        'adresse_client' => $colisData['adresse_client'],
+                        'montant_a_encaisse' => $colisData['montant_a_encaisse'] ?? 0,
+                        'prix_de_vente' => $colisData['prix_de_vente'] ?? 0,
+                        'numero_facture' => $colisData['numero_facture'] ?? '',
+                        'note_client' => $colisData['note_client'] ?? '',
+                        'status' => 0, // En attente
+                        'zone_id' => $zone->id,
+                        'commune_id' => $communeId,
+                        'package_colis_id' => $packageColis->id, // Référence au package de cette boutique
+                        'livreur_id' => $boutiqueData['livreur_id'],
+                        'engin_id' => $boutiqueData['engin_id'],
+                        'poids_id' => $colisData['poids_id'] ?? null,
+                        'mode_livraison_id' => $colisData['mode_livraison_id'] ?? null,
+                        'temp_id' => $colisData['temp_id'] ?? null,
+                        'created_by' => $user->id
+                    ]);
+
+                    $createdColis[] = $colis;
+                    $totalColisCreated++;
+
+                    // Créer la livraison si un livreur est assigné
+                    if ($boutiqueData['livreur_id']) {
+                        $livraison = \DB::table('livraisons')->insertGetId([
+                            'uuid' => \Str::uuid(),
+                            'numero_de_livraison' => $this->generateLivraisonNumber(),
+                            'colis_id' => $colis->id,
+                            'adresse_de_livraison' => $colisData['adresse_client'],
+                            'status' => 0, // En attente
+                            'note_livraison' => $colisData['note_client'] ?? '',
+                            'code_validation' => $this->generateValidationCode(),
+                            'created_by' => $user->id,
+                            'created_at' => now(),
+                            'updated_at' => now()
+                        ]);
+
+                        $createdLivraisons[] = $livraison;
+                    }
+                }
+
+                // 3. Mettre à jour le package avec les IDs des colis créés pour cette boutique
+                $colisIds = array_map(function($colis) {
+                    return $colis->id;
+                }, $createdColis);
+
+                $packageColis->update([
+                    'colis_ids' => $colisIds
+                ]);
+
+                $createdPackages[] = [
+                    'package' => $packageColis,
+                    'colis_count' => count($createdColis),
+                    'livraisons_count' => count($createdLivraisons),
+                    'zones_count' => count($createdZones)
+                ];
+            }
+
+            DB::commit();
+
+            // Log de l'opération réussie
+            Log::info('Packages multi-boutiques créés avec succès', [
+                'marchand_id' => $request->marchand_id,
+                'packages_count' => count($createdPackages),
+                'total_colis' => $totalColisCreated,
+                'user_id' => $user->id
+            ]);
+
+            // Construire le message de succès
+            $message = count($createdPackages) . ' packages créés avec succès pour ' . count($request->boutiques) . ' boutique(s) : ';
+            $message .= $totalColisCreated . ' colis au total';
+
+            return redirect()->route('colis.packages')->with('success', $message);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            DB::rollBack();
+            return redirect()->back()
+                           ->withErrors($e->validator)
+                           ->withInput();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Erreur lors de la création multi-boutiques: ' . $e->getMessage());
+            return redirect()->back()
+                           ->with('error', 'Erreur lors de la création des colis multi-boutiques.')
+                           ->withInput();
+        }
+    }
+
+}
