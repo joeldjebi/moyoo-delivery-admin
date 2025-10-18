@@ -73,7 +73,7 @@ class ReversementController extends Controller
         // Si aucune balance n'existe, créer des entrées pour tous les marchands
         if ($balances->isEmpty()) {
             $this->initializeBalancesForEntreprise($user->entreprise_id);
-            
+
             // Récupérer les balances nouvellement créées
             $balances = $query->get();
         }
@@ -323,7 +323,7 @@ class ReversementController extends Controller
                     ->where('marchand_id', $marchand->id)
                     ->where('boutique_id', $boutique->id)
                     ->first();
-                    
+
                 if (!$existingBalance) {
                     BalanceMarchand::create([
                         'entreprise_id' => $entrepriseId,
