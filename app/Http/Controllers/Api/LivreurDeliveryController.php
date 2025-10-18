@@ -1091,49 +1091,64 @@ class LivreurDeliveryController extends Controller
         try {
             // Récupérer les informations depuis la table livraisons
             $livraison = \App\Models\Livraison::where('colis_id', $colis->id)->first();
-
+            \Log::info('Livraison trouvée pour le colis', [
+                'livraison' => $livraison
+            ]);
             if (!$livraison) {
                 \Log::warning('Aucune livraison trouvée pour le colis', [
                     'colis_id' => $colis->id
                 ]);
                 return;
             }
+            \Log::info('Livraison trouvée pour le colis', [
+                'livraison_id' => $livraison->id,
+                'colis_id' => $colis->id
+            ]);
 
-            // Vérifier si l'entrée existe déjà
-            $existingBalance = BalanceMarchand::where('entreprise_id', $livraison->entreprise_id)
-                ->where('marchand_id', $livraison->marchand_id)
-                ->where('boutique_id', $livraison->boutique_id)
-                ->first();
-
-            if (!$existingBalance) {
-                // Créer l'entrée avec les données par défaut
-                BalanceMarchand::create([
+            // Récupérer ou créer la balance du marchand
+            $balance = BalanceMarchand::firstOrCreate(
+                [
                     'entreprise_id' => $livraison->entreprise_id,
+                    'marchand_id' => $livraison->marchand_id,
+                    'boutique_id' => $livraison->boutique_id
+                ],
+                [
+                    'montant_encaisse' => 0,
+                    'montant_reverse' => 0,
+                    'balance_actuelle' => 0,
+                    'derniere_mise_a_jour' => now()
+                ]
+            );
+
+            // Ajouter le montant encaissé du colis
+            $montantEncaisse = $colis->montant_a_encaisse ?? 0;
+
+            if ($montantEncaisse > 0) {
+                $balance->addEncaissement($montantEncaisse, $colis->id);
+
+                \Log::info('Balance marchand mise à jour après livraison', [
+                    'colis_id' => $colis->id,
+                    'livraison_id' => $livraison->id,
                     'marchand_id' => $livraison->marchand_id,
                     'boutique_id' => $livraison->boutique_id,
-                    'montant_encaisse' => 0.00,
-                    'montant_reverse' => 0.00,
-                    'balance_actuelle' => 0.00,
-                    'derniere_mise_a_jour' => now()
-                ]);
-
-                \Log::info('Entrée balance_marchands créée automatiquement', [
-                    'colis_id' => $colis->id,
-                    'livraison_id' => $livraison->id,
-                    'entreprise_id' => $livraison->entreprise_id,
-                    'marchand_id' => $livraison->marchand_id,
-                    'boutique_id' => $livraison->boutique_id
+                    'montant_encaisse' => $montantEncaisse,
+                    'nouvelle_balance' => $balance->balance_actuelle
                 ]);
             } else {
-                \Log::info('Entrée balance_marchands existe déjà', [
+                \Log::warning('Montant à encaisser nul ou vide', [
+                    'colis_id' => $colis->id,
+                    'montant_a_encaisse' => $colis->montant_a_encaisse
+                ]);
+            }
+
+            \Log::info('Entrée balance_marchands mise à jour', [
                     'colis_id' => $colis->id,
                     'livraison_id' => $livraison->id,
-                    'balance_id' => $existingBalance->id,
+                    'balance_id' => $balance->id,
                     'entreprise_id' => $livraison->entreprise_id,
                     'marchand_id' => $livraison->marchand_id,
                     'boutique_id' => $livraison->boutique_id
                 ]);
-            }
 
         } catch (\Exception $e) {
             \Log::error('Erreur lors de la vérification/création de balance_marchands', [

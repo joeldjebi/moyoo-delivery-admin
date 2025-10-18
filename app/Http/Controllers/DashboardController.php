@@ -678,7 +678,7 @@ class DashboardController extends Controller
      */
     private function getColisEnCours($entrepriseId, $perPage = 10)
     {
-        // Récupérer les colis en cours de livraison depuis historique_livraisons
+        // Récupérer les 10 derniers colis en cours de livraison depuis historique_livraisons
         $colisEnCours = Historique_livraison::where('entreprise_id', $entrepriseId)
                                           ->where('status', 'en_attente')
                                           ->with([
@@ -687,7 +687,8 @@ class DashboardController extends Controller
                                               'livreur'
                                           ])
                                           ->orderBy('created_at', 'desc')
-                                          ->paginate($perPage);
+                                          ->limit(10)
+                                          ->get();
 
         return $colisEnCours;
     }

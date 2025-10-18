@@ -274,7 +274,7 @@ class ReversementController extends Controller
         return view('reversements.balances', $data);
     }
 
-    public function historique($marchandId = null)
+    public function historique(Request $request)
     {
         $data['title'] = 'Historique des Balances';
         $data['menu'] = 'historique_balances';
@@ -283,10 +283,28 @@ class ReversementController extends Controller
 
         $query = \App\Models\HistoriqueBalance::with(['balanceMarchand.marchand', 'balanceMarchand.boutique', 'createdBy']);
 
-        if ($marchandId) {
-            $query->whereHas('balanceMarchand', function($q) use ($marchandId) {
-                $q->where('marchand_id', $marchandId);
+        // Filtre par marchand
+        if ($request->filled('marchand_id')) {
+            $query->whereHas('balanceMarchand', function($q) use ($request) {
+                $q->where('marchand_id', $request->marchand_id);
             });
+        }
+
+        // Filtre par type d'opération
+        if ($request->filled('type')) {
+            $query->where('type_operation', $request->type);
+        }
+
+        // Filtre par date
+        if ($request->filled('date_debut') && $request->filled('date_fin')) {
+            $query->whereBetween('created_at', [
+                \Carbon\Carbon::parse($request->date_debut)->startOfDay(),
+                \Carbon\Carbon::parse($request->date_fin)->endOfDay()
+            ]);
+        } elseif ($request->filled('date_debut')) {
+            $query->whereDate('created_at', '>=', $request->date_debut);
+        } elseif ($request->filled('date_fin')) {
+            $query->whereDate('created_at', '<=', $request->date_fin);
         }
 
         if ($user->user_type !== 'super_admin') {
@@ -295,14 +313,14 @@ class ReversementController extends Controller
             });
         }
 
-        $data['historique'] = $query->orderBy('created_at', 'desc')->paginate(20);
+        $data['historique'] = $query->orderBy('created_at', 'desc')->paginate(20)->appends($request->query());
 
         // Données pour les filtres
         $data['marchands'] = Marchand::where('entreprise_id', $user->entreprise_id)
             ->orderBy('first_name')
             ->get();
 
-        $data['selected_marchand_id'] = $marchandId;
+        $data['selected_marchand_id'] = $request->marchand_id;
 
         return view('reversements.historique', $data);
     }

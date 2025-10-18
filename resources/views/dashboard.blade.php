@@ -828,11 +828,11 @@
         <!-- On route vehicles Table -->
         <div class="col-12 order-5 mt-4">
             <div class="card">
-            <div class="card-header d-flex align-items-center justify-content-between">
+            <div class="card-header d-flex align-items-center justify-content-between" >
                 <div class="card-title mb-0">
                 <h5 class="m-0 me-2">Les colis en cours de livraison</h5>
                 </div>
-                <div class="d-flex align-items-center gap-2">
+                <div class="d-flex align-items-center gap-2" >
                     <!-- Sélecteur du nombre d'éléments par page -->
                     <div class="d-flex align-items-center">
                         <label for="perPageSelect" class="form-label mb-0 me-2 text-muted small">Afficher:</label>
@@ -842,7 +842,8 @@
                             <option value="25" {{ request('per_page', 5) == 25 ? 'selected' : '' }}>25</option>
                             <option value="50" {{ request('per_page', 5) == 50 ? 'selected' : '' }}>50</option>
                         </select>
-                </div>
+                    </div>
+
                 <div class="dropdown">
                 <button
                     class="btn btn-text-secondary rounded-pill text-muted border-0 p-2 me-n1"
@@ -877,7 +878,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @if($recentActivities['colis_en_cours_data']->count() > 0)
+                    @if(count($recentActivities['colis_en_cours_data']) > 0)
                         @foreach($recentActivities['colis_en_cours_data'] as $livraison)
                             <tr>
                                 <td>

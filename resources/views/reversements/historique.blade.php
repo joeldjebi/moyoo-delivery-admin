@@ -119,7 +119,7 @@
                                                 </div>
                                             </div>
                                         </td>
-                                        <td>{{ $mouvement->balanceMarchand->boutique->nom }}</td>
+                                        <td>{{ $mouvement->balanceMarchand->boutique->libelle }}</td>
                                         <td>
                                             <span class="badge bg-label-{{ $mouvement->type_color }}">
                                                 {{ $mouvement->type_label }}
