@@ -705,6 +705,9 @@ class LivreurDeliveryController extends Controller
                 $historique->refresh();
             }
 
+            // Vérifier et créer l'entrée dans balance_marchands si nécessaire
+            $this->ensureBalanceMarchandExists($colis);
+
             DB::commit();
 
             // Envoyer une notification au marchand
@@ -1075,6 +1078,55 @@ class LivreurDeliveryController extends Controller
                 'error' => 'Erreur HTTP: ' . $httpCode,
                 'response' => $responseData
             ];
+        }
+    }
+
+    /**
+     * Vérifier et créer l'entrée dans balance_marchands si nécessaire
+     */
+    private function ensureBalanceMarchandExists($colis)
+    {
+        try {
+            // Vérifier si l'entrée existe déjà
+            $existingBalance = \App\Models\BalanceMarchand::where('entreprise_id', $colis->entreprise_id)
+                ->where('marchand_id', $colis->marchand_id)
+                ->where('boutique_id', $colis->boutique_id)
+                ->first();
+
+            if (!$existingBalance) {
+                // Créer l'entrée avec les données par défaut
+                \App\Models\BalanceMarchand::create([
+                    'entreprise_id' => $colis->entreprise_id,
+                    'marchand_id' => $colis->marchand_id,
+                    'boutique_id' => $colis->boutique_id,
+                    'montant_encaisse' => 0.00,
+                    'montant_reverse' => 0.00,
+                    'balance_actuelle' => 0.00,
+                    'derniere_mise_a_jour' => now()
+                ]);
+
+                \Log::info('Entrée balance_marchands créée automatiquement', [
+                    'colis_id' => $colis->id,
+                    'entreprise_id' => $colis->entreprise_id,
+                    'marchand_id' => $colis->marchand_id,
+                    'boutique_id' => $colis->boutique_id
+                ]);
+            } else {
+                \Log::info('Entrée balance_marchands existe déjà', [
+                    'colis_id' => $colis->id,
+                    'balance_id' => $existingBalance->id,
+                    'entreprise_id' => $colis->entreprise_id,
+                    'marchand_id' => $colis->marchand_id,
+                    'boutique_id' => $colis->boutique_id
+                ]);
+            }
+
+        } catch (\Exception $e) {
+            \Log::error('Erreur lors de la vérification/création de balance_marchands', [
+                'colis_id' => $colis->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
         }
     }
 }
