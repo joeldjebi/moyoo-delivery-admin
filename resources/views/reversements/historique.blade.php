@@ -146,9 +146,28 @@
                         </table>
                     </div>
 
+                    <!-- Informations de pagination -->
+                    <div class="d-flex justify-content-between align-items-center mt-4">
+                        <div class="text-muted">
+                            <small>
+                                Affichage de {{ $historique->firstItem() ?? 0 }} à {{ $historique->lastItem() ?? 0 }} 
+                                sur {{ $historique->total() }} entrées
+                            </small>
+                        </div>
+                        <div>
+                            <small class="text-muted me-3">Éléments par page:</small>
+                            <select class="form-select form-select-sm d-inline-block w-auto" onchange="changePerPage(this.value)">
+                                <option value="10" {{ request('per_page') == 10 ? 'selected' : '' }}>10</option>
+                                <option value="20" {{ request('per_page') == 20 || !request('per_page') ? 'selected' : '' }}>20</option>
+                                <option value="50" {{ request('per_page') == 50 ? 'selected' : '' }}>50</option>
+                                <option value="100" {{ request('per_page') == 100 ? 'selected' : '' }}>100</option>
+                            </select>
+                        </div>
+                    </div>
+
                     <!-- Pagination -->
-                    <div class="d-flex justify-content-center mt-4">
-                        {{ $historique->appends(request()->query())->links() }}
+                    <div class="d-flex justify-content-center mt-3">
+                        {{ $historique->appends(request()->query())->links('pagination::bootstrap-4') }}
                     </div>
                 @else
                     <div class="text-center py-5">
@@ -165,3 +184,12 @@
 </div>
 
 @include('layouts.footer')
+
+<script>
+function changePerPage(perPage) {
+    const url = new URL(window.location);
+    url.searchParams.set('per_page', perPage);
+    url.searchParams.delete('page'); // Reset to first page
+    window.location.href = url.toString();
+}
+</script>

@@ -313,7 +313,8 @@ class ReversementController extends Controller
             });
         }
 
-        $data['historique'] = $query->orderBy('created_at', 'desc')->paginate(20)->appends($request->query());
+        $perPage = $request->get('per_page', 20);
+        $data['historique'] = $query->orderBy('created_at', 'desc')->paginate($perPage)->appends($request->query());
 
         // Données pour les filtres
         $data['marchands'] = Marchand::where('entreprise_id', $user->entreprise_id)
