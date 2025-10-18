@@ -330,9 +330,12 @@
                                         <br>
                                         <small class="text-info">
                                             <i class="ti ti-clock me-1"></i>
-                                            En attente depuis {{ $colis->created_at->diffForHumans() }}
-                                            @if($colis->created_at->diffInDays() > 0)
-                                                ({{ $colis->created_at->diffInDays() }} jour{{ $colis->created_at->diffInDays() > 1 ? 's' : '' }})
+                                            En attente depuis {{ $colis->created_at->diffForHumans(null, true, false, 2) }}
+                                            @php
+                                                $daysDiff = floor($colis->created_at->diffInDays());
+                                            @endphp
+                                            @if($daysDiff > 0)
+                                                ({{ $daysDiff }} jour{{ $daysDiff > 1 ? 's' : '' }})
                                             @endif
                                         </small>
                                     </div>
@@ -407,7 +410,7 @@
                                         <br>
                                         <small class="text-muted">
                                             <i class="ti ti-clock me-1"></i>
-                                            {{ $boutique->created_at->diffForHumans() }}
+                                            {{ $boutique->created_at->diffForHumans(null, true, false, 2) }}
                                         </small>
                                     </div>
                                     <div class="text-end">
@@ -725,7 +728,7 @@
                                                     @if($ramassage->statut === 'demande')
                                                         <small class="text-warning">
                                                             <i class="ti ti-clock me-1"></i>
-                                                            En attente depuis {{ \Carbon\Carbon::parse($ramassage->created_at)->diffForHumans() }}
+                                                            En attente depuis {{ \Carbon\Carbon::parse($ramassage->created_at)->diffForHumans(null, true, false, 2) }}
                                                         </small>
                                                     @elseif($ramassage->statut === 'planifie')
                                                         <small class="text-info">
@@ -735,7 +738,7 @@
                                                     @elseif($ramassage->statut === 'en_cours')
                                                         <small class="text-primary">
                                                             <i class="ti ti-truck me-1"></i>
-                                                            En cours depuis {{ \Carbon\Carbon::parse($ramassage->updated_at)->diffForHumans() }}
+                                                            En cours depuis {{ \Carbon\Carbon::parse($ramassage->updated_at)->diffForHumans(null, true, false, 2) }}
                                                         </small>
                                                     @elseif($ramassage->statut === 'annule')
                                                         <small class="text-danger">
