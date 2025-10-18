@@ -430,17 +430,20 @@ class Colis extends Model
      */
     public function getNomClientAttribute()
     {
-        return $this->getZoneAttributeValue('nom_client');
+        // Retourner la valeur de la table colis si elle existe, sinon chercher dans commune_zone
+        return $this->attributes['nom_client'] ?? $this->getZoneAttributeValue('nom_client');
     }
 
     public function getTelephoneClientAttribute()
     {
-        return $this->getZoneAttributeValue('telephone_client');
+        // Retourner la valeur de la table colis si elle existe, sinon chercher dans commune_zone
+        return $this->attributes['telephone_client'] ?? $this->getZoneAttributeValue('telephone_client');
     }
 
     public function getAdresseClientAttribute()
     {
-        return $this->getZoneAttributeValue('adresse_client');
+        // Retourner la valeur de la table colis si elle existe, sinon chercher dans commune_zone
+        return $this->attributes['adresse_client'] ?? $this->getZoneAttributeValue('adresse_client');
     }
 
     public function getMarchandIdAttribute()

@@ -138,6 +138,7 @@ class ColisController extends Controller
 
             // Récupérer les données nécessaires filtrées par entreprise
             $data['marchands'] = Marchand::where('entreprise_id', $entrepriseId)->orderBy('first_name')->get();
+            $data['boutiques'] = Boutique::where('entreprise_id', $entrepriseId)->orderBy('libelle')->get();
             $data['zones'] = Zone::where('actif', true)->where('entreprise_id', $entrepriseId)->orderBy('nom')->get();
             $data['livreurs'] = Livreur::where('status', 'actif')
                 ->where('entreprise_id', $entrepriseId)
