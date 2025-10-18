@@ -150,7 +150,7 @@
                     <div class="d-flex justify-content-between align-items-center mt-4">
                         <div class="text-muted">
                             <small>
-                                Affichage de {{ $historique->firstItem() ?? 0 }} à {{ $historique->lastItem() ?? 0 }} 
+                                Affichage de {{ $historique->firstItem() ?? 0 }} à {{ $historique->lastItem() ?? 0 }}
                                 sur {{ $historique->total() }} entrées
                             </small>
                         </div>
