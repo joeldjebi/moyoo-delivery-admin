@@ -39,63 +39,105 @@
             </div>
             <div class="card-body">
                 @if($subscriptions->count() > 0)
-                    <div class="row">
-                        @foreach($subscriptions as $subscription)
-                            <div class="col-md-6 col-lg-4 mb-4">
-                                <div class="card h-100 border {{ $subscription->status == 'active' ? 'border-success' : 'border-secondary' }}">
-                                    <div class="card-header d-flex justify-content-between align-items-center">
-                                        <h6 class="mb-0">{{ $subscription->plan_name }}</h6>
-                                        <span class="badge {{ $subscription->status == 'active' ? 'bg-success' : ($subscription->status == 'cancelled' ? 'bg-danger' : 'bg-secondary') }}">
-                                            {{ $subscription->status_label }}
-                                        </span>
-                                    </div>
-                                    <div class="card-body">
-                                        <div class="text-center mb-3">
-                                            <h3 class="text-primary mb-0">{{ $subscription->formatted_price }}</h3>
-                                            <small class="text-muted">par mois</small>
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <small class="text-muted d-block">Période d'abonnement :</small>
-                                            <div class="d-flex justify-content-between">
-                                                <span>{{ $subscription->start_date->format('d/m/Y') }}</span>
-                                                <span>{{ $subscription->end_date->format('d/m/Y') }}</span>
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Plan</th>
+                                    <th>Prix</th>
+                                    <th>Statut</th>
+                                    <th>Début</th>
+                                    <th>Fin</th>
+                                    <th>Fonctionnalités</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($subscriptions as $subscription)
+                                    <tr>
+                                        <td>
+                                            <span class="fw-semibold">#{{ $subscription->id }}</span>
+                                        </td>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="avatar avatar-sm me-2">
+                                                    <span class="avatar-initial rounded bg-label-primary">
+                                                        <i class="ti ti-crown"></i>
+                                                    </span>
+                                                </div>
+                                                <div>
+                                                    <h6 class="mb-0">{{ $subscription->plan_name }}</h6>
+                                                    @if($subscription->notes)
+                                                        <small class="text-muted">{{ $subscription->notes }}</small>
+                                                    @endif
+                                                </div>
                                             </div>
-                                        </div>
-
-                                        @if($subscription->features && count($subscription->features) > 0)
-                                            <div class="mb-3">
-                                                <small class="text-muted d-block mb-2">Fonctionnalités incluses :</small>
-                                                <ul class="list-unstyled mb-0">
+                                        </td>
+                                        <td>
+                                            <div class="text-center">
+                                                <h6 class="mb-0 text-primary">{{ $subscription->formatted_price }}</h6>
+                                                <small class="text-muted">par mois</small>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="badge {{ $subscription->status == 'active' ? 'bg-success' : ($subscription->status == 'cancelled' ? 'bg-danger' : 'bg-secondary') }}">
+                                                {{ $subscription->status_label }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div>
+                                                <span class="fw-semibold">{{ $subscription->start_date->format('d/m/Y') }}</span>
+                                                <br>
+                                                <small class="text-muted">{{ $subscription->start_date->format('H:i') }}</small>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div>
+                                                <span class="fw-semibold">{{ $subscription->end_date->format('d/m/Y') }}</span>
+                                                <br>
+                                                <small class="text-muted">{{ $subscription->end_date->format('H:i') }}</small>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            @if($subscription->features && count($subscription->features) > 0)
+                                                <div class="d-flex flex-wrap gap-1">
                                                     @foreach($subscription->features as $feature)
-                                                        <li class="mb-1">
-                                                            <i class="ti ti-check text-success me-2"></i>
-                                                            <small>{{ $feature }}</small>
-                                                        </li>
+                                                        <span class="badge bg-label-info">{{ $feature }}</span>
                                                     @endforeach
-                                                </ul>
+                                                </div>
+                                            @else
+                                                <span class="text-muted">-</span>
+                                            @endif
+                                        </td>
+                                        <td>
+                                            <div class="dropdown">
+                                                <button type="button" class="btn p-0 dropdown-toggle hide-arrow" data-bs-toggle="dropdown">
+                                                    <i class="ti ti-dots-vertical"></i>
+                                                </button>
+                                                <div class="dropdown-menu">
+                                                    <a class="dropdown-item" href="#">
+                                                        <i class="ti ti-download me-1"></i>
+                                                        Télécharger Facture
+                                                    </a>
+                                                    <a class="dropdown-item" href="#">
+                                                        <i class="ti ti-eye me-1"></i>
+                                                        Voir Détails
+                                                    </a>
+                                                    @if($subscription->status == 'active')
+                                                        <div class="dropdown-divider"></div>
+                                                        <a class="dropdown-item text-danger" href="#">
+                                                            <i class="ti ti-x me-1"></i>
+                                                            Annuler
+                                                        </a>
+                                                    @endif
+                                                </div>
                                             </div>
-                                        @endif
-
-                                        @if($subscription->notes)
-                                            <div class="mb-3">
-                                                <small class="text-muted d-block mb-1">Notes :</small>
-                                                <small class="text-info">{{ $subscription->notes }}</small>
-                                            </div>
-                                        @endif
-                                    </div>
-                                    <div class="card-footer">
-                                        <div class="d-flex justify-content-between align-items-center">
-                                            <small class="text-muted">ID: #{{ $subscription->id }}</small>
-                                            <button class="btn btn-sm btn-outline-primary">
-                                                <i class="ti ti-download me-1"></i>
-                                                Facture
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        @endforeach
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
                     </div>
                 @else
                     <div class="text-center py-5">
@@ -117,47 +159,5 @@
     </div>
 </div>
 
-<!-- Statistiques des abonnements -->
-<div class="row mt-4">
-    <div class="col-md-4">
-        <div class="card">
-            <div class="card-body text-center">
-                <div class="avatar avatar-lg mx-auto mb-3">
-                    <span class="avatar-initial rounded bg-label-primary">
-                        <i class="ti ti-calendar ti-lg"></i>
-                    </span>
-                </div>
-                <h4 class="mb-1">{{ $subscriptions->count() }}</h4>
-                <p class="text-muted mb-0">Abonnements Totaux</p>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4">
-        <div class="card">
-            <div class="card-body text-center">
-                <div class="avatar avatar-lg mx-auto mb-3">
-                    <span class="avatar-initial rounded bg-label-success">
-                        <i class="ti ti-check-circle ti-lg"></i>
-                    </span>
-                </div>
-                <h4 class="mb-1">{{ $subscriptions->where('status', 'active')->count() }}</h4>
-                <p class="text-muted mb-0">Abonnements Actifs</p>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4">
-        <div class="card">
-            <div class="card-body text-center">
-                <div class="avatar avatar-lg mx-auto mb-3">
-                    <span class="avatar-initial rounded bg-label-warning">
-                        <i class="ti ti-currency-euro ti-lg"></i>
-                    </span>
-                </div>
-                <h4 class="mb-1">{{ number_format($subscriptions->sum('price'), 2) }}€</h4>
-                <p class="text-muted mb-0">Total Dépensé</p>
-            </div>
-        </div>
-    </div>
-</div>
 
 @include('layouts.footer')

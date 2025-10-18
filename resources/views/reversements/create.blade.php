@@ -51,16 +51,26 @@
                             <label class="form-label">Marchand <span class="text-danger">*</span></label>
                             <select name="marchand_id" id="marchand_id" class="form-select" required>
                                 <option value="">Sélectionner un marchand</option>
-                                @foreach($balances as $balance)
-                                    <option value="{{ $balance->marchand_id }}"
-                                            data-boutique-id="{{ $balance->boutique_id }}"
-                                            data-balance="{{ $balance->balance_actuelle }}"
-                                            {{ (isset($selected_marchand_id) && $selected_marchand_id == $balance->marchand_id) ? 'selected' : '' }}>
-                                        {{ $balance->marchand->first_name }} {{ $balance->marchand->last_name }} - {{ $balance->boutique->libelle }}
-                                        ({{ number_format($balance->balance_actuelle) }} FCFA)
-                                    </option>
-                                @endforeach
+                                @if($balances->count() > 0)
+                                    @foreach($balances as $balance)
+                                        <option value="{{ $balance->marchand_id }}"
+                                                data-boutique-id="{{ $balance->boutique_id }}"
+                                                data-balance="{{ $balance->balance_actuelle }}"
+                                                {{ (isset($selected_marchand_id) && $selected_marchand_id == $balance->marchand_id) ? 'selected' : '' }}>
+                                            {{ $balance->marchand->first_name }} {{ $balance->marchand->last_name }} - {{ $balance->boutique->libelle }}
+                                            ({{ number_format($balance->balance_actuelle) }} FCFA)
+                                        </option>
+                                    @endforeach
+                                @else
+                                    <option value="" disabled>Aucun marchand trouvé</option>
+                                @endif
                             </select>
+                            @if($balances->count() == 0)
+                                <div class="form-text text-warning">
+                                    <i class="ti ti-alert-triangle me-1"></i>
+                                    Aucun marchand trouvé. Veuillez d'abord créer des marchands et des boutiques.
+                                </div>
+                            @endif
                         </div>
 
                         <div class="col-md-6">

@@ -62,14 +62,23 @@ class ReversementController extends Controller
         $user = Auth::user();
 
         // Récupérer les marchands avec leur balance
-        $query = BalanceMarchand::with(['marchand', 'boutique'])
-            ->where('balance_actuelle', '>', 0);
+        $query = BalanceMarchand::with(['marchand', 'boutique']);
 
         if ($user->user_type !== 'super_admin') {
             $query->where('entreprise_id', $user->entreprise_id);
         }
 
-        $data['balances'] = $query->get();
+        $balances = $query->get();
+
+        // Si aucune balance n'existe, créer des entrées pour tous les marchands
+        if ($balances->isEmpty()) {
+            $this->initializeBalancesForEntreprise($user->entreprise_id);
+            
+            // Récupérer les balances nouvellement créées
+            $balances = $query->get();
+        }
+
+        $data['balances'] = $balances;
 
         // Si des paramètres sont passés (depuis le dashboard)
         if (request('marchand_id') && request('boutique_id')) {
@@ -296,5 +305,46 @@ class ReversementController extends Controller
         $data['selected_marchand_id'] = $marchandId;
 
         return view('reversements.historique', $data);
+    }
+
+    /**
+     * Initialiser les balances pour une entreprise
+     */
+    private function initializeBalancesForEntreprise($entrepriseId)
+    {
+        $marchands = Marchand::where('entreprise_id', $entrepriseId)->get();
+        $boutiques = Boutique::where('entreprise_id', $entrepriseId)->get();
+
+        $created = 0;
+        foreach ($marchands as $marchand) {
+            foreach ($boutiques as $boutique) {
+                // Vérifier si la balance existe déjà
+                $existingBalance = BalanceMarchand::where('entreprise_id', $entrepriseId)
+                    ->where('marchand_id', $marchand->id)
+                    ->where('boutique_id', $boutique->id)
+                    ->first();
+                    
+                if (!$existingBalance) {
+                    BalanceMarchand::create([
+                        'entreprise_id' => $entrepriseId,
+                        'marchand_id' => $marchand->id,
+                        'boutique_id' => $boutique->id,
+                        'balance_actuelle' => 0,
+                        'montant_encaisse' => 0,
+                        'montant_reverse' => 0
+                    ]);
+                    $created++;
+                }
+            }
+        }
+
+        Log::info('Balances initialisées pour entreprise', [
+            'entreprise_id' => $entrepriseId,
+            'marchands_count' => $marchands->count(),
+            'boutiques_count' => $boutiques->count(),
+            'balances_created' => $created
+        ]);
+
+        return $created;
     }
 }
