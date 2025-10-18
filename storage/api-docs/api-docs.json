@@ -15,11 +15,11 @@
     },
     "servers": [
         {
-            "url": "http://192.168.1.9:8000",
+            "url": "http://192.168.1.5:8000",
             "description": "Serveur de développement"
         },
         {
-            "url": "http://192.168.1.9:8000"
+            "url": "http://192.168.1.5:8000"
         }
     ],
     "paths": {
@@ -1304,7 +1304,7 @@
                                                 },
                                                 "photo": {
                                                     "type": "string",
-                                                    "example": "http://192.168.1.9:8000/storage/livreurs/photo.jpg"
+                                                    "example": "http://192.168.1.5:8000/storage/livreurs/photo.jpg"
                                                 }
                                             },
                                             "type": "object"
@@ -1695,7 +1695,7 @@
                                                             },
                                                             "code_validation": {
                                                                 "type": "string",
-                                                                "example": "ABC123"
+                                                                "example": "12345"
                                                             }
                                                         },
                                                         "type": "object"
@@ -2066,7 +2066,7 @@
                                                         },
                                                         "code_validation": {
                                                             "type": "string",
-                                                            "example": "ABC123"
+                                                            "example": "12345"
                                                         }
                                                     },
                                                     "type": "object"
@@ -2196,7 +2196,31 @@
                                         },
                                         "message": {
                                             "type": "string",
-                                            "example": "Ce colis n'est pas disponible pour la livraison"
+                                            "example": "Vous avez déjà une livraison en cours. Terminez-la avant d'en démarrer une nouvelle."
+                                        },
+                                        "active_deliveries": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "code": {
+                                                        "type": "string",
+                                                        "example": "CLIS-000001"
+                                                    },
+                                                    "client": {
+                                                        "type": "string",
+                                                        "example": "John Doe"
+                                                    },
+                                                    "adresse": {
+                                                        "type": "string",
+                                                        "example": "Cocody, Deux Plateaux"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
                                         }
                                     },
                                     "type": "object"
@@ -2239,9 +2263,9 @@
                             "schema": {
                                 "properties": {
                                     "code_validation": {
-                                        "description": "Code de validation du colis",
+                                        "description": "Code de validation du colis (5 chiffres)",
                                         "type": "string",
-                                        "example": "ABC123"
+                                        "example": "12345"
                                     },
                                     "photo_proof": {
                                         "description": "Photo de preuve de livraison",
@@ -2312,7 +2336,7 @@
                                                 },
                                                 "photo_proof_url": {
                                                     "type": "string",
-                                                    "example": "http://192.168.1.9:8000/storage/livraisons/proofs/colis_1_1760357729.jpg"
+                                                    "example": "http://192.168.1.5:8000/storage/livraisons/proofs/colis_1_1760357729.jpg"
                                                 }
                                             },
                                             "type": "object"
@@ -2548,6 +2572,480 @@
                         "bearerAuth": []
                     }
                 ]
+            }
+        },
+        "/api/livreur/check-phone": {
+            "post": {
+                "tags": [
+                    "Livreur OTP"
+                ],
+                "summary": "Vérifier l'existence du numéro de téléphone du livreur",
+                "description": "Vérifie si le numéro de téléphone existe et envoie un code OTP par WhatsApp",
+                "operationId": "c687dc7033a062676e12caf60765f3b3",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "mobile"
+                                ],
+                                "properties": {
+                                    "mobile": {
+                                        "description": "Numéro de téléphone du livreur avec indicatif",
+                                        "type": "string",
+                                        "example": "2250712345678"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Code OTP envoyé avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Code OTP envoyé avec succès"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "mobile": {
+                                                    "type": "string",
+                                                    "example": "2250712345678"
+                                                },
+                                                "expires_at": {
+                                                    "type": "string",
+                                                    "format": "datetime",
+                                                    "example": "2025-10-18T16:20:00.000000Z"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Livreur non trouvé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Aucun livreur trouvé avec ce numéro de téléphone"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Erreur de validation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Les données fournies ne sont pas valides"
+                                        },
+                                        "errors": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/livreur/verify-otp": {
+            "post": {
+                "tags": [
+                    "Livreur OTP"
+                ],
+                "summary": "Vérifier le code OTP",
+                "description": "Vérifie le code OTP de 4 chiffres envoyé au livreur",
+                "operationId": "787e0ec390d1568ffddda9053d3be177",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "mobile",
+                                    "otp_code"
+                                ],
+                                "properties": {
+                                    "mobile": {
+                                        "description": "Numéro de téléphone du livreur",
+                                        "type": "string",
+                                        "example": "2250712345678"
+                                    },
+                                    "otp_code": {
+                                        "description": "Code OTP de 4 chiffres",
+                                        "type": "string",
+                                        "example": "1234"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Code OTP vérifié avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Code OTP vérifié avec succès"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "mobile": {
+                                                    "type": "string",
+                                                    "example": "2250712345678"
+                                                },
+                                                "verified_at": {
+                                                    "type": "string",
+                                                    "format": "datetime",
+                                                    "example": "2025-10-18T16:15:00.000000Z"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Code OTP invalide ou expiré",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Code OTP invalide ou expiré"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Erreur de validation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Les données fournies ne sont pas valides"
+                                        },
+                                        "errors": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/livreur/update-password": {
+            "post": {
+                "tags": [
+                    "Livreur OTP"
+                ],
+                "summary": "Mettre à jour le mot de passe du livreur",
+                "description": "Met à jour le mot de passe du livreur après vérification OTP",
+                "operationId": "115720b966da0f69392c12551ba81904",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "mobile",
+                                    "new_password",
+                                    "new_password_confirmation"
+                                ],
+                                "properties": {
+                                    "mobile": {
+                                        "description": "Numéro de téléphone du livreur",
+                                        "type": "string",
+                                        "example": "2250712345678"
+                                    },
+                                    "new_password": {
+                                        "description": "Nouveau mot de passe",
+                                        "type": "string",
+                                        "example": "nouveauMotDePasse123"
+                                    },
+                                    "new_password_confirmation": {
+                                        "description": "Confirmation du nouveau mot de passe",
+                                        "type": "string",
+                                        "example": "nouveauMotDePasse123"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Mot de passe mis à jour avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Mot de passe mis à jour avec succès"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "mobile": {
+                                                    "type": "string",
+                                                    "example": "2250712345678"
+                                                },
+                                                "updated_at": {
+                                                    "type": "string",
+                                                    "format": "datetime",
+                                                    "example": "2025-10-18T16:20:00.000000Z"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Code OTP non vérifié",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Veuillez d'abord vérifier votre code OTP"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Livreur non trouvé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Livreur non trouvé"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Erreur de validation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Les données fournies ne sont pas valides"
+                                        },
+                                        "errors": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/livreur/resend-otp": {
+            "post": {
+                "tags": [
+                    "Livreur OTP"
+                ],
+                "summary": "Renvoyer le code OTP",
+                "description": "Renvoye un nouveau code OTP au livreur",
+                "operationId": "7759322772dfff26ba31a6e1badf8408",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "mobile"
+                                ],
+                                "properties": {
+                                    "mobile": {
+                                        "description": "Numéro de téléphone du livreur",
+                                        "type": "string",
+                                        "example": "2250712345678"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Code OTP renvoyé avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Code OTP renvoyé avec succès"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "mobile": {
+                                                    "type": "string",
+                                                    "example": "2250712345678"
+                                                },
+                                                "expires_at": {
+                                                    "type": "string",
+                                                    "format": "datetime",
+                                                    "example": "2025-10-18T16:25:00.000000Z"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Livreur non trouvé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Aucun livreur trouvé avec ce numéro de téléphone"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Erreur de validation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Les données fournies ne sont pas valides"
+                                        },
+                                        "errors": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
             }
         },
         "/api/livreur/ramassages": {
@@ -2974,7 +3472,7 @@
                         }
                     },
                     "400": {
-                        "description": "Ramassage non disponible",
+                        "description": "Erreur de validation",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -2985,7 +3483,31 @@
                                         },
                                         "message": {
                                             "type": "string",
-                                            "example": "Ce ramassage n'est pas disponible pour le démarrage"
+                                            "example": "Vous avez déjà un ramassage en cours. Terminez-le avant d'en démarrer un nouveau."
+                                        },
+                                        "active_pickups": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "code": {
+                                                        "type": "string",
+                                                        "example": "RAMS-ABC123"
+                                                    },
+                                                    "marchand": {
+                                                        "type": "string",
+                                                        "example": "John Doe"
+                                                    },
+                                                    "boutique": {
+                                                        "type": "string",
+                                                        "example": "Boutique Central"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
                                         }
                                     },
                                     "type": "object"
@@ -3104,7 +3626,7 @@
                                                             },
                                                             "url": {
                                                                 "type": "string",
-                                                                "example": "http://192.168.1.9:8000/storage/ramassages/photos/colis_1_1760355000_1.jpg"
+                                                                "example": "http://192.168.1.5:8000/storage/ramassages/photos/colis_1_1760355000_1.jpg"
                                                             },
                                                             "path": {
                                                                 "type": "string",
@@ -3248,6 +3770,179 @@
                 ]
             }
         },
+        "/api/livreur/ramassages/{id}/cancel": {
+            "post": {
+                "tags": [
+                    "Ramassage Livreur"
+                ],
+                "summary": "Annuler un ramassage",
+                "description": "Permet au livreur d'annuler un ramassage avec une raison",
+                "operationId": "4bff19be45b71fb2ef8316f8039d380a",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID du ramassage à annuler",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "raison"
+                                ],
+                                "properties": {
+                                    "raison": {
+                                        "description": "Raison de l'annulation",
+                                        "type": "string",
+                                        "example": "Problème technique avec le véhicule"
+                                    },
+                                    "commentaire": {
+                                        "description": "Commentaire supplémentaire (optionnel)",
+                                        "type": "string",
+                                        "example": "Véhicule en panne, impossible de se déplacer"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Ramassage annulé avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Ramassage annulé avec succès"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "statut": {
+                                                    "type": "string",
+                                                    "example": "annule"
+                                                },
+                                                "raison_annulation": {
+                                                    "type": "string",
+                                                    "example": "Problème technique avec le véhicule"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Ramassage non trouvé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Ramassage non trouvé"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Non autorisé à annuler ce ramassage",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Vous n'êtes pas autorisé à annuler ce ramassage"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Ramassage déjà terminé ou annulé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Ce ramassage ne peut pas être annulé"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Erreur de validation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Les données fournies ne sont pas valides"
+                                        },
+                                        "errors": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/test": {
             "get": {
                 "tags": [
@@ -3307,6 +4002,10 @@
         {
             "name": "Authentification Livreur",
             "description": "Endpoints d'authentification pour les livreurs"
+        },
+        {
+            "name": "Livreur OTP",
+            "description": "APIs pour la gestion des codes OTP des livreurs"
         },
         {
             "name": "Ramassage Livreur",

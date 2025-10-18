@@ -340,63 +340,6 @@
                             </div>
                         @endif
 
-                        <!-- Adresse de Ramassage -->
-                        @if($ramassage->planifications->count() > 0 && $colisDataArray && is_array($colisDataArray) && count($colisDataArray) > 0)
-                            <div class="col-12 mb-4">
-                                <div class="card">
-                                    <div class="card-header">
-                                        <h6 class="card-title mb-0">Adresse de Ramassage</h6>
-                                        <small class="text-muted">Colis à ramasser à l'adresse de la boutique</small>
-                                    </div>
-                                    <div class="card-body">
-                                        @php
-                                            $planification = $ramassage->planifications->first();
-                                        @endphp
-                                        @if($planification)
-                                            <div class="mb-4">
-                                                <div class="d-flex align-items-center mb-3">
-                                                    <h6 class="mb-0">
-                                                        <i class="ti ti-map-pin me-2"></i>{{ $planification->zone_ramassage ?? 'Adresse inconnue' }}
-                                                    </h6>
-                                                    <small class="text-muted ms-2">({{ count($colisDataArray) }} colis)</small>
-                                                </div>
-                                                <div class="table-responsive">
-                                                    <table class="table table-sm table-striped">
-                                                        <thead>
-                                                            <tr>
-                                                                <th>#</th>
-                                                                <th>Client</th>
-                                                                <th>Téléphone</th>
-                                                                <th>Adresse</th>
-                                                                <th>Type</th>
-                                                                <th>Valeur</th>
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody>
-                                                            @foreach($colisDataArray as $index => $colisData)
-                                                                <tr>
-                                                                    <td><span class="fw-semibold">{{ $index + 1 }}</span></td>
-                                                                    <td>{{ $colisData['client'] ?? 'N/A' }}</td>
-                                                                    <td>{{ $colisData['telephone_client'] ?? 'N/A' }}</td>
-                                                                    <td>{{ $colisData['adresse_client'] ?? 'N/A' }}</td>
-                                                                    <td>
-                                                                        @php
-                                                                            $type = $types->get($colisData['type_colis_id'] ?? null);
-                                                                        @endphp
-                                                                        {{ $type->libelle ?? 'N/A' }}
-                                                                    </td>
-                                                                    <td>{{ number_format($colisData['valeur'] ?? 0, 0, ',', ' ') }} FCFA</td>
-                                                                </tr>
-                                                            @endforeach
-                                                        </tbody>
-                                                    </table>
-                                                </div>
-                                            </div>
-                                        @endif
-                                    </div>
-                                </div>
-                            </div>
-                        @endif
 
                         <!-- Gestion des Colis -->
                         <div class="col-12 mb-4">

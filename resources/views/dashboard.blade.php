@@ -133,6 +133,7 @@
                     <p class="mb-1">Total des colis</p>
                     <p class="mb-0">
                             <span class="text-heading fw-medium me-2">Tous les temps</span>
+                            <small class="text-muted d-block">Hier: {{ $stats['hier'] }} colis</small>
                     </p>
                 </div>
                 </div>
@@ -152,6 +153,7 @@
                     <p class="mb-1">Colis livrés</p>
                     <p class="mb-0">
                             <span class="text-heading fw-medium me-2">Livrés</span>
+                            <small class="text-muted d-block">Hier: {{ $stats['livres_hier'] ?? 0 }} livrés</small>
                     </p>
                 </div>
                 </div>
@@ -171,6 +173,7 @@
                         <p class="mb-1">En cours</p>
                         <p class="mb-0">
                             <span class="text-heading fw-medium me-2">En transit</span>
+                            <small class="text-muted d-block">Hier: {{ $stats['en_cours_hier'] ?? 0 }} en cours</small>
                         </p>
                     </div>
                 </div>
@@ -190,10 +193,12 @@
                         <p class="mb-1">En attente</p>
                     <p class="mb-0">
                             <span class="text-heading fw-medium me-2">En attente</span>
+                            <small class="text-muted d-block">Hier: {{ $stats['en_attente_hier'] ?? 0 }} en attente</small>
                     </p>
                 </div>
                 </div>
             </div>
+
         </div>
 
         <!-- Statistiques des Livreurs et Marchands -->
@@ -212,6 +217,7 @@
                         <p class="mb-1">Total livreurs</p>
                     <p class="mb-0">
                             <span class="text-heading fw-medium me-2">{{ $livreurStats['actifs'] }} actifs</span>
+                            <small class="text-muted d-block">Hier: {{ $livreurStats['hier'] }} ajoutés</small>
                     </p>
                 </div>
                 </div>
@@ -231,6 +237,7 @@
                         <p class="mb-1">Total marchands</p>
                         <p class="mb-0">
                             <span class="text-heading fw-medium me-2">{{ $marchandStats['actifs'] }} actifs</span>
+                            <small class="text-muted d-block">Hier: {{ $marchandStats['hier'] }} ajoutés</small>
                         </p>
                     </div>
                 </div>
@@ -282,13 +289,19 @@
                     <div class="card-header d-flex align-items-center justify-content-between">
                         <div class="card-title mb-0">
                             <h5 class="m-0 me-2">Colis en attente de livraison</h5>
+                            <small class="text-muted">Colis prêts à être assignés à un livreur</small>
                         </div>
                         <div class="dropdown">
                             <button class="btn btn-text-secondary rounded-pill text-muted border-0 p-2 me-n1" type="button" data-bs-toggle="dropdown">
                                 <i class="ti ti-dots-vertical ti-md text-muted"></i>
                             </button>
                             <div class="dropdown-menu dropdown-menu-end">
-                                <a class="dropdown-item" href="{{ route('colis.index') }}">Voir tous</a>
+                                <a class="dropdown-item" href="{{ route('colis.index', ['status' => 'en_attente']) }}">
+                                    <i class="ti ti-clock me-2"></i>Voir tous les colis en attente
+                                </a>
+                                <a class="dropdown-item" href="{{ route('colis.create') }}">
+                                    <i class="ti ti-plus me-2"></i>Créer un nouveau colis
+                                </a>
                             </div>
                         </div>
                     </div>
@@ -312,21 +325,45 @@
                                             @endif
                                         </h6>
                                         <small class="text-muted">
-                                            {{ $colis->nom_client ?? 'N/A' }} - {{ $colis->telephone_client ?? 'N/A' }} -
-                                            {{ $colis->created_at->diffForHumans() }}
+                                            {{ $colis->nom_client ?? 'N/A' }} - {{ $colis->telephone_client ?? 'N/A' }}
+                                        </small>
+                                        <br>
+                                        <small class="text-info">
+                                            <i class="ti ti-clock me-1"></i>
+                                            En attente depuis {{ $colis->created_at->diffForHumans() }}
+                                            @if($colis->created_at->diffInDays() > 0)
+                                                ({{ $colis->created_at->diffInDays() }} jour{{ $colis->created_at->diffInDays() > 1 ? 's' : '' }})
+                                            @endif
                                         </small>
                                     </div>
                                     <div class="text-end">
-                                        <span class="badge bg-{{ $colis->status == 1 ? 'success' : 'warning' }}">
-                                            {{ $colis->status == 1 ? 'Livré' : 'En attente' }}
-                                        </span>
+                                        @php
+                                            $statusConfig = match($colis->status) {
+                                                \App\Models\Colis::STATUS_EN_ATTENTE => ['label' => 'En attente', 'class' => 'bg-label-warning'],
+                                                \App\Models\Colis::STATUS_EN_COURS => ['label' => 'En cours', 'class' => 'bg-label-primary'],
+                                                \App\Models\Colis::STATUS_LIVRE => ['label' => 'Livré', 'class' => 'bg-label-success'],
+                                                \App\Models\Colis::STATUS_ANNULE_CLIENT => ['label' => 'Annulé client', 'class' => 'bg-label-danger'],
+                                                \App\Models\Colis::STATUS_ANNULE_LIVREUR => ['label' => 'Annulé livreur', 'class' => 'bg-label-danger'],
+                                                \App\Models\Colis::STATUS_ANNULE_MARCHAND => ['label' => 'Annulé marchand', 'class' => 'bg-label-danger'],
+                                                default => ['label' => 'Inconnu', 'class' => 'bg-label-secondary']
+                                            };
+                                        @endphp
+                                        <div class="d-flex flex-column align-items-end gap-1">
+                                            <span class="badge {{ $statusConfig['class'] }}">{{ $statusConfig['label'] }}</span>
+                                            @if($colis->status == \App\Models\Colis::STATUS_EN_ATTENTE)
+                                                <a href="{{ route('colis.show', $colis) }}" class="btn btn-sm btn-outline-primary">
+                                                    <i class="ti ti-user-plus me-1"></i>Assigner
+                                                </a>
+                                            @endif
+                                        </div>
                                     </div>
                                 </div>
                             @endforeach
                         @else
                             <div class="text-center py-4">
                                 <i class="ti ti-package ti-48px text-muted mb-2"></i>
-                                <p class="text-muted">Aucun colis récent</p>
+                                <p class="text-muted">Aucun colis en attente de livraison</p>
+                                <small class="text-muted">Tous les colis ont été assignés ou sont en cours de traitement</small>
                             </div>
                         @endif
                     </div>
@@ -414,7 +451,7 @@
                         </div>
                         <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
                         <div class="me-2">
-                            <h6 class="mb-0 fw-normal">Colis en transit</h6>
+                            <h6 class="mb-0 fw-normal">Colis en cours de livraison</h6>
                             <small class="text-{{ $recentActivities['performance_data']['packages_in_transit']['variation_type'] ?? 'secondary' }} fw-normal d-block">
                             <i class="ti ti-chevron-{{ ($recentActivities['performance_data']['packages_in_transit']['variation'] ?? 0) >= 0 ? 'up' : 'down' }} mb-1 me-1"></i>
                             {{ abs($recentActivities['performance_data']['packages_in_transit']['variation'] ?? 0) }}%
@@ -579,26 +616,26 @@
             <div class="card">
                 <div class="card-header d-flex align-items-center justify-content-between">
                     <div class="card-title mb-0">
-                        <h5 class="m-0 me-2">Ramassages Récents</h5>
+                        <h5 class="m-0 me-2">Ramassages en cours</h5>
+                        <small class="text-muted">Ramassages en attente, planifiés, en cours et annulés</small>
                         </div>
                     <div class="d-flex align-items-center gap-2">
                         <!-- Sélecteur du nombre d'éléments par page -->
-                        <div class="d-flex align-items-center">
-                            <label for="perPageRamassagesSelect" class="form-label mb-0 me-2 text-muted small">Afficher:</label>
-                            <select id="perPageRamassagesSelect" class="form-select form-select-sm" style="width: auto;" onchange="changePerPageRamassages(this.value)">
-                                <option value="5" {{ request('per_page_ramassages', 5) == 5 ? 'selected' : '' }}>5</option>
-                                <option value="10" {{ request('per_page_ramassages', 5) == 10 ? 'selected' : '' }}>10</option>
-                                <option value="25" {{ request('per_page_ramassages', 5) == 25 ? 'selected' : '' }}>25</option>
-                                <option value="50" {{ request('per_page_ramassages', 5) == 50 ? 'selected' : '' }}>50</option>
-                            </select>
-                            </div>
+                        <!-- Sélecteur de pagination supprimé - méthode traditionnelle utilisée -->
                         <div class="dropdown">
                             <button class="btn btn-text-secondary rounded-pill text-muted border-0 p-2 me-n1" type="button" id="ramassagesDropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                 <i class="ti ti-dots-vertical"></i>
                             </button>
                             <div class="dropdown-menu dropdown-menu-end" aria-labelledby="ramassagesDropdown">
-                                <a class="dropdown-item" href="{{ route('ramassages.index') }}">Voir tous les ramassages</a>
-                                <a class="dropdown-item" href="{{ route('ramassages.create') }}">Nouveau ramassage</a>
+                                <a class="dropdown-item" href="{{ route('ramassages.index', ['statut' => 'en_cours']) }}">
+                                    <i class="ti ti-clock me-2"></i>Voir tous les ramassages en cours
+                                </a>
+                                <a class="dropdown-item" href="{{ route('ramassages.index', ['statut' => 'demande']) }}">
+                                    <i class="ti ti-alert-circle me-2"></i>Ramassages en attente
+                                </a>
+                                <a class="dropdown-item" href="{{ route('ramassages.create') }}">
+                                    <i class="ti ti-plus me-2"></i>Nouveau ramassage
+                                </a>
                         </div>
                             </div>
                         </div>
@@ -618,22 +655,145 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <!-- Le contenu sera chargé via AJAX -->
+                                @if(isset($ramassages) && $ramassages->count() > 0)
+                                    @foreach($ramassages as $ramassage)
+                                        <tr>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <div class="avatar avatar-sm me-2">
+                                                        <span class="avatar-initial rounded bg-label-primary">
+                                                            <i class="ti ti-package"></i>
+                                                        </span>
+                                                    </div>
+                                                    <div>
+                                                        <h6 class="mb-0">{{ $ramassage->code_ramassage }}</h6>
+                                                        <small class="text-muted">ID: {{ $ramassage->id }}</small>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <div class="avatar avatar-sm me-2">
+                                                        <span class="avatar-initial rounded bg-label-info">
+                                                            <i class="ti ti-user"></i>
+                                                        </span>
+                                                    </div>
+                                                    <div>
+                                                        <h6 class="mb-0">{{ $ramassage->marchand->first_name ?? 'N/A' }} {{ $ramassage->marchand->last_name ?? '' }}</h6>
+                                                        <small class="text-muted">{{ $ramassage->marchand->mobile ?? 'N/A' }}</small>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <div class="avatar avatar-sm me-2">
+                                                        <span class="avatar-initial rounded bg-label-warning">
+                                                            <i class="ti ti-building-store"></i>
+                                                        </span>
+                                                    </div>
+                                                    <div>
+                                                        <h6 class="mb-0">{{ $ramassage->boutique->libelle ?? 'N/A' }}</h6>
+                                                        <small class="text-muted">{{ $ramassage->boutique->mobile ?? 'N/A' }}</small>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div>
+                                                    <h6 class="mb-0">{{ \Carbon\Carbon::parse($ramassage->date_demande)->format('d/m/Y') }}</h6>
+                                                    <small class="text-muted">{{ \Carbon\Carbon::parse($ramassage->date_demande)->format('H:i') }}</small>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                @php
+                                                    $statutLabels = [
+                                                        'demande' => ['label' => 'Demande', 'class' => 'bg-label-warning'],
+                                                        'planifie' => ['label' => 'Planifié', 'class' => 'bg-label-info'],
+                                                        'en_cours' => ['label' => 'En cours', 'class' => 'bg-label-primary'],
+                                                        'termine' => ['label' => 'Terminé', 'class' => 'bg-label-success'],
+                                                        'annule' => ['label' => 'Annulé', 'class' => 'bg-label-danger']
+                                                    ];
+                                                    $statut = $statutLabels[$ramassage->statut] ?? ['label' => $ramassage->statut, 'class' => 'bg-label-secondary'];
+                                                @endphp
+                                                <span class="badge {{ $statut['class'] }}">{{ $statut['label'] }}</span>
+                                            </td>
+                                            <td>
+                                                <div class="d-flex flex-column">
+                                                    <div class="d-flex align-items-center mb-1">
+                                                        <span class="badge bg-label-primary me-1">{{ $ramassage->nombre_colis_reel ?? 0 }}</span>
+                                                        <small class="text-muted">colis</small>
+                                                    </div>
+                                                    @if($ramassage->statut === 'demande')
+                                                        <small class="text-warning">
+                                                            <i class="ti ti-clock me-1"></i>
+                                                            En attente depuis {{ \Carbon\Carbon::parse($ramassage->created_at)->diffForHumans() }}
+                                                        </small>
+                                                    @elseif($ramassage->statut === 'planifie')
+                                                        <small class="text-info">
+                                                            <i class="ti ti-calendar me-1"></i>
+                                                            Planifié pour {{ \Carbon\Carbon::parse($ramassage->date_planifiee ?? $ramassage->created_at)->format('d/m/Y') }}
+                                                        </small>
+                                                    @elseif($ramassage->statut === 'en_cours')
+                                                        <small class="text-primary">
+                                                            <i class="ti ti-truck me-1"></i>
+                                                            En cours depuis {{ \Carbon\Carbon::parse($ramassage->updated_at)->diffForHumans() }}
+                                                        </small>
+                                                    @elseif($ramassage->statut === 'annule')
+                                                        <small class="text-danger">
+                                                            <i class="ti ti-x me-1"></i>
+                                                            Annulé le {{ \Carbon\Carbon::parse($ramassage->updated_at)->format('d/m/Y H:i') }}
+                                                        </small>
+                                                    @endif
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="dropdown">
+                                                    <button type="button" class="btn p-0 dropdown-toggle hide-arrow" data-bs-toggle="dropdown">
+                                                        <i class="ti ti-dots-vertical"></i>
+                                                    </button>
+                                                    <div class="dropdown-menu">
+                                                        <a class="dropdown-item" href="{{ route('ramassages.show', $ramassage->id) }}">
+                                                            <i class="ti ti-eye me-1"></i> Voir
+                                                        </a>
+                                                        @if($ramassage->statut === 'demande')
+                                                            <a class="dropdown-item" href="{{ route('ramassages.planifier', $ramassage->id) }}">
+                                                                <i class="ti ti-calendar me-1"></i> Planifier
+                                                            </a>
+                                                        @elseif($ramassage->statut === 'planifie')
+                                                            <a class="dropdown-item" href="{{ route('ramassages.show', $ramassage->id) }}">
+                                                                <i class="ti ti-play me-1"></i> Démarrer
+                                                            </a>
+                                                        @elseif($ramassage->statut === 'en_cours')
+                                                            <a class="dropdown-item" href="{{ route('ramassages.show', $ramassage->id) }}">
+                                                                <i class="ti ti-check me-1"></i> Finaliser
+                                                            </a>
+                                                        @elseif($ramassage->statut === 'annule')
+                                                            <a class="dropdown-item" href="{{ route('ramassages.show', $ramassage->id) }}">
+                                                                <i class="ti ti-refresh me-1"></i> Réactiver
+                                                            </a>
+                                                        @endif
+                                                    </div>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                @else
+                                    <tr>
+                                        <td colspan="7" class="text-center py-4">
+                                            <i class="ti ti-package-off ti-48px text-muted mb-2"></i>
+                                            <p class="text-muted">Aucun ramassage en cours</p>
+                                            <small class="text-muted">Tous les ramassages sont terminés</small>
+                                            <br><br>
+                                            <a href="{{ route('ramassages.create') }}" class="btn btn-primary">
+                                                <i class="ti ti-plus me-1"></i>
+                                                Créer un ramassage
+                                            </a>
+                                        </td>
+                                    </tr>
+                                @endif
                             </tbody>
                         </table>
                 </div>
-
-                    <!-- Pagination pour les ramassages -->
-                    <div id="pagination-ramassages-container" class="d-flex justify-content-between align-items-center mt-3 px-3 pb-3 border-top" style="display: none !important;">
-                        <div class="text-muted small">
-                            <i class="ti ti-info-circle me-1"></i>
-                            <span id="pagination-ramassages-info">Affichage de 1 à 5 sur 10 résultats</span>
                 </div>
-                        <div class="pagination-custom" id="pagination-ramassages-links">
-                            <!-- Les liens de pagination seront générés par JavaScript -->
-            </div>
-            </div>
-        </div>
             </div>
         </div>
         <!--/ Ramassages Section -->
@@ -1102,20 +1262,19 @@ function initializeChart() {
 
 // Initialiser les graphiques quand le DOM est prêt
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚀 Dashboard JavaScript chargé');
     initializeChart();
     initializeExceptionsChart();
 
     // Initialiser la pagination AJAX si elle n'est pas déjà chargée
-    if (document.querySelector('#colis-en-cours-table tbody tr').length === 0 ||
-        document.querySelector('#colis-en-cours-table tbody tr').textContent.includes('Chargement')) {
+    const colisTableRow = document.querySelector('#colis-en-cours-table tbody tr');
+    if (!colisTableRow || colisTableRow.textContent.includes('Chargement')) {
         // Charger les données initiales via AJAX
         loadColisEnCours({{ request('page', 1) }});
     }
 
-    if (document.getElementById('ramassages-table')) {
-        // Charger les données initiales des ramassages via AJAX
-        loadRamassages({{ request('page_ramassages', 1) }});
-    }
+    // Les ramassages sont maintenant chargés directement via Blade
+    console.log('📋 Ramassages chargés via méthode traditionnelle');
 });
 
 // Variables globales pour la pagination AJAX
@@ -1123,10 +1282,7 @@ let currentPage = 1;
 let currentPerPage = {{ request('per_page', 5) }};
 let isLoading = false;
 
-// Variables globales pour la pagination des ramassages
-let currentPageRamassages = 1;
-let currentPerPageRamassages = {{ request('per_page_ramassages', 5) }};
-let isLoadingRamassages = false;
+// Variables globales pour la pagination des ramassages (supprimées - méthode traditionnelle utilisée)
 
 // Fonction pour changer le nombre d'éléments par page
 function changePerPage(perPage) {
@@ -1413,59 +1569,19 @@ function showError(message) {
 
 // ===== FONCTIONS POUR LA PAGINATION DES RAMASSAGES =====
 
-// Fonction pour changer le nombre d'éléments par page pour les ramassages
-function changePerPageRamassages(perPage) {
-    currentPerPageRamassages = perPage;
-    currentPageRamassages = 1; // Reset à la première page
-    loadRamassages();
-}
+// Fonction pour changer le nombre d'éléments par page pour les ramassages (supprimée - méthode traditionnelle utilisée)
 
-// Fonction pour charger les ramassages via AJAX
-function loadRamassages(page = 1) {
-    if (isLoadingRamassages) return;
-
-    isLoadingRamassages = true;
-    currentPageRamassages = page;
-
-    // Afficher un indicateur de chargement
-    showLoadingIndicatorRamassages();
-
-    const url = new URL('/api/dashboard/ramassages', window.location.origin);
-    url.searchParams.set('per_page', currentPerPageRamassages);
-    url.searchParams.set('page', currentPageRamassages);
-
-    fetch(url, {
-        method: 'GET',
-        headers: {
-            'X-Requested-With': 'XMLHttpRequest',
-            'Accept': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            updateRamassagesTable(data.data.items);
-            updateRamassagesPagination(data.data.pagination);
-        } else {
-            showErrorRamassages('Erreur lors du chargement des données');
-        }
-    })
-    .catch(error => {
-        console.error('Erreur:', error);
-        showErrorRamassages('Erreur lors du chargement des données');
-    })
-    .finally(() => {
-        isLoadingRamassages = false;
-        hideLoadingIndicatorRamassages();
-    });
-}
+// Fonction pour charger les ramassages via AJAX (supprimée - méthode traditionnelle utilisée)
 
 // Fonction pour mettre à jour le tableau des ramassages
 function updateRamassagesTable(items) {
+    console.log('🔄 Mise à jour du tableau des ramassages avec', items.length, 'éléments');
+    console.log('📋 Données des ramassages:', items);
+
     const tbody = document.querySelector('#ramassages-table tbody');
 
     if (items.length === 0) {
+        console.log('⚠️ Aucun ramassage à afficher');
         tbody.innerHTML = `
             <tr>
                 <td colspan="7" class="text-center py-4">
@@ -1512,6 +1628,7 @@ function updateRamassagesTable(items) {
     });
 
     tbody.innerHTML = html;
+    console.log('✅ Tableau des ramassages mis à jour avec', items.length, 'lignes');
 }
 
 // Fonction pour mettre à jour la pagination des ramassages

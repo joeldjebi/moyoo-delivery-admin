@@ -34,7 +34,11 @@ class Ramassage extends Model
         'notes_livreur',
         'notes_ramassage',
         'colis_data',
-        'montant_total'
+        'montant_total',
+        'raison_annulation',
+        'commentaire_annulation',
+        'date_annulation',
+        'annule_par'
     ];
 
     protected $casts = [
@@ -43,6 +47,7 @@ class Ramassage extends Model
         'date_effectuee' => 'date',
         'date_debut_ramassage' => 'datetime',
         'date_fin_ramassage' => 'datetime',
+        'date_annulation' => 'datetime',
         'colis_data' => 'array',
         'montant_total' => 'decimal:2'
     ];
@@ -66,6 +71,11 @@ class Ramassage extends Model
     public function livreur()
     {
         return $this->belongsTo(Livreur::class);
+    }
+
+    public function livreurAnnuleur()
+    {
+        return $this->belongsTo(Livreur::class, 'annule_par');
     }
 
     // Colis liés via la table pivot (liaison simple)

@@ -213,12 +213,12 @@ const colis = await getColisDetails(id);
 ### **Test de la Route :**
 ```bash
 # Connexion du livreur
-curl -X POST http://192.168.1.9:8000/api/livreur/login \
+curl -X POST http://192.168.1.5:8000/api/livreur/login \
   -H "Content-Type: application/json" \
   -d '{"mobile": "0123456789", "password": "password"}'
 
 # Récupération des détails du colis
-curl -X GET http://192.168.1.9:8000/api/livreur/colis/1/details \
+curl -X GET http://192.168.1.5:8000/api/livreur/colis/1/details \
   -H "Authorization: Bearer YOUR_JWT_TOKEN" \
   -H "Accept: application/json"
 ```

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Boutique;
+use App\Models\Colis;
 use App\Models\Marchand;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -78,16 +79,32 @@ class BoutiqueController extends Controller
     {
         // Vérifier l'authentification
         if (!Auth::check()) {
+            Log::warning('Tentative de création de boutique sans authentification', [
+                'ip' => $request->ip(),
+                'user_agent' => $request->userAgent()
+            ]);
             return redirect()->route('auth.login')->with('error', 'Veuillez vous connecter pour accéder à cette page.');
         }
 
         $user = Auth::user();
 
+        Log::info('Début de création de boutique', [
+            'user_id' => $user->id,
+            'entreprise_id' => $user->entreprise_id,
+            'ip' => $request->ip(),
+            'request_data' => $request->except(['_token'])
+        ]);
+
         try {
             // Validation des données
+            Log::info('Début de validation des données', [
+                'user_id' => $user->id,
+                'raw_data' => $request->all()
+            ]);
+
             $validatedData = $request->validate([
-                'libelle' => 'required|string|max:255|regex:/^[a-zA-ZÀ-ÿ0-9\s\-\.]+$/',
-                'mobile' => 'required|string|max:20|regex:/^(\+225|225)?[0-9]{8,10}$/',
+                'libelle' => 'required|string|max:255',
+                'mobile' => 'required|string|max:20',
                 'adresse' => 'nullable|string|max:500',
                 'adresse_gps' => 'nullable|url|max:500',
                 'cover_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
@@ -114,32 +131,108 @@ class BoutiqueController extends Controller
                 ->first();
 
             if (!$marchand) {
+                Log::warning('Marchand non trouvé ou non autorisé', [
+                    'user_id' => $user->id,
+                    'marchand_id' => $validatedData['marchand_id'],
+                    'entreprise_id' => $user->entreprise_id
+                ]);
                 throw ValidationException::withMessages([
                     'marchand_id' => ['Vous ne pouvez pas créer une boutique pour ce marchand.']
                 ]);
             }
 
+            Log::info('Marchand trouvé et autorisé', [
+                'user_id' => $user->id,
+                'marchand_id' => $marchand->id,
+                'marchand_name' => $marchand->first_name . ' ' . $marchand->last_name,
+                'entreprise_id' => $marchand->entreprise_id
+            ]);
+
+            // Vérifier qu'il n'y a pas déjà une boutique avec le même nom pour ce marchand
+            Log::info('Vérification des doublons de boutique', [
+                'user_id' => $user->id,
+                'marchand_id' => $validatedData['marchand_id'],
+                'libelle' => $validatedData['libelle'],
+                'entreprise_id' => $user->entreprise_id
+            ]);
+
+            $existingBoutique = Boutique::where('marchand_id', $validatedData['marchand_id'])
+                ->where('libelle', $validatedData['libelle'])
+                ->where('entreprise_id', $user->entreprise_id)
+                ->first();
+
+            if ($existingBoutique) {
+                Log::warning('Boutique avec le même nom existe déjà', [
+                    'user_id' => $user->id,
+                    'existing_boutique_id' => $existingBoutique->id,
+                    'marchand_id' => $validatedData['marchand_id'],
+                    'libelle' => $validatedData['libelle']
+                ]);
+                throw ValidationException::withMessages([
+                    'libelle' => ['Une boutique avec ce nom existe déjà pour ce marchand.']
+                ]);
+            }
+
+            Log::info('Aucun doublon trouvé, procédure de création', [
+                'user_id' => $user->id,
+                'marchand_id' => $validatedData['marchand_id'],
+                'libelle' => $validatedData['libelle']
+            ]);
+
             DB::beginTransaction();
+            Log::info('Transaction DB démarrée', ['user_id' => $user->id]);
 
             // Gérer l'upload de l'image
             $coverImagePath = null;
             if ($request->hasFile('cover_image')) {
+                Log::info('Upload d\'image détecté', [
+                    'user_id' => $user->id,
+                    'file_name' => $request->file('cover_image')->getClientOriginalName(),
+                    'file_size' => $request->file('cover_image')->getSize()
+                ]);
                 $coverImage = $request->file('cover_image');
                 $coverImagePath = $coverImage->store('boutiques', 'public');
+                Log::info('Image uploadée avec succès', [
+                    'user_id' => $user->id,
+                    'image_path' => $coverImagePath
+                ]);
+            } else {
+                Log::info('Aucune image à uploader', ['user_id' => $user->id]);
             }
 
             // Créer la boutique
+            Log::info('Création de la boutique en cours', [
+                'user_id' => $user->id,
+                'boutique_data' => [
+                    'libelle' => $validatedData['libelle'],
+                    'mobile' => $validatedData['mobile'],
+                    'marchand_id' => $validatedData['marchand_id'],
+                    'status' => $validatedData['status'],
+                    'entreprise_id' => $user->entreprise_id,
+                    'created_by' => $user->id
+                ]
+            ]);
+
             $boutique = Boutique::create([
                 'libelle' => $validatedData['libelle'],
+                'mobile' => $validatedData['mobile'],
                 'adresse' => $validatedData['adresse'],
                 'adresse_gps' => $validatedData['adresse_gps'],
                 'cover_image' => $coverImagePath,
                 'marchand_id' => $validatedData['marchand_id'],
                 'status' => $validatedData['status'],
-                'entreprise_id' => $user->entreprise_id
+                'entreprise_id' => $user->entreprise_id,
+                'created_by' => $user->id
+            ]);
+
+            Log::info('Boutique créée avec succès', [
+                'user_id' => $user->id,
+                'boutique_id' => $boutique->id,
+                'boutique_libelle' => $boutique->libelle
             ]);
 
             DB::commit();
+            Log::info('Transaction DB commitée avec succès', ['user_id' => $user->id]);
 
             // Log de l'action
             Log::info('Boutique créée avec succès', [
@@ -155,6 +248,12 @@ class BoutiqueController extends Controller
 
         } catch (ValidationException $e) {
             DB::rollBack();
+            Log::warning('Erreur de validation lors de la création de boutique', [
+                'user_id' => $user->id,
+                'validation_errors' => $e->errors(),
+                'input_data' => $request->except(['_token']),
+                'ip' => $request->ip()
+            ]);
             return redirect()->back()
                 ->withErrors($e->errors())
                 ->withInput();
@@ -162,7 +261,9 @@ class BoutiqueController extends Controller
             DB::rollBack();
             Log::error('Erreur lors de la création de la boutique', [
                 'error' => $e->getMessage(),
+                'error_trace' => $e->getTraceAsString(),
                 'user_id' => $user->id,
+                'input_data' => $request->except(['_token']),
                 'ip' => $request->ip()
             ]);
 
@@ -185,13 +286,36 @@ class BoutiqueController extends Controller
         $user = Auth::user();
 
         // Charger les relations
-        $boutique->load(['marchand', 'colis', 'user']);
+        $boutique->load(['marchand', 'user']);
+
+        // Récupérer les colis de cette boutique via la table livraisons
+        $colis = Colis::join('livraisons', 'colis.id', '=', 'livraisons.colis_id')
+                     ->where('livraisons.boutique_id', $boutique->id)
+                     ->where('colis.entreprise_id', $user->entreprise_id)
+                     ->select('colis.*')
+                     ->orderBy('colis.created_at', 'desc')
+                     ->get();
+
+        // Statistiques des colis par statut
+        $colisStats = [
+            'total' => $colis->count(),
+            'en_attente' => $colis->where('status', Colis::STATUS_EN_ATTENTE)->count(),
+            'en_cours' => $colis->where('status', Colis::STATUS_EN_COURS)->count(),
+            'livres' => $colis->where('status', Colis::STATUS_LIVRE)->count(),
+            'annules' => $colis->whereIn('status', [
+                Colis::STATUS_ANNULE_CLIENT,
+                Colis::STATUS_ANNULE_LIVREUR,
+                Colis::STATUS_ANNULE_MARCHAND
+            ])->count()
+        ];
 
         $data = [
             'title' => 'Détails de la Boutique',
             'menu' => 'boutiques',
             'user' => $user,
-            'boutique' => $boutique
+            'boutique' => $boutique,
+            'colis' => $colis,
+            'colisStats' => $colisStats
         ];
 
         return view('boutique.show', $data);
@@ -254,8 +378,8 @@ class BoutiqueController extends Controller
         try {
             // Validation des données
             $validatedData = $request->validate([
-                'libelle' => 'required|string|max:255|regex:/^[a-zA-ZÀ-ÿ0-9\s\-\.]+$/',
-                'mobile' => 'required|string|max:20|regex:/^(\+225|225)?[0-9]{8,10}$/',
+                'libelle' => 'required|string|max:255',
+                'mobile' => 'required|string|max:20',
                 'adresse' => 'nullable|string|max:500',
                 'adresse_gps' => 'nullable|url|max:500',
                 'cover_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',

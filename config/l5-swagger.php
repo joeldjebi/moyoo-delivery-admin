@@ -91,7 +91,7 @@ return [
             /*
              * Edit to set the api's base path
              */
-            'base' => env('L5_SWAGGER_BASE_PATH', 'http://192.168.1.9:8000'),
+            'base' => env('L5_SWAGGER_BASE_PATH', 'http://192.168.1.5:8000'),
 
             /*
              * Absolute path to directories that should be excluded from scanning
@@ -312,7 +312,7 @@ return [
          * Constants which can be used in annotations
          */
         'constants' => [
-            'L5_SWAGGER_CONST_HOST' => env('L5_SWAGGER_CONST_HOST', 'http://192.168.1.9:8000'),
+            'L5_SWAGGER_CONST_HOST' => env('L5_SWAGGER_CONST_HOST', 'http://192.168.1.5:8000'),
         ],
     ],
 ];

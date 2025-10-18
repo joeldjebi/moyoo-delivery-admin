@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\LivreurAuthController;
 use App\Http\Controllers\Api\LivreurDeliveryController;
 use App\Http\Controllers\Api\LivreurRamassageController;
+use App\Http\Controllers\Api\LivreurOtpController;
 use App\Http\Controllers\Api\FcmTokenController;
 use App\Http\Controllers\Api\FirebaseNotificationController;
 use App\Http\Controllers\SwaggerController;
@@ -25,6 +26,12 @@ Route::prefix('livreur')->group(function () {
     // Authentification
     Route::post('login', [LivreurAuthController::class, 'login']);
     Route::post('refresh', [LivreurAuthController::class, 'refresh']);
+
+    // Gestion des codes OTP (routes publiques)
+    Route::post('check-phone', [LivreurOtpController::class, 'checkPhone']);
+    Route::post('verify-otp', [LivreurOtpController::class, 'verifyOtp']);
+    Route::post('update-password', [LivreurOtpController::class, 'updatePassword']);
+    Route::post('resend-otp', [LivreurOtpController::class, 'resendOtp']);
 });
 
 // Routes protégées pour les livreurs
@@ -48,6 +55,7 @@ Route::prefix('livreur')->middleware('auth:livreur')->group(function () {
             Route::get('ramassages/{id}/details', [LivreurRamassageController::class, 'getRamassageDetails']);
             Route::post('ramassages/{id}/start', [LivreurRamassageController::class, 'startRamassage']);
             Route::post('ramassages/{id}/complete', [LivreurRamassageController::class, 'completeRamassage']);
+            Route::post('ramassages/{id}/cancel', [LivreurRamassageController::class, 'cancelRamassage']);
             Route::get('ramassages/stats/daily', [LivreurRamassageController::class, 'getDailyStats']);
 
             // Gestion des tokens FCM

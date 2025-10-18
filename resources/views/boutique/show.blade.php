@@ -49,6 +49,18 @@
                                 <span class="badge bg-label-info">{{ $boutique->marchand->full_name }}</span>
                             </p>
                         </div>
+                        @if($boutique->mobile)
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">Téléphone</label>
+                            <p class="form-control-plaintext">{{ $boutique->mobile }}</p>
+                        </div>
+                        @endif
+                        @if($boutique->adresse)
+                        <div class="col-12 mb-3">
+                            <label class="form-label fw-bold">Adresse</label>
+                            <p class="form-control-plaintext">{{ $boutique->adresse }}</p>
+                        </div>
+                        @endif
                         @if($boutique->adresse)
                         <div class="col-12 mb-3">
                             <label class="form-label fw-bold">Adresse</label>
@@ -166,7 +178,7 @@
                             <i class="ti ti-package"></i>
                         </span>
                     </div>
-                    <h4 class="mb-1">{{ $boutique->colis->count() }}</h4>
+                    <h4 class="mb-1">{{ $colisStats['total'] ?? 0 }}</h4>
                     <p class="text-muted mb-0">Colis</p>
                 </div>
             </div>
@@ -198,13 +210,99 @@
         </div>
     </div>
 
-    <!-- Liste des colis récents -->
-    @if($boutique->colis->count() > 0)
+    <!-- Statistiques des colis -->
+    @if(isset($colisStats) && $colisStats['total'] > 0)
     <div class="row mt-4">
         <div class="col-12">
             <div class="card">
                 <div class="card-header">
-                    <h5 class="card-title mb-0">Colis Récents ({{ $boutique->colis->count() }})</h5>
+                    <h5 class="card-title mb-0">Statistiques des Colis</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <div class="d-flex align-items-center">
+                                <div class="avatar me-3">
+                                    <span class="avatar-initial rounded bg-label-primary">
+                                        <i class="ti ti-package"></i>
+                                    </span>
+                                </div>
+                                <div>
+                                    <h6 class="mb-0">{{ $colisStats['total'] }}</h6>
+                                    <small class="text-muted">Total</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="d-flex align-items-center">
+                                <div class="avatar me-3">
+                                    <span class="avatar-initial rounded bg-label-warning">
+                                        <i class="ti ti-clock"></i>
+                                    </span>
+                                </div>
+                                <div>
+                                    <h6 class="mb-0">{{ $colisStats['en_attente'] }}</h6>
+                                    <small class="text-muted">En attente</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="d-flex align-items-center">
+                                <div class="avatar me-3">
+                                    <span class="avatar-initial rounded bg-label-info">
+                                        <i class="ti ti-truck"></i>
+                                    </span>
+                                </div>
+                                <div>
+                                    <h6 class="mb-0">{{ $colisStats['en_cours'] }}</h6>
+                                    <small class="text-muted">En cours</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="d-flex align-items-center">
+                                <div class="avatar me-3">
+                                    <span class="avatar-initial rounded bg-label-success">
+                                        <i class="ti ti-check"></i>
+                                    </span>
+                                </div>
+                                <div>
+                                    <h6 class="mb-0">{{ $colisStats['livres'] }}</h6>
+                                    <small class="text-muted">Livrés</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    @if($colisStats['annules'] > 0)
+                    <div class="row g-3 mt-2">
+                        <div class="col-md-3">
+                            <div class="d-flex align-items-center">
+                                <div class="avatar me-3">
+                                    <span class="avatar-initial rounded bg-label-danger">
+                                        <i class="ti ti-x"></i>
+                                    </span>
+                                </div>
+                                <div>
+                                    <h6 class="mb-0">{{ $colisStats['annules'] }}</h6>
+                                    <small class="text-muted">Annulés</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    @endif
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
+
+    <!-- Liste des colis récents -->
+    @if(isset($colis) && $colis->count() > 0)
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Colis Récents ({{ $colis->count() }})</h5>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
@@ -220,15 +318,24 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach($boutique->colis->take(4) as $colis_item)
+                                @foreach($colis->take(4) as $colis_item)
                                 <tr>
                                     <td>{{ $colis_item->code ?? 'N/A' }}</td>
                                     <td>{{ $colis_item->nom_client ?? 'N/A' }}</td>
                                     <td>{{ $colis_item->telephone_client ?? 'N/A' }}</td>
                                     <td>
-                                        <span class="badge bg-{{ $colis_item->status == 1 ? 'success' : 'warning' }}">
-                                            {{ $colis_item->status == 1 ? 'Livré' : 'En attente' }}
-                                        </span>
+                                        @php
+                                            $statusConfig = match($colis_item->status) {
+                                                \App\Models\Colis::STATUS_EN_ATTENTE => ['label' => 'En attente', 'class' => 'bg-label-warning'],
+                                                \App\Models\Colis::STATUS_EN_COURS => ['label' => 'En cours', 'class' => 'bg-label-primary'],
+                                                \App\Models\Colis::STATUS_LIVRE => ['label' => 'Livré', 'class' => 'bg-label-success'],
+                                                \App\Models\Colis::STATUS_ANNULE_CLIENT => ['label' => 'Annulé client', 'class' => 'bg-label-danger'],
+                                                \App\Models\Colis::STATUS_ANNULE_LIVREUR => ['label' => 'Annulé livreur', 'class' => 'bg-label-danger'],
+                                                \App\Models\Colis::STATUS_ANNULE_MARCHAND => ['label' => 'Annulé marchand', 'class' => 'bg-label-danger'],
+                                                default => ['label' => 'Inconnu', 'class' => 'bg-label-secondary']
+                                            };
+                                        @endphp
+                                        <span class="badge {{ $statusConfig['class'] }}">{{ $statusConfig['label'] }}</span>
                                     </td>
                                     <td>{{ $colis_item->created_at->format('d/m/Y') }}</td>
                                     <td>
@@ -242,11 +349,11 @@
                             </tbody>
                         </table>
                     </div>
-                    @if($boutique->colis->count() > 4)
+                    @if($colis->count() > 4)
                     <div class="text-center mt-3">
                         <a href="{{ route('colis.index') }}?boutique_id={{ $boutique->id }}" class="btn btn-outline-primary">
                             <i class="ti ti-eye me-1"></i>
-                            Voir plus ({{ $boutique->colis->count() - 4 }} autres)
+                            Voir plus ({{ $colis->count() - 4 }} autres)
                         </a>
                     </div>
                     @endif

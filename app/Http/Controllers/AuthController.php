@@ -82,10 +82,23 @@ class AuthController extends Controller
      */
     public function loginUser(Request $request)
     {
+        // Log du début de la tentative de connexion
+        Log::info('Tentative de connexion', [
+            'email' => $request->email,
+            'ip' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+            'remember' => $request->boolean('remember')
+        ]);
+
         // Limitation du taux de tentatives
         $key = 'login.' . $request->ip();
         if (RateLimiter::tooManyAttempts($key, 5)) {
             $seconds = RateLimiter::availableIn($key);
+            Log::warning('Tentative de connexion bloquée - Trop de tentatives', [
+                'email' => $request->email,
+                'ip' => $request->ip(),
+                'seconds_remaining' => $seconds
+            ]);
             throw ValidationException::withMessages([
                 'email' => [trans('auth.throttle', ['seconds' => $seconds])],
             ]);
@@ -96,16 +109,39 @@ class AuthController extends Controller
             'password' => 'required|min:8',
         ]);
 
+        // Log de la validation réussie
+        Log::info('Validation des données de connexion réussie', [
+            'email' => $request->email,
+            'ip' => $request->ip()
+        ]);
+
         $credentials = $request->only('email', 'password');
 
         if (Auth::attempt($credentials, $request->boolean('remember'))) {
+            $user = Auth::user();
             $request->session()->regenerate();
             RateLimiter::clear($key);
 
             // Log de la connexion réussie
-            Log::info('User logged in successfully', [
-                'user_id' => Auth::id(),
-                'email' => $request->email,
+            Log::info('Connexion réussie', [
+                'user_id' => $user->id,
+                'email' => $user->email,
+                'first_name' => $user->first_name,
+                'last_name' => $user->last_name,
+                'entreprise_id' => $user->entreprise_id,
+                'remember_me' => $request->boolean('remember'),
+                'session_id' => $request->session()->getId(),
+                'ip' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+                'login_time' => now()->toDateTimeString()
+            ]);
+
+            // Log des permissions et accès
+            Log::info('Vérification des accès utilisateur', [
+                'user_id' => $user->id,
+                'email' => $user->email,
+                'entreprise_id' => $user->entreprise_id,
+                'has_entreprise' => !is_null($user->entreprise_id),
                 'ip' => $request->ip()
             ]);
 
@@ -116,9 +152,12 @@ class AuthController extends Controller
         RateLimiter::hit($key, 300); // 5 minutes
 
         // Log de la tentative échouée
-        Log::warning('Failed login attempt', [
+        Log::warning('Tentative de connexion échouée', [
             'email' => $request->email,
-            'ip' => $request->ip()
+            'ip' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+            'attempts_remaining' => 5 - RateLimiter::attempts($key),
+            'reason' => 'Identifiants incorrects'
         ]);
 
         // Message d'erreur générique pour éviter la fuite d'informations
@@ -132,17 +171,44 @@ class AuthController extends Controller
      */
     public function registerUser(Request $request)
     {
+        // Log du début de l'inscription
+        Log::info('Début du processus d\'inscription', [
+            'ip' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+            'request_data' => $request->except(['password', 'password_confirmation'])
+        ]);
+
         $request->validate([
-            'first_name' => 'required|string|max:255|regex:/^[a-zA-ZÀ-ÿ\s]+$/',
-            'last_name' => 'required|string|max:255|regex:/^[a-zA-ZÀ-ÿ\s]+$/',
+            'first_name' => 'required|string|max:255',
+            'last_name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email|max:255',
             'mobile' => 'required|string|regex:/^[0-9+\-\s()]+$/|min:10|max:15',
-            'password' => 'required|min:8|confirmed|regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/',
+            'password' => 'required|min:8|confirmed',
         ], [
-            'first_name.regex' => 'Le prénom ne peut contenir que des lettres et espaces.',
-            'last_name.regex' => 'Le nom ne peut contenir que des lettres et espaces.',
             'mobile.regex' => 'Le format du numéro de téléphone est invalide.',
-            'password.regex' => 'Le mot de passe doit contenir au moins une minuscule, une majuscule, un chiffre et un caractère spécial.',
+            'password.confirmed' => 'Les mots de passe ne correspondent pas.',
+            'password.min' => 'Le mot de passe doit contenir au moins 8 caractères.',
+            'first_name.required' => 'Le prénom est obligatoire.',
+            'last_name.required' => 'Le nom est obligatoire.',
+            'email.required' => 'L\'adresse email est obligatoire.',
+            'email.email' => 'L\'adresse email doit être valide.',
+            'email.unique' => 'Cette adresse email est déjà utilisée.',
+            'mobile.required' => 'Le numéro de téléphone est obligatoire.',
+            'mobile.regex' => 'Le format du numéro de téléphone est invalide.',
+            'mobile.min' => 'Le numéro de téléphone doit contenir au moins 10 caractères.',
+            'mobile.max' => 'Le numéro de téléphone doit contenir au plus 15 caractères.',
+            'password.required' => 'Le mot de passe est obligatoire.',
+            'password.confirmed' => 'Les mots de passe ne correspondent pas.',
+            'password.min' => 'Le mot de passe doit contenir au moins 8 caractères.',
+        ]);
+
+        // Log de la validation réussie
+        Log::info('Validation des données d\'inscription réussie', [
+            'email' => $request->email,
+            'first_name' => $request->first_name,
+            'last_name' => $request->last_name,
+            'mobile' => $request->mobile,
+            'ip' => $request->ip()
         ]);
 
         try {
@@ -156,14 +222,26 @@ class AuthController extends Controller
             ];
 
             // Créer la vérification OTP
+            Log::info('Création de la vérification OTP', [
+                'email' => $userData['email'],
+                'ip' => $request->ip()
+            ]);
+
             $verification = EmailVerification::createVerification($userData['email'], $userData);
 
             // Envoyer l'OTP par email
+            Log::info('Envoi de l\'OTP par email', [
+                'email' => $userData['email'],
+                'first_name' => $userData['first_name'],
+                'ip' => $request->ip()
+            ]);
+
             $this->sendOTPEmail($userData['email'], $userData['first_name'], $verification->otp);
 
             // Log de la demande d'inscription
-            Log::info('Registration OTP sent', [
+            Log::info('OTP envoyé avec succès - Inscription en attente de vérification', [
                 'email' => $userData['email'],
+                'verification_id' => $verification->id,
                 'ip' => $request->ip()
             ]);
 
@@ -207,8 +285,6 @@ class AuthController extends Controller
         $senderEmail = config('mailjet.default_from.email');
         $senderName = config('mailjet.default_from.name');
         $apiUrl = config('mailjet.api_url');
-        $timeout = config('mailjet.timeout');
-        $verifySsl = config('mailjet.verify_ssl');
 
         if (!$apiKeyPublic || !$apiKeyPrivate || !$senderEmail) {
             Log::error('Configuration Mailjet manquante');
@@ -246,8 +322,8 @@ class AuthController extends Controller
                 'Content-Type: application/json',
                 'Authorization: Basic ' . base64_encode($apiKeyPublic . ':' . $apiKeyPrivate)
             ],
-            CURLOPT_SSL_VERIFYPEER => $verifySsl,
-            CURLOPT_TIMEOUT => $timeout
+            CURLOPT_SSL_VERIFYPEER => true,
+            CURLOPT_TIMEOUT => 30
         ]);
 
         $response = curl_exec($ch);
@@ -449,6 +525,13 @@ class AuthController extends Controller
      */
     public function verifyOTP(Request $request)
     {
+        // Log du début de la vérification OTP
+        Log::info('Début de la vérification OTP', [
+            'email' => $request->email,
+            'ip' => $request->ip(),
+            'user_agent' => $request->userAgent()
+        ]);
+
         $request->validate([
             'otp' => 'required|string|size:6',
             'email' => 'required|email'
@@ -464,30 +547,110 @@ class AuthController extends Controller
             ->first();
 
         if (!$verification) {
+            Log::warning('Vérification OTP échouée - Code invalide ou expiré', [
+                'email' => $email,
+                'ip' => $request->ip()
+            ]);
             return redirect()->back()
                 ->withErrors(['otp' => 'Code de vérification invalide ou expiré.']);
         }
 
         if (!$verification->isValid($otp)) {
+            Log::warning('Vérification OTP échouée - Code incorrect', [
+                'email' => $email,
+                'otp_provided' => $otp,
+                'ip' => $request->ip()
+            ]);
             return redirect()->back()
                 ->withErrors(['otp' => 'Code de vérification incorrect.']);
         }
 
         try {
+            // Log de la validation OTP réussie
+            Log::info('Validation OTP réussie - Création du compte en cours', [
+                'email' => $email,
+                'verification_id' => $verification->id,
+                'ip' => $request->ip()
+            ]);
+
             // Créer l'utilisateur avec les données stockées
             $userData = $verification->user_data;
+            Log::info('Données utilisateur préparées pour la création', [
+                'email' => $userData['email'],
+                'first_name' => $userData['first_name'],
+                'last_name' => $userData['last_name'],
+                'mobile' => $userData['mobile'],
+                'ip' => $request->ip()
+            ]);
+
             $user = User::create($userData);
+
+            // Créer une entreprise par défaut pour l'utilisateur
+            Log::info('Création d\'une entreprise par défaut pour l\'utilisateur', [
+                'user_id' => $user->id,
+                'email' => $user->email,
+                'ip' => $request->ip()
+            ]);
+
+            // Vérifier s'il y a des communes disponibles
+            $commune = \DB::table('communes')->first();
+            if (!$commune) {
+                // Créer une commune par défaut
+                Log::info('Création d\'une commune par défaut', [
+                    'user_id' => $user->id,
+                    'ip' => $request->ip()
+                ]);
+
+                $communeId = \DB::table('communes')->insertGetId([
+                    'nom' => 'Abidjan',
+                    'created_at' => now(),
+                    'updated_at' => now()
+                ]);
+            } else {
+                $communeId = $commune->id;
+            }
+
+            $entreprise = Entreprise::create([
+                'name' => $user->first_name . ' ' . $user->last_name . ' - Entreprise',
+                'mobile' => $user->mobile,
+                'email' => $user->email,
+                'adresse' => 'Adresse à définir',
+                'commune_id' => $communeId,
+                'statut' => 1, // 1 = actif
+                'created_by' => $user->id
+            ]);
+
+            // Associer l'entreprise à l'utilisateur
+            $user->update(['entreprise_id' => $entreprise->id]);
+
+            Log::info('Entreprise créée et associée à l\'utilisateur', [
+                'user_id' => $user->id,
+                'entreprise_id' => $entreprise->id,
+                'entreprise_name' => $entreprise->name,
+                'ip' => $request->ip()
+            ]);
 
             // Marquer la vérification comme validée
             $verification->markAsVerified();
 
             // Envoyer l'email de bienvenue
+            Log::info('Envoi de l\'email de bienvenue', [
+                'user_id' => $user->id,
+                'email' => $user->email,
+                'ip' => $request->ip()
+            ]);
+
             $this->sendWelcomeEmail($user);
 
             // Log de l'inscription réussie
-            Log::info('User registration completed', [
+            Log::info('Inscription complétée avec succès - Compte créé', [
                 'user_id' => $user->id,
                 'email' => $user->email,
+                'first_name' => $user->first_name,
+                'last_name' => $user->last_name,
+                'mobile' => $user->mobile,
+                'entreprise_id' => $user->entreprise_id,
+                'created_at' => $user->created_at,
                 'ip' => $request->ip()
             ]);
 

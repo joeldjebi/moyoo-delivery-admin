@@ -211,12 +211,12 @@
         }
 
         // Vérifier la force du mot de passe
-        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/;
-        if (!passwordRegex.test(password)) {
-            e.preventDefault();
-            alert('Le mot de passe doit contenir au moins une minuscule, une majuscule, un chiffre et un caractère spécial.');
-            return false;
-        }
+        // const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/;
+        // if (!passwordRegex.test(password)) {
+        //     e.preventDefault();
+        //     alert('Le mot de passe doit contenir au moins une minuscule, une majuscule, un chiffre et un caractère spécial.');
+        //     return false;
+        // }
     });
 
     // Fonction pour afficher/masquer le mot de passe

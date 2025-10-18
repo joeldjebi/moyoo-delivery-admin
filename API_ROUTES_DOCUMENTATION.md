@@ -131,7 +131,7 @@ GET /api/livreur/ramassages/stats/daily
 ### Démarrer une livraison (CORRECT)
 ```bash
 curl -X 'POST' \
-  'http://192.168.1.9:8000/api/livreur/colis/1/start-delivery' \
+  'http://192.168.1.5:8000/api/livreur/colis/1/start-delivery' \
   -H 'accept: application/json' \
   -H 'Authorization: Bearer YOUR_TOKEN_HERE' \
   -H 'Content-Type: application/json' \
@@ -141,7 +141,7 @@ curl -X 'POST' \
 ### Démarrer un ramassage (CORRECT)
 ```bash
 curl -X 'POST' \
-  'http://192.168.1.9:8000/api/livreur/ramassages/1/start' \
+  'http://192.168.1.5:8000/api/livreur/ramassages/1/start' \
   -H 'accept: application/json' \
   -H 'Authorization: Bearer YOUR_TOKEN_HERE' \
   -H 'Content-Type: application/json' \
@@ -151,7 +151,7 @@ curl -X 'POST' \
 ### Terminer une livraison (CORRECT)
 ```bash
 curl -X 'POST' \
-  'http://192.168.1.9:8000/api/livreur/colis/1/complete-delivery' \
+  'http://192.168.1.5:8000/api/livreur/colis/1/complete-delivery' \
   -H 'accept: application/json' \
   -H 'Authorization: Bearer YOUR_TOKEN_HERE' \
   -H 'Content-Type: multipart/form-data' \
@@ -166,7 +166,7 @@ curl -X 'POST' \
 ### Annuler une livraison (CORRECT)
 ```bash
 curl -X 'POST' \
-  'http://192.168.1.9:8000/api/livreur/colis/1/cancel-delivery' \
+  'http://192.168.1.5:8000/api/livreur/colis/1/cancel-delivery' \
   -H 'accept: application/json' \
   -H 'Authorization: Bearer YOUR_TOKEN_HERE' \
   -H 'Content-Type: application/json' \
@@ -192,11 +192,11 @@ curl -X 'POST' \
 
 ### 3. Documentation régénérée
 - La documentation Swagger a été régénérée avec les routes corrigées
-- Toutes les URLs d'exemple utilisent maintenant `http://192.168.1.9:8000`
+- Toutes les URLs d'exemple utilisent maintenant `http://192.168.1.5:8000`
 
 ## Accès à la documentation
 
-**Documentation Swagger :** http://192.168.1.9:8000/api/documentation
+**Documentation Swagger :** http://192.168.1.5:8000/api/documentation
 
 ## Dépannage
 

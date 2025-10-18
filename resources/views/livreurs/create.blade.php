@@ -74,12 +74,20 @@
                                         <div class="row">
                                             <div class="col-md-6 mb-3">
                                                 <label for="mobile" class="form-label">Téléphone <span class="text-danger">*</span></label>
-                                                <input type="tel"
-                                                       class="form-control @error('mobile') is-invalid @enderror"
-                                                       id="mobile"
-                                                       name="mobile"
-                                                       value="{{ old('mobile') }}"
-                                                       required>
+                                                <div class="input-group">
+                                                    <span class="input-group-text">+225</span>
+                                                    <input type="tel"
+                                                           class="form-control @error('mobile') is-invalid @enderror"
+                                                           id="mobile"
+                                                           name="mobile"
+                                                           value="{{ old('mobile') }}"
+                                                           placeholder="0707070707"
+                                                           pattern="[0-9\s]{8,15}"
+                                                           minlength="8"
+                                                           maxlength="15"
+                                                           required>
+                                                </div>
+                                                <div class="form-text">Format: 0707070707 (sans l'indicatif +225)</div>
                                                 @error('mobile')
                                                     <div class="invalid-feedback">{{ $message }}</div>
                                                 @enderror
@@ -248,28 +256,9 @@
                                             @enderror
                                         </div>
 
-                                        <div class="mb-3">
-                                            <label for="password" class="form-label">Mot de passe <span class="text-danger">*</span></label>
-                                            <input type="password"
-                                                   class="form-control @error('password') is-invalid @enderror"
-                                                   id="password"
-                                                   name="password"
-                                                   required>
-                                            @error('password')
-                                                <div class="invalid-feedback">{{ $message }}</div>
-                                            @enderror
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label for="password_confirmation" class="form-label">Confirmer le mot de passe <span class="text-danger">*</span></label>
-                                            <input type="password"
-                                                   class="form-control @error('password_confirmation') is-invalid @enderror"
-                                                   id="password_confirmation"
-                                                   name="password_confirmation"
-                                                   required>
-                                            @error('password_confirmation')
-                                                <div class="invalid-feedback">{{ $message }}</div>
-                                            @enderror
+                                        <div class="alert alert-info">
+                                            <i class="ti ti-info-circle me-2"></i>
+                                            <strong>Mot de passe automatique :</strong> Un mot de passe de 8 chiffres sera généré automatiquement et envoyé par WhatsApp au livreur.
                                         </div>
                                     </div>
                                 </div>
@@ -327,20 +316,46 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Validation du mot de passe
-    const password = document.getElementById('password');
-    const passwordConfirmation = document.getElementById('password_confirmation');
+    // Validation du numéro de téléphone
+    const mobileInput = document.getElementById('mobile');
 
-    function validatePassword() {
-        if (password.value !== passwordConfirmation.value) {
-            passwordConfirmation.setCustomValidity('Les mots de passe ne correspondent pas');
-        } else {
-            passwordConfirmation.setCustomValidity('');
+    mobileInput.addEventListener('input', function() {
+        // Nettoyer le numéro (supprimer les espaces et caractères non numériques)
+        let value = this.value.replace(/\D/g, '');
+
+        // Limiter à 10 chiffres
+        if (value.length > 10) {
+            value = value.substring(0, 10);
         }
-    }
 
-    password.addEventListener('input', validatePassword);
-    passwordConfirmation.addEventListener('input', validatePassword);
+        // Formater avec des espaces (format: 0707070707)
+        if (value.length >= 2) {
+            value = value.substring(0, 2) + ' ' + value.substring(2);
+        }
+        if (value.length >= 5) {
+            value = value.substring(0, 5) + ' ' + value.substring(5);
+        }
+        if (value.length >= 8) {
+            value = value.substring(0, 8) + ' ' + value.substring(8);
+        }
+        if (value.length >= 11) {
+            value = value.substring(0, 11) + ' ' + value.substring(11);
+        }
+
+        this.value = value;
+    });
+
+    // Validation personnalisée pour le formulaire
+    mobileInput.addEventListener('blur', function() {
+        const cleanValue = this.value.replace(/\D/g, '');
+        if (cleanValue.length < 8) {
+            this.setCustomValidity('Le numéro de téléphone doit contenir au moins 8 chiffres');
+        } else if (cleanValue.length > 10) {
+            this.setCustomValidity('Le numéro de téléphone ne peut pas dépasser 10 chiffres');
+        } else {
+            this.setCustomValidity('');
+        }
+    });
 
     // Gestion des communes
     const communeSearch = document.getElementById('communeSearch');

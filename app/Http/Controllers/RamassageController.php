@@ -408,22 +408,33 @@ class RamassageController extends Controller
 
         // Envoyer une notification au livreur
         $livreur = Livreur::find($request->livreur_id);
-        if ($livreur && $livreur->fcm_token) {
-            $notificationResult = $this->sendNewRamassageNotification($livreur, $ramassage);
+        if ($livreur) {
+            // Notification Firebase
+            if ($livreur->fcm_token) {
+                $notificationResult = $this->sendNewRamassageNotification($livreur, $ramassage);
 
-            // Log du résultat de la notification
-            if ($notificationResult['success']) {
-                \Log::info('Notification ramassage envoyée avec succès', [
+                // Log du résultat de la notification Firebase
+                if ($notificationResult['success']) {
+                    \Log::info('Notification Firebase ramassage envoyée avec succès', [
+                        'livreur_id' => $livreur->id,
+                        'ramassage_id' => $ramassage->id
+                    ]);
+                } else {
+                    \Log::warning('Échec envoi notification Firebase ramassage', [
+                        'livreur_id' => $livreur->id,
+                        'ramassage_id' => $ramassage->id,
+                        'error' => $notificationResult['message']
+                    ]);
+                }
+            } else {
+                \Log::warning('FCM token manquant pour le livreur', [
                     'livreur_id' => $livreur->id,
                     'ramassage_id' => $ramassage->id
                 ]);
-            } else {
-                \Log::warning('Échec envoi notification ramassage', [
-                    'livreur_id' => $livreur->id,
-                    'ramassage_id' => $ramassage->id,
-                    'error' => $notificationResult['message']
-                ]);
             }
+
+            // Notification WhatsApp
+            $this->sendRamassageWhatsAppNotification($livreur, $ramassage, $request);
         }
 
         return redirect()->route('ramassages.show', $ramassage->id)
@@ -704,6 +715,116 @@ class RamassageController extends Controller
                 'success' => false,
                 'message' => 'Erreur lors de la mise à jour de la planification'
             ], 500);
+        }
+    }
+
+    /**
+     * Envoyer une notification WhatsApp pour un nouveau ramassage
+     */
+    private function sendRamassageWhatsAppNotification($livreur, $ramassage, $request)
+    {
+        try {
+            $entrepriseName = auth()->user()->entreprise ? auth()->user()->entreprise->name : 'MOYOO';
+
+            $message = "🚚 MOYOO - Nouveau Ramassage Assigné\n\n";
+            $message .= "Bonjour {$livreur->first_name},\n\n";
+            $message .= "Un nouveau ramassage vous a été assigné :\n\n";
+            $message .= "📦 Code Ramassage : {$ramassage->code_ramassage}\n";
+            $message .= "🏪 Boutique : {$ramassage->boutique->libelle}\n";
+            $message .= "👤 Marchand : {$ramassage->marchand->first_name} {$ramassage->marchand->last_name}\n";
+            $message .= "📅 Date : " . \Carbon\Carbon::parse($request->date_planifiee)->format('d/m/Y') . "\n";
+            $message .= "🕐 Heure : {$request->heure_planifiee}\n";
+            $message .= "📍 Adresse : {$request->adresse_ramassage}\n";
+            $message .= "📦 Colis estimés : {$ramassage->nombre_colis_estime}\n\n";
+
+            if (!empty($request->notes_planification)) {
+                $message .= "📝 Notes : {$request->notes_planification}\n\n";
+            }
+
+            $message .= "⚠️ IMPORTANT :\n";
+            $message .= "• Arrivez à l'heure prévue\n";
+            $message .= "• Vérifiez l'adresse avant de partir\n";
+            $message .= "• Contactez le marchand si nécessaire\n\n";
+            $message .= "Bonne journée de ramassage !\n\n";
+            $message .= "Cordialement,\nL'équipe {$entrepriseName}";
+
+            $result = $this->sendWhatsAppMessageInternal($livreur->mobile, $message);
+
+            if ($result['success']) {
+                \Log::info('Notification WhatsApp ramassage envoyée avec succès', [
+                    'livreur_id' => $livreur->id,
+                    'ramassage_id' => $ramassage->id,
+                    'mobile' => $livreur->mobile
+                ]);
+            } else {
+                \Log::warning('Échec envoi notification WhatsApp ramassage', [
+                    'livreur_id' => $livreur->id,
+                    'ramassage_id' => $ramassage->id,
+                    'mobile' => $livreur->mobile,
+                    'error' => $result['error'] ?? 'Erreur inconnue'
+                ]);
+            }
+
+        } catch (\Exception $e) {
+            \Log::error('Erreur lors de l\'envoi de la notification WhatsApp ramassage', [
+                'livreur_id' => $livreur->id,
+                'ramassage_id' => $ramassage->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+        }
+    }
+
+    /**
+     * Envoyer un message WhatsApp via l'API Wassenger
+     */
+    private function sendWhatsAppMessageInternal($phone, $message)
+    {
+        $apiUrl = env('WASSENGER_API_URL', 'https://api.wassenger.com/v1/messages');
+        $token = env('WASSENGER_TOKEN', '11aa75a1de8f22a6c05e5b49eeb309b48329258699f05e419624bff1d0fcc9940058293b92a6fc95');
+
+        $data = [
+            'phone' => $phone,
+            'message' => $message
+        ];
+
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $apiUrl);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Content-Type: application/json',
+            'Authorization: Bearer ' . $token
+        ]);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $error = curl_error($ch);
+        curl_close($ch);
+
+        if ($error) {
+            return [
+                'success' => false,
+                'error' => 'Erreur cURL: ' . $error,
+                'response' => null
+            ];
+        }
+
+        $responseData = json_decode($response, true);
+
+        if ($httpCode >= 200 && $httpCode < 300) {
+            return [
+                'success' => true,
+                'response' => $responseData
+            ];
+        } else {
+            return [
+                'success' => false,
+                'error' => 'Erreur HTTP: ' . $httpCode,
+                'response' => $responseData
+            ];
         }
     }
 }

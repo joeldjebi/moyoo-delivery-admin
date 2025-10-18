@@ -337,7 +337,7 @@ class ColisController extends Controller
                     'commune_id' => null, // Nullable comme demandé
                     'ordre' => $colisIndex,
                     'nom_client' => $colisData['nom_client'],
-                    'telephone_client' => $colisData['telephone_client'],
+                    'telephone_client' => $this->cleanPhoneNumber($colisData['telephone_client']),
                     'adresse_client' => $colisData['adresse_client'],
                     'marchand_id' => $request->marchand_id,
                     'boutique_id' => $request->boutique_id,
@@ -370,7 +370,7 @@ class ColisController extends Controller
                     'prix_de_vente' => $colisData['prix_de_vente'] ?? 0,
                     'numero_facture' => $colisData['numero_facture'] ?? '',
                     'nom_client' => $colisData['nom_client'],
-                    'telephone_client' => $colisData['telephone_client'],
+                    'telephone_client' => $this->cleanPhoneNumber($colisData['telephone_client']),
                     'adresse_client' => $colisData['adresse_client'],
                     'note_client' => $colisData['note_client'] ?? '',
                     'numero_de_ramassage' => '',
@@ -925,7 +925,7 @@ class ColisController extends Controller
                         'commune_id' => $communeId,
                         'ordre' => $index,
                         'nom_client' => $colisData['nom_client'],
-                        'telephone_client' => $colisData['telephone_client'],
+                        'telephone_client' => $this->cleanPhoneNumber($colisData['telephone_client']),
                         'adresse_client' => $colisData['adresse_client'],
                         'marchand_id' => $request->marchand_id,
                         'boutique_id' => $request->boutique_id,
@@ -1877,7 +1877,7 @@ class ColisController extends Controller
                         'commune_id' => null, // Nullable comme demandé
                         'ordre' => $colisIndex,
                         'nom_client' => $colisData['nom_client'],
-                        'telephone_client' => $colisData['telephone_client'],
+                        'telephone_client' => $this->cleanPhoneNumber($colisData['telephone_client']),
                         'adresse_client' => $colisData['adresse_client'],
                         'marchand_id' => $request->marchand_id,
                         'boutique_id' => $boutiqueData['boutique_id'],
@@ -1901,7 +1901,7 @@ class ColisController extends Controller
                         'uuid' => \Str::uuid(),
                         'code' => $this->generateColisCode($zone->id, $communeId),
                         'nom_client' => $colisData['nom_client'],
-                        'telephone_client' => $colisData['telephone_client'],
+                        'telephone_client' => $this->cleanPhoneNumber($colisData['telephone_client']),
                         'adresse_client' => $colisData['adresse_client'],
                         'montant_a_encaisse' => $colisData['montant_a_encaisse'] ?? 0,
                         'prix_de_vente' => $colisData['prix_de_vente'] ?? 0,
@@ -2057,4 +2057,73 @@ class ColisController extends Controller
         }
     }
 
+    /**
+     * Nettoyer et formater le numéro de téléphone avec l'indicatif +225
+     */
+    private function cleanPhoneNumber($phone)
+    {
+        if (empty($phone)) {
+            return $phone;
+        }
+
+        // Supprimer tous les espaces et caractères non numériques
+        $cleanPhone = preg_replace('/[^0-9]/', '', $phone);
+
+        // Si le numéro commence déjà par 225, le retourner tel quel
+        if (strpos($cleanPhone, '225') === 0) {
+            return $cleanPhone;
+        }
+
+        // Si le numéro commence par 0, le remplacer par 225
+        if (strpos($cleanPhone, '0') === 0) {
+            return '225' . substr($cleanPhone, 1);
+        }
+
+        // Si le numéro ne commence ni par 0 ni par 225, ajouter 225
+        return '225' . $cleanPhone;
+    }
+
+    /**
+     * Envoyer une notification Firebase au livreur lors de la création d'un colis
+     */
+    private function sendColisCreatedNotification($livreur, $colis)
+    {
+        try {
+            // Vérifier que le livreur a un token FCM
+            if (!$livreur->fcm_token) {
+                Log::warning("Token FCM manquant pour le livreur", [
+                    'livreur_id' => $livreur->id,
+                    'livreur_name' => $livreur->first_name . ' ' . $livreur->last_name
+                ]);
+                return false;
+            }
+
+            // Utiliser le trait SendsFirebaseNotifications
+            $result = $this->sendNewColisNotification($livreur, $colis);
+
+            if ($result['success']) {
+                Log::info("Notification Firebase envoyée au livreur", [
+                    'livreur_id' => $livreur->id,
+                    'colis_id' => $colis->id,
+                    'colis_code' => $colis->code
+                ]);
+                return true;
+            } else {
+                Log::warning("Échec envoi notification Firebase", [
+                    'livreur_id' => $livreur->id,
+                    'colis_id' => $colis->id,
+                    'error' => $result['message'] ?? 'Erreur inconnue'
+                ]);
+                return false;
+            }
+
+        } catch (\Exception $e) {
+            Log::error("Erreur lors de l'envoi de la notification Firebase", [
+                'livreur_id' => $livreur->id,
+                'colis_id' => $colis->id,
+                'error' => $e->getMessage()
+            ]);
+            return false;
+        }
+    }
 }

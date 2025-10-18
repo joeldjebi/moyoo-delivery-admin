@@ -62,7 +62,7 @@ Les notifications sont automatiquement envoyées lors de :
 
 ### **1. Mise à jour du Token FCM (Livreur)**
 ```bash
-curl -X POST http://192.168.1.9:8000/api/livreur/fcm-token \
+curl -X POST http://192.168.1.5:8000/api/livreur/fcm-token \
   -H "Authorization: Bearer YOUR_JWT_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -73,7 +73,7 @@ curl -X POST http://192.168.1.9:8000/api/livreur/fcm-token \
 
 ### **2. Test de Notification**
 ```bash
-curl -X POST http://192.168.1.9:8000/api/admin/firebase/test-notification \
+curl -X POST http://192.168.1.5:8000/api/admin/firebase/test-notification \
   -H "Authorization: Bearer YOUR_JWT_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -108,7 +108,7 @@ tail -f storage/logs/laravel.log | grep "Notification Sent"
 
 ### **Vérification du Statut**
 ```bash
-curl -X GET http://192.168.1.9:8000/api/admin/firebase/status \
+curl -X GET http://192.168.1.5:8000/api/admin/firebase/status \
   -H "Authorization: Bearer YOUR_JWT_TOKEN"
 ```
 

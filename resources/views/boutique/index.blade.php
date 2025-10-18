@@ -66,6 +66,7 @@
                                 <thead>
                                     <tr>
                                         <th>Libellé</th>
+                                        <th>Téléphone</th>
                                         <th>Marchand</th>
                                         <th>Adresse</th>
                                         <th>Statut</th>
@@ -89,12 +90,15 @@
                                                             <small class="text-muted">
                                                                 <a href="{{ $boutique->adresse_gps }}" target="_blank" class="text-primary">
                                                                     <i class="ti ti-external-link me-1"></i>
-                                                                    {{ Str::limit($boutique->adresse_gps, 30) }}
+                                                                    {{ Str::limit($boutique->adresse_gps, 15) }}
                                                                 </a>
                                                             </small>
                                                         @endif
                                                     </div>
                                                 </div>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-label-info">{{ $boutique->mobile }}</span>
                                             </td>
                                             <td>
                                                 <span class="badge bg-label-info">{{ $boutique->marchand->full_name }}</span>

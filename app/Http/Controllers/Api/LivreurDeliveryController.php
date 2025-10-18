@@ -100,7 +100,7 @@ class LivreurDeliveryController extends Controller
      *                         type="object",
      *                         @OA\Property(property="id", type="integer", example=1),
      *                         @OA\Property(property="numero_de_livraison", type="string", example="LIV-000001"),
-     *                         @OA\Property(property="code_validation", type="string", example="ABC123")
+     *                         @OA\Property(property="code_validation", type="string", example="12345")
      *                     )
      *                 )
      *             ),
@@ -330,7 +330,7 @@ class LivreurDeliveryController extends Controller
                  *                     type="object",
                  *                     @OA\Property(property="id", type="integer", example=1),
                  *                     @OA\Property(property="numero_de_livraison", type="string", example="LIV-000001"),
-                 *                     @OA\Property(property="code_validation", type="string", example="ABC123")
+                 *                     @OA\Property(property="code_validation", type="string", example="12345")
                  *                 ),
      *                 @OA\Property(
      *                     property="historique_livraison",
@@ -439,7 +439,18 @@ class LivreurDeliveryController extends Controller
      *         description="Erreur de validation",
      *         @OA\JsonContent(
      *             @OA\Property(property="success", type="boolean", example=false),
-     *             @OA\Property(property="message", type="string", example="Ce colis n'est pas disponible pour la livraison")
+     *             @OA\Property(property="message", type="string", example="Vous avez déjà une livraison en cours. Terminez-la avant d'en démarrer une nouvelle."),
+     *             @OA\Property(
+     *                 property="active_deliveries",
+     *                 type="array",
+     *                 @OA\Items(
+     *                     type="object",
+     *                     @OA\Property(property="id", type="integer", example=1),
+     *                     @OA\Property(property="code", type="string", example="CLIS-000001"),
+     *                     @OA\Property(property="client", type="string", example="John Doe"),
+     *                     @OA\Property(property="adresse", type="string", example="Cocody, Deux Plateaux")
+     *                 )
+     *             )
      *         )
      *     )
      * )
@@ -448,6 +459,31 @@ class LivreurDeliveryController extends Controller
     {
         try {
             $livreur = Auth::guard('livreur')->user();
+
+            // Vérifier si le livreur a déjà une livraison en cours
+            if (!$livreur->canStartDelivery()) {
+                $activeDeliveries = $livreur->getActiveDeliveries();
+                \Log::warning("Tentative de démarrage de livraison avec livraison en cours", [
+                    'livreur_id' => $livreur->id,
+                    'livreur_name' => $livreur->first_name . ' ' . $livreur->last_name,
+                    'colis_id' => $id,
+                    'active_deliveries_count' => $activeDeliveries->count(),
+                    'active_deliveries' => $activeDeliveries->pluck('id')->toArray()
+                ]);
+
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Vous avez déjà une livraison en cours. Terminez-la avant d\'en démarrer une nouvelle.',
+                    'active_deliveries' => $activeDeliveries->map(function($colis) {
+                        return [
+                            'id' => $colis->id,
+                            'code' => $colis->code,
+                            'client' => $colis->nom_client,
+                            'adresse' => $colis->adresse_client
+                        ];
+                    })
+                ], 400);
+            }
 
             $colis = Colis::where('id', $id)
                 ->where('livreur_id', $livreur->id)
@@ -485,7 +521,7 @@ class LivreurDeliveryController extends Controller
                     'boutique_id' => $colis->packageColis->boutique_id ?? 1,
                     'adresse_de_livraison' => $colis->adresse_client,
                     'status' => 1, // En cours
-                    'code_validation' => 'CODE-' . strtoupper(substr(md5($colis->id . time()), 0, 6)),
+                    'code_validation' => str_pad(random_int(0, 99999), 5, '0', STR_PAD_LEFT),
                     'created_by' => $livreur->id
                 ]);
             }
@@ -503,10 +539,13 @@ class LivreurDeliveryController extends Controller
                     'status' => 'en_cours',
                     'montant_a_encaisse' => $colis->montant_a_encaisse,
                     'prix_de_vente' => $colis->prix_de_vente,
-                    'montant_de_la_livraison' => $colis->prix_de_vente,
+                    'montant_de_la_livraison' => $colis->calculateDeliveryCost(),
                     'created_by' => $livreur->id
                 ]
             );
+
+            // Envoyer le code de validation par WhatsApp au livreur
+            $this->sendValidationCodeWhatsApp($livreur, $livraison, $colis);
 
             DB::commit();
 
@@ -548,7 +587,7 @@ class LivreurDeliveryController extends Controller
      *         @OA\MediaType(
      *             mediaType="multipart/form-data",
      *             @OA\Schema(
-     *                 @OA\Property(property="code_validation", type="string", example="ABC123", description="Code de validation du colis"),
+     *                 @OA\Property(property="code_validation", type="string", example="12345", description="Code de validation du colis (5 chiffres)"),
      *                 @OA\Property(property="photo_proof", type="string", format="binary", description="Photo de preuve de livraison"),
      *                 @OA\Property(property="signature_data", type="string", example="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA...", description="Signature du client (base64)"),
      *                 @OA\Property(property="note_livraison", type="string", example="Livraison effectuée avec succès", description="Note du livreur"),
@@ -570,7 +609,7 @@ class LivreurDeliveryController extends Controller
      *                 @OA\Property(property="status", type="integer", example=2),
      *                 @OA\Property(property="status_label", type="string", example="Livré"),
      *                 @OA\Property(property="date_livraison_effective", type="string", format="date-time", example="2025-10-13T14:30:00Z"),
-     *                 @OA\Property(property="photo_proof_url", type="string", example="http://192.168.1.9:8000/storage/livraisons/proofs/colis_1_1760357729.jpg")
+     *                 @OA\Property(property="photo_proof_url", type="string", example="http://192.168.1.5:8000/storage/livraisons/proofs/colis_1_1760357729.jpg")
      *             )
      *         )
      *     ),
@@ -592,7 +631,7 @@ class LivreurDeliveryController extends Controller
 
             // Validation des données
             $validator = Validator::make($request->all(), [
-                'code_validation' => 'required|string|max:255',
+                'code_validation' => 'required|string|size:5|regex:/^[0-9]{5}$/',
                 'photo_proof' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:10240', // 10MB max
                 'signature_data' => 'nullable|string',
                 'note_livraison' => 'nullable|string|max:500',
@@ -922,6 +961,120 @@ class LivreurDeliveryController extends Controller
                 'success' => false,
                 'message' => 'Erreur lors de la récupération des statistiques: ' . $e->getMessage()
             ], 500);
+        }
+    }
+
+    /**
+     * Envoyer le code de validation par WhatsApp au livreur
+     */
+    private function sendValidationCodeWhatsApp($livreur, $livraison, $colis)
+    {
+        try {
+            // Récupérer le nom de l'entreprise
+            $entrepriseName = $livreur->entreprise ? $livreur->entreprise->name : 'MOYOO';
+
+            // Construire le message
+            $message = "🚚 MOYOO - Code de Validation de Livraison\n\n";
+            $message .= "Bonjour {$livreur->first_name},\n\n";
+            $message .= "Vous avez démarré une nouvelle livraison :\n";
+            $message .= "📦 Colis : {$colis->code}\n";
+            $message .= "🏠 Adresse : {$colis->adresse_client}\n";
+            $message .= "👤 Client : {$colis->nom_client}\n";
+            $message .= "📱 Téléphone : {$colis->telephone_client}\n\n";
+            $message .= "🔐 CODE DE VALIDATION (5 chiffres) : {$livraison->code_validation}\n\n";
+            $message .= "⚠️ IMPORTANT :\n";
+            $message .= "• Utilisez ce code pour finaliser la livraison\n";
+            $message .= "• Ne partagez jamais ce code avec le client\n";
+            $message .= "• Le code est valide uniquement pour cette livraison\n\n";
+            $message .= "Bonne livraison !\n\n";
+            $message .= "Cordialement,\nL'équipe {$entrepriseName}";
+
+            // Envoyer le message
+            $result = $this->sendWhatsAppMessageInternal($livreur->mobile, $message);
+
+            if ($result['success']) {
+                \Log::info('Code de validation envoyé par WhatsApp', [
+                    'livreur_id' => $livreur->id,
+                    'livraison_id' => $livraison->id,
+                    'colis_id' => $colis->id,
+                    'code_validation' => $livraison->code_validation,
+                    'mobile' => $livreur->mobile
+                ]);
+            } else {
+                \Log::warning('Échec envoi code de validation WhatsApp', [
+                    'livreur_id' => $livreur->id,
+                    'livraison_id' => $livraison->id,
+                    'colis_id' => $colis->id,
+                    'error' => $result['error'] ?? 'Erreur inconnue'
+                ]);
+            }
+
+        } catch (\Exception $e) {
+            \Log::error('Erreur lors de l\'envoi du code de validation WhatsApp', [
+                'livreur_id' => $livreur->id,
+                'livraison_id' => $livraison->id,
+                'colis_id' => $colis->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+        }
+    }
+
+    /**
+     * Envoyer un message WhatsApp via l'API Wassenger
+     */
+    private function sendWhatsAppMessageInternal($phone, $message)
+    {
+        // Configuration de l'API Wassenger
+        $apiUrl = env('WASSENGER_API_URL', 'https://api.wassenger.com/v1/messages');
+        $token = env('WASSENGER_TOKEN', '11aa75a1de8f22a6c05e5b49eeb309b48329258699f05e419624bff1d0fcc9940058293b92a6fc95');
+
+        // Préparer les données
+        $data = [
+            'phone' => $phone,
+            'message' => $message
+        ];
+
+        // Configuration cURL
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $apiUrl);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Content-Type: application/json',
+            'Authorization: Bearer ' . $token
+        ]);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+
+        // Exécuter la requête
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $error = curl_error($ch);
+        curl_close($ch);
+
+        // Analyser la réponse
+        if ($error) {
+            return [
+                'success' => false,
+                'error' => 'Erreur cURL: ' . $error,
+                'response' => null
+            ];
+        }
+
+        $responseData = json_decode($response, true);
+
+        if ($httpCode >= 200 && $httpCode < 300) {
+            return [
+                'success' => true,
+                'response' => $responseData
+            ];
+        } else {
+            return [
+                'success' => false,
+                'error' => 'Erreur HTTP: ' . $httpCode,
+                'response' => $responseData
+            ];
         }
     }
 }

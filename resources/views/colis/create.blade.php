@@ -81,9 +81,11 @@
                                     <option value="">Sélectionner un ramassage</option>
                                     @if(isset($ramassages) && count($ramassages) > 0)
                                         @foreach($ramassages as $ramassage)
-                                            <option value="{{ $ramassage->id }}">
-                                                {{ $ramassage->code_ramassage }} - {{ $ramassage->marchand->first_name ?? '' }} {{ $ramassage->marchand->last_name ?? '' }}
-                                            </option>
+                                            @if($ramassage->statut === 'termine')
+                                                <option value="{{ $ramassage->id }}">
+                                                    {{ $ramassage->code_ramassage }} - {{ $ramassage->marchand->first_name ?? '' }} {{ $ramassage->marchand->last_name ?? '' }}
+                                                </option>
+                                            @endif
                                         @endforeach
                                     @else
                                         <option value="" disabled>Aucun ramassage disponible</option>
@@ -91,9 +93,12 @@
                                 </select>
                                 <small class="form-text text-muted">
                                     @if(isset($ramassages) && count($ramassages) > 0)
-                                        {{ count($ramassages) }} ramassage(s) disponible(s)
+                                        @php
+                                            $ramassagesTermines = collect($ramassages)->where('statut', 'termine')->count();
+                                        @endphp
+                                        {{ $ramassagesTermines }} ramassage(s) terminé(s) disponible(s)
                                     @else
-                                        Aucun ramassage avec des données de colis trouvé
+                                        Aucun ramassage terminé trouvé
                                     @endif
                                 </small>
                             </div>
@@ -191,15 +196,17 @@
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
-                        <div class="col-md-4 mt-2">
+                        <div class="col-md-6 mt-2">
                             <label for="ramassage_id" class="form-label">Ramassage (Optionnel)</label>
                             <select class="form-select @error('ramassage_id') is-invalid @enderror" id="ramassage_id" name="ramassage_id">
                                 <option value="">Sélectionner un ramassage</option>
                                 @if(isset($ramassages) && count($ramassages) > 0)
                                     @foreach($ramassages as $ramassage)
-                                        <option value="{{ $ramassage->id }}" {{ old('ramassage_id') == $ramassage->id ? 'selected' : '' }}>
-                                            {{ $ramassage->code_ramassage }} - {{ $ramassage->marchand->first_name ?? '' }} {{ $ramassage->marchand->last_name ?? '' }}
-                                        </option>
+                                        @if($ramassage->statut === 'termine')
+                                            <option value="{{ $ramassage->id }}" {{ old('ramassage_id') == $ramassage->id ? 'selected' : '' }}>
+                                                {{ $ramassage->code_ramassage }} - {{ $ramassage->marchand->first_name ?? '' }} {{ $ramassage->marchand->last_name ?? '' }}
+                                            </option>
+                                        @endif
                                     @endforeach
                                 @else
                                     <option value="" disabled>Aucun ramassage disponible</option>
@@ -207,9 +214,12 @@
                             </select>
                             <small class="form-text text-muted">
                                 @if(isset($ramassages) && count($ramassages) > 0)
-                                    {{ count($ramassages) }} ramassage(s) disponible(s)
+                                    @php
+                                        $ramassagesTermines = collect($ramassages)->where('statut', 'termine')->count();
+                                    @endphp
+                                    {{ $ramassagesTermines }} ramassage(s) terminé(s) disponible(s)
                                 @else
-                                    Aucun ramassage avec des données de colis trouvé
+                                    Aucun ramassage terminé trouvé
                                 @endif
                             </small>
                             @error('ramassage_id')
@@ -711,7 +721,11 @@ document.addEventListener('DOMContentLoaded', function() {
                         </div>
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Téléphone du client <span class="text-danger">*</span></label>
-                            <input type="tel" class="form-control" name="colis[${index}][telephone_client]" value="${colisData.telephone_client || ''}" required>
+                            <div class="input-group">
+                                <span class="input-group-text">+225</span>
+                                <input type="tel" class="form-control" name="colis[${index}][telephone_client]" value="${colisData.telephone_client || ''}" placeholder="07 12 34 56 78" required>
+                            </div>
+                            <div class="form-text">Format: 0707070707 (sans l'indicatif +225)</div>
                         </div>
                     </div>
                     <div class="row">
@@ -967,7 +981,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
                     <div class="col-md-6">
                         <label class="form-label">Téléphone du client <span class="text-danger">*</span></label>
-                        <input type="tel" class="form-control" name="colis[${index}][telephone_client]" required>
+                        <div class="input-group">
+                            <span class="input-group-text">+225</span>
+                            <input type="tel" class="form-control" name="colis[${index}][telephone_client]" placeholder="07 12 34 56 78" required>
+                        </div>
+                        <div class="form-text">Format: 0707070707 (sans l'indicatif +225)</div>
                     </div>
                 </div>
                 <div class="row mt-3">
@@ -2363,9 +2381,13 @@ function handleLivreurChangeMulti(index, livreurId) {
                             <label class="form-label">Nom du client <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" name="colis[${index}][nom_client]" value="${colisData.client || ''}" required>
                         </div>
-                        <div class="col-md-6 mb-3">
+                        <div class="col-md-6 mb-3"></div>
                             <label class="form-label">Téléphone du client <span class="text-danger">*</span></label>
-                            <input type="tel" class="form-control" name="colis[${index}][telephone_client]" value="${colisData.telephone_client || ''}" required>
+                            <div class="input-group">
+                                <span class="input-group-text">+225</span>
+                                <input type="tel" class="form-control" name="colis[${index}][telephone_client]" value="${colisData.telephone_client || ''}" placeholder="07 12 34 56 78" required>
+                            </div>
+                            <div class="form-text">Format: 0707070707 (sans l'indicatif +225)</div>
                         </div>
                     </div>
                     <div class="row">
@@ -2601,5 +2623,68 @@ function handleLivreurChangeMulti(index, livreurId) {
             });
         }
     }
+
+    // Fonction pour formater le numéro de téléphone
+    function formatPhoneNumber(input) {
+        // Nettoyer le numéro (supprimer les espaces et caractères non numériques)
+        let value = input.value.replace(/\D/g, '');
+
+        // Limiter à 10 chiffres
+        if (value.length > 10) {
+            value = value.substring(0, 10);
+        }
+
+        // Formater avec des espaces (format: 07 12 34 56 78)
+        if (value.length >= 2) {
+            value = value.substring(0, 2) + ' ' + value.substring(2);
+        }
+        if (value.length >= 5) {
+            value = value.substring(0, 5) + ' ' + value.substring(5);
+        }
+        if (value.length >= 8) {
+            value = value.substring(0, 8) + ' ' + value.substring(8);
+        }
+        if (value.length >= 11) {
+            value = value.substring(0, 11) + ' ' + value.substring(11);
+        }
+
+        input.value = value;
+    }
+
+    // Ajouter le formatage automatique aux champs téléphone existants et futurs
+    document.addEventListener('DOMContentLoaded', function() {
+        // Formater les champs téléphone existants
+        const phoneInputs = document.querySelectorAll('input[name*="telephone_client"]');
+        phoneInputs.forEach(input => {
+            input.addEventListener('input', function() {
+                formatPhoneNumber(this);
+            });
+        });
+
+        // Observer les nouveaux champs téléphone ajoutés dynamiquement
+        const observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                mutation.addedNodes.forEach(function(node) {
+                    if (node.nodeType === 1) { // Element node
+                        const phoneInputs = node.querySelectorAll('input[name*="telephone_client"]');
+                        phoneInputs.forEach(input => {
+                            input.addEventListener('input', function() {
+                                formatPhoneNumber(this);
+                            });
+                        });
+                    }
+                });
+            });
+        });
+
+        // Observer les changements dans le conteneur des colis
+        const colisContainer = document.getElementById('colis-container');
+        if (colisContainer) {
+            observer.observe(colisContainer, {
+                childList: true,
+                subtree: true
+            });
+        }
+    });
 }
 </script>

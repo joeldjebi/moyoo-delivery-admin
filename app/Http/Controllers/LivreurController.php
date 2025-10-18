@@ -94,11 +94,20 @@ class LivreurController extends Controller
                 'communes.*' => 'exists:communes,id',
                 'permis' => 'nullable|string|max:255',
                 'adresse' => 'nullable|string|max:500',
-                'password' => 'required|string|min:8|confirmed',
                 'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
             ]);
 
             DB::beginTransaction();
+
+            // Générer un mot de passe aléatoire de 8 chiffres
+            $password = str_pad(random_int(0, 99999999), 8, '0', STR_PAD_LEFT);
+
+            Log::info('Génération du mot de passe pour le livreur', [
+                'user_id' => $user->id,
+                'livreur_name' => $request->first_name . ' ' . $request->last_name,
+                'mobile' => $request->mobile,
+                'ip' => $request->ip()
+            ]);
 
             // Gérer l'upload de la photo
             $photoPath = null;
@@ -107,16 +116,28 @@ class LivreurController extends Controller
                 $photoPath = $photo->store('livreurs', 'public');
             }
 
+            // Nettoyer le numéro de téléphone (supprimer les espaces)
+            $cleanMobile = str_replace(' ', '', $request->mobile);
+            $fullMobile = '225' . $cleanMobile;
+
+            // Récupérer les livreurs pour la planification
+            $entrepriseId = auth()->user()->entreprise_id;
+            if (!$entrepriseId) {
+                $entreprise = Entreprise::where('created_by', auth()->id())->first();
+                $entrepriseId = $entreprise ? $entreprise->id : null;
+            }
+
             $livreur = Livreur::create([
+                'entreprise_id' => $entrepriseId,
                 'first_name' => $request->first_name,
                 'last_name' => $request->last_name,
-                'mobile' => $request->mobile,
+                'mobile' => $fullMobile,
                 'email' => $request->email,
                 'engin_id' => $request->engin_id,
                 'zone_activite_id' => $request->zone_activite_id,
                 'permis' => $request->permis,
                 'adresse' => $request->adresse,
-                'password' => Hash::make($request->password),
+                'password' => Hash::make($password),
                 'photo' => $photoPath,
                 'status' => 'actif',
                 'created_by' => $user->id
@@ -127,16 +148,55 @@ class LivreurController extends Controller
                 $livreur->communes()->attach($request->communes);
             }
 
+            // Générer le message WhatsApp
+            $message = $this->generateLivreurAccessMessage($livreur, $password, $fullMobile);
+
+            Log::info('Envoi des accès par WhatsApp', [
+                'livreur_id' => $livreur->id,
+                'mobile' => $fullMobile,
+                'app_url' => env('MOYOO_LIVREUR_APP_URL', 'https://bit.ly/moyoo-livreur-app'),
+                'entreprise_name' => $user->entreprise ? $user->entreprise->name : 'MOYOO',
+                'user_id' => $user->id,
+                'ip' => $request->ip()
+            ]);
+
+            $whatsappResult = $this->sendWhatsAppMessageInternal($fullMobile, $message);
+
+            if ($whatsappResult['success']) {
+                Log::info('Message WhatsApp envoyé avec succès', [
+                    'livreur_id' => $livreur->id,
+                    'mobile' => $fullMobile,
+                    'response' => $whatsappResult['response']
+                ]);
+            } else {
+                Log::warning('Échec de l\'envoi du message WhatsApp', [
+                    'livreur_id' => $livreur->id,
+                    'mobile' => $fullMobile,
+                    'error' => $whatsappResult['error'] ?? 'Erreur inconnue',
+                    'response' => $whatsappResult['response'] ?? null
+                ]);
+            }
+
             DB::commit();
 
             Log::info('Livreur créé avec succès', [
                 'livreur_id' => $livreur->id,
                 'nom' => $livreur->first_name . ' ' . $livreur->last_name,
+                'mobile' => $fullMobile,
+                'password_generated' => true,
+                'whatsapp_sent' => $whatsappResult['success'],
                 'user_id' => $user->id
             ]);
 
+            $successMessage = 'Livreur créé avec succès !';
+            if ($whatsappResult['success']) {
+                $successMessage .= ' Les accès ont été envoyés par WhatsApp.';
+            } else {
+                $successMessage .= ' Attention : L\'envoi WhatsApp a échoué.';
+            }
+
             return redirect()->route('livreurs.index')
-                ->with('success', 'Livreur créé avec succès !');
+                ->with('success', $successMessage);
 
         } catch (ValidationException $e) {
             DB::rollBack();
@@ -462,5 +522,89 @@ class LivreurController extends Controller
             return redirect()->back()
                 ->with('error', 'Erreur lors du changement de statut.');
         }
+    }
+
+    /**
+     * Générer le message WhatsApp pour les accès livreur
+     */
+    private function generateLivreurAccessMessage($livreur, $password, $fullMobile)
+    {
+        $appUrl = env('MOYOO_LIVREUR_APP_URL', 'https://bit.ly/moyoo-livreur-app');
+
+        // Récupérer le nom de l'entreprise de l'utilisateur qui crée le livreur
+        $user = Auth::user();
+        $entrepriseName = $user->entreprise ? $user->entreprise->name : 'MOYOO';
+
+        $message = "Bonjour {$livreur->first_name} {$livreur->last_name},\n\n";
+        $message .= "Votre compte livreur MOYOO a été créé avec succès !\n\n";
+        $message .= "Vos identifiants de connexion :\n";
+        $message .= "📱 Téléphone : {$fullMobile}\n";
+        $message .= "🔑 Mot de passe : {$password}\n\n";
+        $message .= "📲 Téléchargez l'application MOYOO :\n";
+        $message .= "🔗 {$appUrl}\n\n";
+        $message .= "Vous pouvez maintenant vous connecter à l'application MOYOO.\n\n";
+        $message .= "Cordialement,\nL'équipe {$entrepriseName}";
+
+        return $message;
+    }
+
+    /**
+     * Envoyer un message WhatsApp via l'API Wassenger
+     */
+    private function sendWhatsAppMessageInternal($phone, $message)
+    {
+        // Configuration de l'API Wassenger
+        $apiUrl = env('WASSENGER_API_URL');
+        $token = env('WASSENGER_TOKEN');
+
+        // Données à envoyer
+        $data = [
+            'phone' => $phone,
+            'message' => $message
+        ];
+
+        // Initialisation de cURL
+        $curl = curl_init();
+
+        // Configuration des options cURL
+        curl_setopt_array($curl, [
+            CURLOPT_URL => $apiUrl,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING => '',
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 30,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => 'POST',
+            CURLOPT_POSTFIELDS => json_encode($data),
+            CURLOPT_HTTPHEADER => [
+                'Content-Type: application/json',
+                'Token: ' . $token
+            ],
+        ]);
+
+        // Exécution de la requête
+        $response = curl_exec($curl);
+        $httpCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+        $error = curl_error($curl);
+
+        // Fermeture de cURL
+        curl_close($curl);
+
+        // Retour de la réponse
+        if ($error) {
+            return [
+                'success' => false,
+                'error' => $error,
+            ];
+        }
+
+        $responseData = json_decode($response, true);
+
+        return [
+            'success' => $httpCode >= 200 && $httpCode < 300,
+            'http_code' => $httpCode,
+            'response' => $responseData,
+        ];
     }
 }

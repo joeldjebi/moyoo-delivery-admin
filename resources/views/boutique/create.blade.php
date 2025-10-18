@@ -24,10 +24,29 @@
         </div>
     </div>
 
-    <!-- Messages d'erreur -->
+    <!-- Messages de session -->
+    @if(session('success'))
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="ti ti-check-circle me-2"></i>
+            {{ session('success') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+
+    @if(session('error'))
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="ti ti-alert-circle me-2"></i>
+            {{ session('error') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+
+    <!-- Messages d'erreur de validation -->
     @if($errors->any())
         <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            <ul class="mb-0">
+            <i class="ti ti-alert-circle me-2"></i>
+            <strong>Erreurs de validation :</strong>
+            <ul class="mb-0 mt-2">
                 @foreach($errors->all() as $error)
                     <li>{{ $error }}</li>
                 @endforeach
@@ -221,6 +240,15 @@ document.getElementById('boutiqueForm').addEventListener('submit', function(e) {
         e.preventDefault();
         alert('Veuillez entrer un numéro de téléphone valide (ex: +225 07 12 34 56 78).');
         document.getElementById('mobile').focus();
+        return false;
+    }
+
+    // Validation du libellé (caractères autorisés)
+    const libelleRegex = /^[a-zA-ZÀ-ÿ0-9\s\-\.]+$/;
+    if (!libelleRegex.test(libelle)) {
+        e.preventDefault();
+        alert('Le nom de la boutique ne peut contenir que des lettres, chiffres, espaces, tirets et points.');
+        document.getElementById('libelle').focus();
         return false;
     }
 

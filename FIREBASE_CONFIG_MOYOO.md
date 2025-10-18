@@ -87,7 +87,7 @@ const getFCMToken = async () => {
 
 // Envoyer le token au serveur
 const updateFCMToken = async (token) => {
-    const response = await fetch('http://192.168.1.9:8000/api/livreur/fcm-token', {
+    const response = await fetch('http://192.168.1.5:8000/api/livreur/fcm-token', {
         method: 'POST',
         headers: {
             'Authorization': `Bearer ${userToken}`,

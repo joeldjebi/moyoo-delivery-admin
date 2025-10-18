@@ -43,7 +43,7 @@ class HistoriqueLivraisonController extends Controller
 
             $data['user'] = Auth::user();
             if (empty($data['user'])) {
-                return redirect()->route('login')
+                return redirect()->route('auth.login')
                     ->withErrors(['error' => 'Veuillez vous connecter pour accéder à cette page.']);
             }
 
@@ -114,7 +114,7 @@ class HistoriqueLivraisonController extends Controller
 
             $data['user'] = Auth::user();
             if (empty($data['user'])) {
-                return redirect()->route('login')
+                return redirect()->route('auth.login')
                     ->withErrors(['error' => 'Veuillez vous connecter pour accéder à cette page.']);
             }
 
@@ -160,7 +160,7 @@ class HistoriqueLivraisonController extends Controller
         try {
             $user = Auth::user();
             if (empty($user)) {
-                return redirect()->route('login')
+                return redirect()->route('auth.login')
                     ->withErrors(['error' => 'Veuillez vous connecter pour accéder à cette page.']);
             }
 
@@ -230,7 +230,7 @@ class HistoriqueLivraisonController extends Controller
 
             $data['user'] = Auth::user();
             if (empty($data['user'])) {
-                return redirect()->route('login')
+                return redirect()->route('auth.login')
                     ->withErrors(['error' => 'Veuillez vous connecter pour accéder à cette page.']);
             }
 
@@ -270,7 +270,7 @@ class HistoriqueLivraisonController extends Controller
 
             $data['user'] = Auth::user();
             if (empty($data['user'])) {
-                return redirect()->route('login')
+                return redirect()->route('auth.login')
                     ->withErrors(['error' => 'Veuillez vous connecter pour accéder à cette page.']);
             }
 
@@ -325,7 +325,7 @@ class HistoriqueLivraisonController extends Controller
         try {
             $user = Auth::user();
             if (empty($user)) {
-                return redirect()->route('login')
+                return redirect()->route('auth.login')
                     ->withErrors(['error' => 'Veuillez vous connecter pour accéder à cette page.']);
             }
 
@@ -394,7 +394,7 @@ class HistoriqueLivraisonController extends Controller
         try {
             $user = Auth::user();
             if (empty($user)) {
-                return redirect()->route('login')
+                return redirect()->route('auth.login')
                     ->withErrors(['error' => 'Veuillez vous connecter pour accéder à cette page.']);
             }
 

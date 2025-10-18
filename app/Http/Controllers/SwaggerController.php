@@ -20,7 +20,7 @@ use Illuminate\Http\Request;
  * )
  *
  * @OA\Server(
- *     url="http://192.168.1.9:8000",
+ *     url="http://192.168.1.5:8000",
  *     description="Serveur de développement"
  * )
  *

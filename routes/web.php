@@ -213,9 +213,8 @@ Route::get('/api/ramassages/{id}/colis-data', [RamassageController::class, 'getC
 });
 
 // Routes d'authentification (sans middleware auth)
-Route::get('/', [AuthController::class, 'showLogin'])->name('login');
 Route::get('/', [AuthController::class, 'showLogin'])->name('auth.login');
-Route::get('/login', [AuthController::class, 'showLogin'])->name('auth.login');
+Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
 Route::post('/login', [AuthController::class, 'loginUser'])->name('auth.login.post');
 Route::get('/register', [AuthController::class, 'showRegister'])->name('auth.register');
 Route::post('/register', [AuthController::class, 'registerUser'])->name('auth.register.post');
@@ -393,6 +392,7 @@ Route::get('/api/ramassages/by-boutique/{boutiqueId}', function($boutiqueId) {
                $ramassages = \App\Models\Ramassage::with(['marchand', 'boutique'])
                    ->where('boutique_id', $boutiqueId)
                    ->where('entreprise_id', $entrepriseId)
+                   ->where('statut', 'termine') // Filtrer uniquement les ramassages terminés
                    ->whereNotNull('colis_data')
                    ->where('colis_data', '!=', '')
                    ->where('colis_data', '!=', '[]')
@@ -431,6 +431,118 @@ Route::get('/test-auth', function() {
         'entreprise_id' => auth()->check() ? auth()->user()->entreprise_id : null,
         'entreprise_created_by' => auth()->check() ? \App\Models\Entreprise::where('created_by', auth()->user()->id)->first()?->id : null
     ]);
+});
+
+// Routes Swagger
+require __DIR__.'/swagger.php';
+
+// Route pour synchroniser les données de frais de livraison
+Route::get('/api/sync-frais-data', function() {
+    try {
+        $user = auth()->user();
+        $entrepriseId = $user->entreprise_id ?? 1;
+
+        $controller = new \App\Http\Controllers\DashboardController();
+        $reflection = new ReflectionClass($controller);
+        $method = $reflection->getMethod('syncFraisData');
+        $method->setAccessible(true);
+
+        $method->invoke($controller, $entrepriseId);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Données de frais synchronisées avec succès'
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'error' => $e->getMessage()
+        ], 500);
+    }
+})->middleware('auth');
+
+// Route pour obtenir les statistiques de frais de livraison
+Route::get('/api/frais-stats', function() {
+    try {
+        $user = auth()->user();
+        $entrepriseId = $user->entreprise_id ?? 1;
+
+        $controller = new \App\Http\Controllers\DashboardController();
+        $reflection = new ReflectionClass($controller);
+        $method = $reflection->getMethod('getFraisStats');
+        $method->setAccessible(true);
+
+        $fraisStats = $method->invoke($controller, $entrepriseId);
+
+        return response()->json([
+            'success' => true,
+            'data' => $fraisStats
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'error' => $e->getMessage()
+        ], 500);
+    }
+})->middleware('auth');
+
+// Route pour obtenir les statistiques détaillées de frais de livraison
+Route::get('/api/frais-stats-detailed', function() {
+    try {
+        $user = auth()->user();
+        $entrepriseId = $user->entreprise_id ?? 1;
+
+        $controller = new \App\Http\Controllers\DashboardController();
+        $reflection = new ReflectionClass($controller);
+        $method = $reflection->getMethod('getFraisStatsDetailed');
+        $method->setAccessible(true);
+
+        $fraisStatsDetailed = $method->invoke($controller, $entrepriseId);
+
+        return response()->json([
+            'success' => true,
+            'data' => $fraisStatsDetailed
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'error' => $e->getMessage()
+        ], 500);
+    }
+})->middleware('auth');
+
+// Route de test simple pour les frais
+Route::get('/api/test-frais', function() {
+    try {
+        $entrepriseId = 1;
+
+        // Test direct
+        $totalDirect = \App\Models\Historique_livraison::where('entreprise_id', $entrepriseId)
+            ->sum('montant_de_la_livraison');
+
+        // Test via contrôleur
+        $controller = new \App\Http\Controllers\DashboardController();
+        $reflection = new ReflectionClass($controller);
+        $method = $reflection->getMethod('getFraisStats');
+        $method->setAccessible(true);
+        $fraisStats = $method->invoke($controller, $entrepriseId);
+
+        return response()->json([
+            'success' => true,
+            'direct_total' => $totalDirect,
+            'controller_stats' => $fraisStats,
+            'debug_info' => [
+                'entreprise_id' => $entrepriseId,
+                'today' => now()->format('Y-m-d'),
+                'records_count' => \App\Models\Historique_livraison::where('entreprise_id', $entrepriseId)->count()
+            ]
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'error' => $e->getMessage()
+        ], 500);
+    }
 });
 
 // Routes pour les reversements

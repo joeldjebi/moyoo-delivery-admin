@@ -42,7 +42,7 @@
 ### **Informations Générales :**
 - **Titre** : API MOYOO Fleet - Delivery & Notifications
 - **Version** : 2.0.0
-- **Serveur** : http://192.168.1.9:8000
+- **Serveur** : http://192.168.1.5:8000
 - **Authentification** : JWT Bearer Token
 
 ### **Sécurité :**
@@ -162,8 +162,8 @@ Content-Type: application/json
 ## 🚀 **Accès à la Documentation**
 
 ### **URL Swagger :**
-- **Interface** : http://192.168.1.9:8000/api/documentation
-- **JSON** : http://192.168.1.9:8000/api/documentation.json
+- **Interface** : http://192.168.1.5:8000/api/documentation
+- **JSON** : http://192.168.1.5:8000/api/documentation.json
 
 ### **Regénération :**
 ```bash

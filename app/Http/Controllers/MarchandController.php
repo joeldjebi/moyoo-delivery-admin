@@ -121,7 +121,8 @@ class MarchandController extends Controller
                 'adresse' => $request->adresse ? trim($request->adresse) : null,
                 'commune_id' => $request->commune_id,
                 'status' => $request->status,
-                'created_by' => $user->id
+                'created_by' => $user->id,
+                'entreprise_id' => $user->entreprise_id
             ]);
 
             DB::commit();

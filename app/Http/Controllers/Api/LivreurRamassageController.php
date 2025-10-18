@@ -320,10 +320,21 @@ class LivreurRamassageController extends Controller
      *     ),
      *     @OA\Response(
      *         response=400,
-     *         description="Ramassage non disponible",
+     *         description="Erreur de validation",
      *         @OA\JsonContent(
      *             @OA\Property(property="success", type="boolean", example=false),
-     *             @OA\Property(property="message", type="string", example="Ce ramassage n'est pas disponible pour le démarrage")
+     *             @OA\Property(property="message", type="string", example="Vous avez déjà un ramassage en cours. Terminez-le avant d'en démarrer un nouveau."),
+     *             @OA\Property(
+     *                 property="active_pickups",
+     *                 type="array",
+     *                 @OA\Items(
+     *                     type="object",
+     *                     @OA\Property(property="id", type="integer", example=1),
+     *                     @OA\Property(property="code", type="string", example="RAMS-ABC123"),
+     *                     @OA\Property(property="marchand", type="string", example="John Doe"),
+     *                     @OA\Property(property="boutique", type="string", example="Boutique Central")
+     *                 )
+     *             )
      *         )
      *     )
      * )
@@ -332,6 +343,31 @@ class LivreurRamassageController extends Controller
     {
         try {
             $livreur = Auth::guard('livreur')->user();
+
+            // Vérifier si le livreur a déjà un ramassage en cours
+            if (!$livreur->canStartPickup()) {
+                $activePickups = $livreur->getActivePickups();
+                \Log::warning("Tentative de démarrage de ramassage avec ramassage en cours", [
+                    'livreur_id' => $livreur->id,
+                    'livreur_name' => $livreur->first_name . ' ' . $livreur->last_name,
+                    'ramassage_id' => $id,
+                    'active_pickups_count' => $activePickups->count(),
+                    'active_pickups' => $activePickups->pluck('id')->toArray()
+                ]);
+
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Vous avez déjà un ramassage en cours. Terminez-le avant d\'en démarrer un nouveau.',
+                    'active_pickups' => $activePickups->map(function($ramassage) {
+                        return [
+                            'id' => $ramassage->id,
+                            'code' => $ramassage->code_ramassage,
+                            'marchand' => $ramassage->marchand ? $ramassage->marchand->first_name . ' ' . $ramassage->marchand->last_name : 'N/A',
+                            'boutique' => $ramassage->boutique ? $ramassage->boutique->libelle : 'N/A'
+                        ];
+                    })
+                ], 400);
+            }
 
             DB::beginTransaction();
 
@@ -428,7 +464,7 @@ class LivreurRamassageController extends Controller
      *                     @OA\Items(
      *                         type="object",
      *                         @OA\Property(property="filename", type="string", example="colis_1_1760355000_1.jpg"),
-     *                         @OA\Property(property="url", type="string", example="http://192.168.1.9:8000/storage/ramassages/photos/colis_1_1760355000_1.jpg"),
+     *                         @OA\Property(property="url", type="string", example="http://192.168.1.5:8000/storage/ramassages/photos/colis_1_1760355000_1.jpg"),
      *                         @OA\Property(property="path", type="string", example="ramassages/photos/colis_1_1760355000_1.jpg")
      *                     )
      *                 ),
@@ -691,6 +727,201 @@ class LivreurRamassageController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Erreur lors de la récupération des statistiques: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/api/livreur/ramassages/{id}/cancel",
+     *     summary="Annuler un ramassage",
+     *     description="Permet au livreur d'annuler un ramassage avec une raison",
+     *     tags={"Ramassage Livreur"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         description="ID du ramassage à annuler",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"raison"},
+     *             @OA\Property(property="raison", type="string", example="Problème technique avec le véhicule", description="Raison de l'annulation"),
+     *             @OA\Property(property="commentaire", type="string", example="Véhicule en panne, impossible de se déplacer", description="Commentaire supplémentaire (optionnel)")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Ramassage annulé avec succès",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Ramassage annulé avec succès"),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="id", type="integer", example=1),
+     *                 @OA\Property(property="statut", type="string", example="annule"),
+     *                 @OA\Property(property="raison_annulation", type="string", example="Problème technique avec le véhicule")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Ramassage non trouvé",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Ramassage non trouvé")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=403,
+     *         description="Non autorisé à annuler ce ramassage",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Vous n'êtes pas autorisé à annuler ce ramassage")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=400,
+     *         description="Ramassage déjà terminé ou annulé",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Ce ramassage ne peut pas être annulé")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Erreur de validation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Les données fournies ne sont pas valides"),
+     *             @OA\Property(property="errors", type="object")
+     *         )
+     *     )
+     * )
+     */
+    public function cancelRamassage(Request $request, $id)
+    {
+        try {
+            $livreur = Auth::guard('livreur')->user();
+
+            // Validation des données
+            $validator = Validator::make($request->all(), [
+                'raison' => 'required|string|max:500',
+                'commentaire' => 'nullable|string|max:1000'
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Les données fournies ne sont pas valides',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            // Récupérer le ramassage
+            $ramassage = Ramassage::find($id);
+
+            if (!$ramassage) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Ramassage non trouvé'
+                ], 404);
+            }
+
+            // Vérifier que le livreur est assigné à ce ramassage
+            $planification = PlanificationRamassage::where('ramassage_id', $ramassage->id)
+                                                  ->where('livreur_id', $livreur->id)
+                                                  ->first();
+
+            if (!$planification) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Vous n\'êtes pas autorisé à annuler ce ramassage'
+                ], 403);
+            }
+
+            // Vérifier que le ramassage peut être annulé
+            if (in_array($ramassage->statut, ['termine', 'annule'])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Ce ramassage ne peut pas être annulé (déjà terminé ou annulé)'
+                ], 400);
+            }
+
+            DB::beginTransaction();
+
+            try {
+                // Mettre à jour le statut du ramassage
+                $ramassage->update([
+                    'statut' => 'annule',
+                    'raison_annulation' => $request->raison,
+                    'commentaire_annulation' => $request->commentaire,
+                    'date_annulation' => now(),
+                    'annule_par' => $livreur->id
+                ]);
+
+                // Mettre à jour la planification
+                $planification->update([
+                    'statut' => 'annule',
+                    'date_annulation' => now()
+                ]);
+
+                // Si le ramassage était en cours, remettre les colis en attente
+                if ($ramassage->statut === 'en_cours') {
+                    $colisIds = RamassageColis::where('ramassage_id', $ramassage->id)
+                                             ->pluck('colis_id')
+                                             ->toArray();
+
+                    if (!empty($colisIds)) {
+                        Colis::whereIn('id', $colisIds)
+                             ->update([
+                                 'status' => Colis::STATUS_EN_ATTENTE,
+                                 'updated_at' => now()
+                             ]);
+                    }
+                }
+
+                DB::commit();
+
+                // Log de l'annulation
+                \Log::info('Ramassage annulé par le livreur', [
+                    'ramassage_id' => $ramassage->id,
+                    'livreur_id' => $livreur->id,
+                    'raison' => $request->raison,
+                    'commentaire' => $request->commentaire,
+                    'ip' => $request->ip()
+                ]);
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Ramassage annulé avec succès',
+                    'data' => [
+                        'id' => $ramassage->id,
+                        'statut' => $ramassage->statut,
+                        'raison_annulation' => $ramassage->raison_annulation,
+                        'date_annulation' => $ramassage->date_annulation
+                    ]
+                ]);
+
+            } catch (\Exception $e) {
+                DB::rollBack();
+                throw $e;
+            }
+
+        } catch (\Exception $e) {
+            \Log::error('Erreur lors de l\'annulation du ramassage', [
+                'ramassage_id' => $id,
+                'livreur_id' => $livreur->id ?? null,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'ip' => $request->ip()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de l\'annulation du ramassage: ' . $e->getMessage()
             ], 500);
         }
     }

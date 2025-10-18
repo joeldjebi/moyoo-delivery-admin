@@ -112,7 +112,7 @@ const getFCMToken = async () => {
 
 // Envoyer le token au serveur
 const updateFCMToken = async (token) => {
-    const response = await fetch('http://192.168.1.9:8000/api/livreur/fcm-token', {
+    const response = await fetch('http://192.168.1.5:8000/api/livreur/fcm-token', {
         method: 'POST',
         headers: {
             'Authorization': `Bearer ${userToken}`,
@@ -149,7 +149,7 @@ php artisan firebase:test --token=YOUR_FCM_TOKEN --type=marchand --id=1
 ### 2. **Test Manuel via API**
 ```bash
 # Mettre à jour le token FCM d'un livreur
-curl -X POST 'http://192.168.1.9:8000/api/livreur/fcm-token' \
+curl -X POST 'http://192.168.1.5:8000/api/livreur/fcm-token' \
   -H 'Authorization: Bearer YOUR_JWT_TOKEN' \
   -H 'Content-Type: application/json' \
   -d '{

@@ -18,7 +18,7 @@
 - **Titre** : "API MOYOO Fleet - Delivery & Notifications"
 - **Version** : 2.0.0
 - **Description** : Inclut les notifications Firebase
-- **Serveur** : http://192.168.1.9:8000
+- **Serveur** : http://192.168.1.5:8000
 
 #### 4. **🏷️ Tags Swagger**
 - **FCM Token** : Gestion des tokens FCM
@@ -50,8 +50,8 @@
 ## 🔗 **Accès à la Documentation**
 
 ### **URLs :**
-- **Interface Swagger** : http://192.168.1.9:8000/api/documentation
-- **JSON Swagger** : http://192.168.1.9:8000/api/documentation.json
+- **Interface Swagger** : http://192.168.1.5:8000/api/documentation
+- **JSON Swagger** : http://192.168.1.5:8000/api/documentation.json
 
 ### **Commandes :**
 ```bash
@@ -66,18 +66,18 @@ php artisan config:cache
 
 ### **Test API Général :**
 ```bash
-curl -X GET http://192.168.1.9:8000/api/test
+curl -X GET http://192.168.1.5:8000/api/test
 ```
 
 ### **Test Configuration Firebase :**
 ```bash
-curl -X GET http://192.168.1.9:8000/api/admin/firebase/status \
+curl -X GET http://192.168.1.5:8000/api/admin/firebase/status \
   -H "Authorization: Bearer YOUR_JWT_TOKEN"
 ```
 
 ### **Test Notification :**
 ```bash
-curl -X POST http://192.168.1.9:8000/api/admin/firebase/test-notification \
+curl -X POST http://192.168.1.5:8000/api/admin/firebase/test-notification \
   -H "Authorization: Bearer YOUR_JWT_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -103,7 +103,7 @@ const getFCMToken = async () => {
 ### **Envoyer le token au serveur :**
 ```javascript
 const updateFCMToken = async (token) => {
-    const response = await fetch('http://192.168.1.9:8000/api/livreur/fcm-token', {
+    const response = await fetch('http://192.168.1.5:8000/api/livreur/fcm-token', {
         method: 'POST',
         headers: {
             'Authorization': `Bearer ${userToken}`,
@@ -141,7 +141,7 @@ const updateFCMToken = async (token) => {
 
 ## 📋 **Prochaines Étapes**
 
-1. **Tester l'interface Swagger** : http://192.168.1.9:8000/api/documentation
+1. **Tester l'interface Swagger** : http://192.168.1.5:8000/api/documentation
 2. **Vérifier la configuration Firebase** : `/api/admin/firebase/status`
 3. **Tester les notifications** : `/api/admin/firebase/test-notification`
 4. **Intégrer dans l'app mobile** : Récupérer et envoyer les tokens FCM
@@ -154,6 +154,6 @@ const updateFCMToken = async (token) => {
 **Votre documentation API est complète et prête pour l'intégration mobile avec les notifications Firebase !**
 
 ### **📱 Accès Rapide :**
-- **Swagger UI** : http://192.168.1.9:8000/api/documentation
-- **Test API** : http://192.168.1.9:8000/api/test
-- **Status Firebase** : http://192.168.1.9:8000/api/admin/firebase/status
+- **Swagger UI** : http://192.168.1.5:8000/api/documentation
+- **Test API** : http://192.168.1.5:8000/api/test
+- **Status Firebase** : http://192.168.1.5:8000/api/admin/firebase/status

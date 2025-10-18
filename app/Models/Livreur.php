@@ -176,4 +176,62 @@ class Livreur extends Authenticatable implements JWTSubject
     {
         return $this->where('mobile', $mobile)->first();
     }
+
+    /**
+     * Vérifier si le livreur a des livraisons en cours
+     */
+    public function hasActiveDeliveries()
+    {
+        return $this->colis()
+            ->where('status', \App\Models\Colis::STATUS_EN_COURS)
+            ->exists();
+    }
+
+    /**
+     * Vérifier si le livreur a des ramassages en cours
+     */
+    public function hasActivePickups()
+    {
+        return \App\Models\Ramassage::where('livreur_id', $this->id)
+            ->where('statut', 'en_cours')
+            ->exists();
+    }
+
+    /**
+     * Obtenir les livraisons en cours du livreur
+     */
+    public function getActiveDeliveries()
+    {
+        return $this->colis()
+            ->where('status', \App\Models\Colis::STATUS_EN_COURS)
+            ->with(['livraison', 'commune_zone'])
+            ->get();
+    }
+
+    /**
+     * Obtenir les ramassages en cours du livreur
+     */
+    public function getActivePickups()
+    {
+        return \App\Models\Ramassage::where('livreur_id', $this->id)
+            ->where('statut', 'en_cours')
+            ->with(['marchand', 'boutique'])
+            ->get();
+    }
+
+    /**
+     * Vérifier si le livreur peut démarrer une nouvelle livraison
+     */
+    public function canStartDelivery()
+    {
+        return !$this->hasActiveDeliveries();
+    }
+
+    /**
+     * Vérifier si le livreur peut démarrer un nouveau ramassage
+     */
+    public function canStartPickup()
+    {
+        return !$this->hasActivePickups();
+    }
 }
