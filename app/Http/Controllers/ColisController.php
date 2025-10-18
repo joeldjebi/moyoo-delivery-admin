@@ -376,8 +376,6 @@ class ColisController extends Controller
                     'numero_de_ramassage' => '',
                     'adresse_de_ramassage' => '',
                     'status' => 0, // En attente
-                    'marchand_id' => $request->marchand_id,
-                    'boutique_id' => $request->boutique_id,
                     'zone_id' => $zone->id,
                     'commune_id' => $communeId, // Renseigner la commune pour le calcul des coûts
                     'package_colis_id' => $packageColis->id, // Référence au package
@@ -421,7 +419,7 @@ class ColisController extends Controller
                 $createdColis[] = $colis;
 
                 // Créer automatiquement la livraison pour ce colis
-                $livraison = $colis->createLivraison();
+                $livraison = $colis->createLivraison($request->marchand_id, $request->boutique_id);
                 $createdLivraisons[] = $livraison->id;
             }
 

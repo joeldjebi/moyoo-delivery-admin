@@ -245,7 +245,7 @@ class Colis extends Model
     /**
      * Créer automatiquement une livraison pour ce colis
      */
-    public function createLivraison()
+    public function createLivraison($marchandId = null, $boutiqueId = null)
     {
         $livraison = Livraison::create([
             'entreprise_id' => $this->entreprise_id,
@@ -253,8 +253,8 @@ class Colis extends Model
             'numero_de_livraison' => 'LIV-' . strtoupper(Str::random(8)),
             'colis_id' => $this->id,
             'package_colis_id' => $this->package_colis_id,
-            'marchand_id' => $this->marchand_id,
-            'boutique_id' => $this->boutique_id,
+            'marchand_id' => $marchandId,
+            'boutique_id' => $boutiqueId,
             'adresse_de_livraison' => $this->adresse_client,
             'status' => Livraison::STATUS_EN_ATTENTE,
             'note_livraison' => $this->instructions_livraison,

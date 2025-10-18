@@ -1091,7 +1091,7 @@ class LivreurDeliveryController extends Controller
         try {
             // Récupérer les informations depuis la table livraisons
             $livraison = \App\Models\Livraison::where('colis_id', $colis->id)->first();
-            
+
             if (!$livraison) {
                 \Log::warning('Aucune livraison trouvée pour le colis', [
                     'colis_id' => $colis->id
