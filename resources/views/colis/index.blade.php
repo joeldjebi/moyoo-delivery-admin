@@ -162,7 +162,7 @@
                                             </td>
                                             <td>
                                                 <div>
-                                                    <span class="badge bg-label-primary">{{ $colisItem->zone->nom ?? 'N/A' }}</span>
+                                                    <span class="badge bg-label-primary">{{ $colisItem->zone->libelle ?? 'N/A' }}</span>
                                                     <br>
                                                     <small class="text-muted">{{ $colisItem->commune->libelle ?? 'N/A' }}</small>
                                                 </div>
@@ -170,8 +170,8 @@
                                             <td>
                                                 @if($colisItem->livreur)
                                                     <div>
-                                                        <h6 class="mb-0">{{ $colisItem->livreur->nom ?? 'N/A' }} {{ $colisItem->livreur->prenom ?? 'N/A' }}</h6>
-                                                        <small class="text-muted">{{ $colisItem->livreur->telephone ?? 'N/A' }}</small>
+                                                        <h6 class="mb-0">{{ $colisItem->livreur->first_name ?? 'N/A' }} {{ $colisItem->livreur->last_name ?? 'N/A' }}</h6>
+                                                        <small class="text-muted">{{ $colisItem->livreur->mobile ?? 'N/A' }}</small>
                                                     </div>
                                                 @else
                                                     <span class="text-muted">Non assigné</span>
