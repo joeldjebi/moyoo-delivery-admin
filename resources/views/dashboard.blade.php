@@ -330,7 +330,13 @@
                                         <br>
                                         <small class="text-info">
                                             <i class="ti ti-clock me-1"></i>
-                                            En attente depuis {{ $colis->created_at->diffForHumans(null, true, false, 2) }}
+                                            @php
+                                                $originalLocale = \Carbon\Carbon::getLocale();
+                                                \Carbon\Carbon::setLocale('fr');
+                                                $timeDiff = $colis->created_at->diffForHumans(null, true, false, 2);
+                                                \Carbon\Carbon::setLocale($originalLocale);
+                                            @endphp
+                                            En attente depuis {{ $timeDiff }}
                                             @php
                                                 $daysDiff = floor($colis->created_at->diffInDays());
                                             @endphp
@@ -410,7 +416,13 @@
                                         <br>
                                         <small class="text-muted">
                                             <i class="ti ti-clock me-1"></i>
-                                            {{ $boutique->created_at->diffForHumans(null, true, false, 2) }}
+                                            @php
+                                                $originalLocale = \Carbon\Carbon::getLocale();
+                                                \Carbon\Carbon::setLocale('fr');
+                                                $timeDiff = $boutique->created_at->diffForHumans(null, true, false, 2);
+                                                \Carbon\Carbon::setLocale($originalLocale);
+                                            @endphp
+                                            {{ $timeDiff }}
                                         </small>
                                     </div>
                                     <div class="text-end">
@@ -728,7 +740,13 @@
                                                     @if($ramassage->statut === 'demande')
                                                         <small class="text-warning">
                                                             <i class="ti ti-clock me-1"></i>
-                                                            En attente depuis {{ \Carbon\Carbon::parse($ramassage->created_at)->diffForHumans(null, true, false, 2) }}
+                                                            @php
+                                                                $originalLocale = \Carbon\Carbon::getLocale();
+                                                                \Carbon\Carbon::setLocale('fr');
+                                                                $timeDiff = \Carbon\Carbon::parse($ramassage->created_at)->diffForHumans(null, true, false, 2);
+                                                                \Carbon\Carbon::setLocale($originalLocale);
+                                                            @endphp
+                                                            En attente depuis {{ $timeDiff }}
                                                         </small>
                                                     @elseif($ramassage->statut === 'planifie')
                                                         <small class="text-info">
@@ -738,7 +756,13 @@
                                                     @elseif($ramassage->statut === 'en_cours')
                                                         <small class="text-primary">
                                                             <i class="ti ti-truck me-1"></i>
-                                                            En cours depuis {{ \Carbon\Carbon::parse($ramassage->updated_at)->diffForHumans(null, true, false, 2) }}
+                                                            @php
+                                                                $originalLocale = \Carbon\Carbon::getLocale();
+                                                                \Carbon\Carbon::setLocale('fr');
+                                                                $timeDiff = \Carbon\Carbon::parse($ramassage->updated_at)->diffForHumans(null, true, false, 2);
+                                                                \Carbon\Carbon::setLocale($originalLocale);
+                                                            @endphp
+                                                            En cours depuis {{ $timeDiff }}
                                                         </small>
                                                     @elseif($ramassage->statut === 'annule')
                                                         <small class="text-danger">
