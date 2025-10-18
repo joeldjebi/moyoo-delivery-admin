@@ -7,6 +7,8 @@ use App\Models\Colis;
 use App\Models\Historique_livraison;
 use App\Models\Livraison;
 use App\Models\PackageColis;
+use App\Models\Commune;
+use App\Models\BalanceMarchand;
 use App\Models\Marchand;
 use App\Helpers\ImageCompressor;
 use App\Traits\SendsFirebaseNotifications;
@@ -1087,18 +1089,28 @@ class LivreurDeliveryController extends Controller
     private function ensureBalanceMarchandExists($colis)
     {
         try {
+            // Récupérer les informations depuis la table livraisons
+            $livraison = \App\Models\Livraison::where('colis_id', $colis->id)->first();
+            
+            if (!$livraison) {
+                \Log::warning('Aucune livraison trouvée pour le colis', [
+                    'colis_id' => $colis->id
+                ]);
+                return;
+            }
+
             // Vérifier si l'entrée existe déjà
-            $existingBalance = \App\Models\BalanceMarchand::where('entreprise_id', $colis->entreprise_id)
-                ->where('marchand_id', $colis->marchand_id)
-                ->where('boutique_id', $colis->boutique_id)
+            $existingBalance = BalanceMarchand::where('entreprise_id', $livraison->entreprise_id)
+                ->where('marchand_id', $livraison->marchand_id)
+                ->where('boutique_id', $livraison->boutique_id)
                 ->first();
 
             if (!$existingBalance) {
                 // Créer l'entrée avec les données par défaut
-                \App\Models\BalanceMarchand::create([
-                    'entreprise_id' => $colis->entreprise_id,
-                    'marchand_id' => $colis->marchand_id,
-                    'boutique_id' => $colis->boutique_id,
+                BalanceMarchand::create([
+                    'entreprise_id' => $livraison->entreprise_id,
+                    'marchand_id' => $livraison->marchand_id,
+                    'boutique_id' => $livraison->boutique_id,
                     'montant_encaisse' => 0.00,
                     'montant_reverse' => 0.00,
                     'balance_actuelle' => 0.00,
@@ -1107,17 +1119,19 @@ class LivreurDeliveryController extends Controller
 
                 \Log::info('Entrée balance_marchands créée automatiquement', [
                     'colis_id' => $colis->id,
-                    'entreprise_id' => $colis->entreprise_id,
-                    'marchand_id' => $colis->marchand_id,
-                    'boutique_id' => $colis->boutique_id
+                    'livraison_id' => $livraison->id,
+                    'entreprise_id' => $livraison->entreprise_id,
+                    'marchand_id' => $livraison->marchand_id,
+                    'boutique_id' => $livraison->boutique_id
                 ]);
             } else {
                 \Log::info('Entrée balance_marchands existe déjà', [
                     'colis_id' => $colis->id,
+                    'livraison_id' => $livraison->id,
                     'balance_id' => $existingBalance->id,
-                    'entreprise_id' => $colis->entreprise_id,
-                    'marchand_id' => $colis->marchand_id,
-                    'boutique_id' => $colis->boutique_id
+                    'entreprise_id' => $livraison->entreprise_id,
+                    'marchand_id' => $livraison->marchand_id,
+                    'boutique_id' => $livraison->boutique_id
                 ]);
             }
 
