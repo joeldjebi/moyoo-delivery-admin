@@ -106,7 +106,7 @@ class ColisController extends Controller
             $data['colis'] = $query->orderBy('created_at', 'desc')->paginate(15)->appends($request->query());
 
             // Ajouter les données nécessaires pour les filtres
-            $data['zones'] = Zone::where('actif', true)->orderBy('nom')->get();
+            $data['zones'] = Commune::orderBy('libelle')->get();
             $data['livreurs'] = Livreur::where('status', 'actif')->orderBy('first_name')->get();
             $data['engins'] = Engin::where('status', 'actif')->orderBy('libelle')->get();
 
