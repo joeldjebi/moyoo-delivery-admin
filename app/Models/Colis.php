@@ -258,7 +258,7 @@ class Colis extends Model
             'adresse_de_livraison' => $this->adresse_client,
             'status' => Livraison::STATUS_EN_ATTENTE,
             'note_livraison' => $this->instructions_livraison,
-            'code_validation' => Str::random(6),
+            'code_validation' => str_pad(random_int(0, 99999), 5, '0', STR_PAD_LEFT),
             'created_by' => auth()->user()->id ?? 1
         ]);
 
