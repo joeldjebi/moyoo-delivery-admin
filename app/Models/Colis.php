@@ -458,17 +458,20 @@ class Colis extends Model
 
     public function getMontantAEncaisseAttribute()
     {
-        return $this->getZoneAttributeValue('montant_a_encaisse');
+        // Retourner la valeur de la table colis si elle existe, sinon chercher dans commune_zone
+        return $this->attributes['montant_a_encaisse'] ?? $this->getZoneAttributeValue('montant_a_encaisse');
     }
 
     public function getPrixDeVenteAttribute()
     {
-        return $this->getZoneAttributeValue('prix_de_vente');
+        // Retourner la valeur de la table colis si elle existe, sinon chercher dans commune_zone
+        return $this->attributes['prix_de_vente'] ?? $this->getZoneAttributeValue('prix_de_vente');
     }
 
     public function getNumeroFactureAttribute()
     {
-        return $this->getZoneAttributeValue('numero_facture');
+        // Retourner la valeur de la table colis si elle existe, sinon chercher dans commune_zone
+        return $this->attributes['numero_facture'] ?? $this->getZoneAttributeValue('numero_facture');
     }
 
     public function getTypeColisIdAttribute()
@@ -483,12 +486,14 @@ class Colis extends Model
 
     public function getPoidsIdAttribute()
     {
-        return $this->getZoneAttributeValue('poids_id');
+        // Retourner la valeur de la table colis si elle existe, sinon chercher dans commune_zone
+        return $this->attributes['poids_id'] ?? $this->getZoneAttributeValue('poids_id');
     }
 
     public function getModeLivraisonIdAttribute()
     {
-        return $this->getZoneAttributeValue('mode_livraison_id');
+        // Retourner la valeur de la table colis si elle existe, sinon chercher dans commune_zone
+        return $this->attributes['mode_livraison_id'] ?? $this->getZoneAttributeValue('mode_livraison_id');
     }
 
     public function getDelaiIdAttribute()
