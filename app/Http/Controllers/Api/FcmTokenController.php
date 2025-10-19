@@ -50,7 +50,7 @@ class FcmTokenController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'fcm_token' => 'required|string|min:10',
-            'device_type' => 'nullable|string|in:android,ios'
+            'device_type' => 'nullable|string|in:android,ios,web'
         ]);
 
         if ($validator->fails()) {
@@ -62,7 +62,8 @@ class FcmTokenController extends Controller
         }
 
         try {
-            $user = auth('sanctum')->user();
+            // Essayer d'abord l'authentification web, puis sanctum
+            $user = auth()->user() ?? auth('sanctum')->user();
 
             if (!$user) {
                 return response()->json([
@@ -155,7 +156,7 @@ class FcmTokenController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'fcm_token' => 'required|string|min:10',
-            'device_type' => 'nullable|string|in:android,ios'
+            'device_type' => 'nullable|string|in:android,ios,web'
         ]);
 
         if ($validator->fails()) {
@@ -243,7 +244,7 @@ class FcmTokenController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'fcm_token' => 'required|string|min:10',
-            'device_type' => 'nullable|string|in:android,ios'
+            'device_type' => 'nullable|string|in:android,ios,web'
         ]);
 
         if ($validator->fails()) {
@@ -427,7 +428,8 @@ class FcmTokenController extends Controller
     public function destroy()
     {
         try {
-            $user = auth('sanctum')->user();
+            // Essayer d'abord l'authentification web, puis sanctum
+            $user = auth()->user() ?? auth('sanctum')->user();
 
             if (!$user) {
                 return response()->json([

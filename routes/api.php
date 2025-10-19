@@ -27,6 +27,12 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::delete('fcm-token', [FcmTokenController::class, 'destroy']);
 });
 
+// Routes pour l'authentification web (fallback)
+Route::middleware(['web', 'auth'])->group(function () {
+    Route::post('fcm-token-web', [FcmTokenController::class, 'store']);
+    Route::delete('fcm-token-web', [FcmTokenController::class, 'destroy']);
+});
+
 // Routes publiques pour l'authentification des livreurs
 Route::prefix('livreur')->group(function () {
     // Authentification
