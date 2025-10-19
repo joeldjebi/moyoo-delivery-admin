@@ -221,6 +221,12 @@
                 </a>
               </li>
               @endif
+              <li class="menu-item {{ $menu == 'subscriptions' ? 'active' : '' }}">
+                <a href="{{ route('subscriptions.index') }}" class="menu-link">
+                  <i class="menu-icon tf-icons ti ti-crown"></i>
+                  <div data-i18n="Abonnements">Abonnements</div>
+                </a>
+              </li>
               @if(auth()->user()->hasPermission('settings.update'))
               <li class="menu-item {{ $menu == 'role-permissions' ? 'active' : '' }}">
                 <a href="{{ route('role-permissions.index') }}" class="menu-link">

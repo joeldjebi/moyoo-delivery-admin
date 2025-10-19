@@ -30,6 +30,12 @@ class User extends Authenticatable
         'permissions',
         'status',
         'created_by',
+        'subscription_plan_id',
+        'subscription_started_at',
+        'subscription_expires_at',
+        'subscription_status',
+        'is_trial',
+        'trial_expires_at',
     ];
 
     /**
@@ -53,6 +59,10 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'permissions' => 'array',
+            'subscription_started_at' => 'datetime',
+            'subscription_expires_at' => 'datetime',
+            'trial_expires_at' => 'datetime',
+            'is_trial' => 'boolean',
         ];
     }
 
@@ -67,6 +77,11 @@ class User extends Authenticatable
     public function createdBy()
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function subscriptionPlan()
+    {
+        return $this->belongsTo(SubscriptionPlan::class);
     }
 
     /**
@@ -374,5 +389,109 @@ class User extends Authenticatable
         }
 
         return false;
+    }
+
+    /**
+     * Méthodes pour la gestion des abonnements
+     */
+    
+    /**
+     * Vérifier si l'utilisateur a un abonnement actif
+     */
+    public function hasActiveSubscription()
+    {
+        return $this->subscription_status === 'active' && 
+               $this->subscription_expires_at && 
+               $this->subscription_expires_at->isFuture() &&
+               !$this->is_trial;
+    }
+
+    /**
+     * Vérifier si l'utilisateur est en période d'essai
+     */
+    public function isOnTrial()
+    {
+        return $this->is_trial && 
+               $this->trial_expires_at && 
+               $this->trial_expires_at->isFuture();
+    }
+
+    /**
+     * Vérifier si l'utilisateur peut utiliser une fonctionnalité
+     */
+    public function canUseFeature($feature)
+    {
+        if (!$this->subscriptionPlan) {
+            return false;
+        }
+
+        return $this->subscriptionPlan->$feature ?? false;
+    }
+
+    /**
+     * Vérifier si l'utilisateur a atteint sa limite de colis
+     */
+    public function hasReachedColisLimit()
+    {
+        if (!$this->subscriptionPlan || !$this->subscriptionPlan->max_colis_per_month) {
+            return false;
+        }
+
+        $currentMonthColis = \App\Models\Colis::whereHas('packageColis', function($query) {
+            $query->whereHas('communeZone', function($q) {
+                $q->where('entreprise_id', $this->entreprise_id);
+            });
+        })->whereMonth('created_at', now()->month)
+          ->whereYear('created_at', now()->year)
+          ->count();
+
+        return $currentMonthColis >= $this->subscriptionPlan->max_colis_per_month;
+    }
+
+    /**
+     * Assigner un plan d'abonnement à l'utilisateur
+     */
+    public function assignSubscriptionPlan($planId, $isTrial = true)
+    {
+        $plan = \App\Models\SubscriptionPlan::find($planId);
+        
+        if (!$plan) {
+            return false;
+        }
+
+        $this->update([
+            'subscription_plan_id' => $planId,
+            'subscription_started_at' => now(),
+            'subscription_expires_at' => $isTrial ? now()->addMonth() : now()->addDays($plan->duration_days),
+            'subscription_status' => 'active',
+            'is_trial' => $isTrial,
+            'trial_expires_at' => $isTrial ? now()->addMonth() : null,
+        ]);
+
+        return true;
+    }
+
+    /**
+     * Obtenir le statut de l'abonnement formaté
+     */
+    public function getSubscriptionStatusAttribute()
+    {
+        if ($this->isOnTrial()) {
+            return 'Période d\'essai';
+        }
+
+        if ($this->hasActiveSubscription()) {
+            return 'Actif';
+        }
+
+        if ($this->subscription_status === 'expired') {
+            return 'Expiré';
+        }
+
+        if ($this->subscription_status === 'cancelled') {
+            return 'Annulé';
+        }
+
+        return 'Inactif';
     }
 }

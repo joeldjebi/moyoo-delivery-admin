@@ -563,3 +563,18 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/reversements/{id}/validate', [App\Http\Controllers\ReversementController::class, 'validateReversement'])->name('reversements.validate')->middleware('permission:reversements.update');
     Route::post('/reversements/{id}/cancel', [App\Http\Controllers\ReversementController::class, 'cancelReversement'])->name('reversements.cancel')->middleware('permission:reversements.update');
 });
+
+// Routes des abonnements
+Route::middleware(['auth', 'tenant'])->group(function () {
+    Route::get('/subscriptions', [App\Http\Controllers\SubscriptionController::class, 'index'])->name('subscriptions.index');
+    Route::post('/subscriptions/change-plan', [App\Http\Controllers\SubscriptionController::class, 'changePlan'])->name('subscriptions.change-plan');
+    Route::get('/subscriptions/payment/{plan_id}', [App\Http\Controllers\SubscriptionController::class, 'payment'])->name('subscriptions.payment');
+    Route::post('/subscriptions/process-payment', [App\Http\Controllers\SubscriptionController::class, 'processPayment'])->name('subscriptions.process-payment');
+    Route::post('/subscriptions/cancel', [App\Http\Controllers\SubscriptionController::class, 'cancel'])->name('subscriptions.cancel');
+});
+
+// API Routes pour les abonnements
+Route::middleware(['auth:sanctum'])->group(function () {
+    Route::get('/api/subscriptions/plans', [App\Http\Controllers\SubscriptionController::class, 'getPlans']);
+    Route::get('/api/subscriptions/user', [App\Http\Controllers\SubscriptionController::class, 'getUserSubscription']);
+});
