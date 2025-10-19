@@ -101,7 +101,7 @@
                             <p class="text-muted">{{ $user->subscriptionPlan->description }}</p>
                         </div>
                         <div class="col-md-6">
-                            <h6>Statut: {{ $user->subscription_status }}</h6>
+                            <h6>Statut: {{ $user->getAttribute('subscription_status') }}</h6>
                             @if($user->isOnTrial())
                                 <p class="text-muted">Période d'essai jusqu'au {{ $user->trial_expires_at->format('d/m/Y à H:i') }}</p>
                             @elseif($user->hasActiveSubscription())
