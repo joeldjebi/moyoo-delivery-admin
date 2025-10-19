@@ -84,7 +84,7 @@ $hasSubscription = $user && $user->subscriptionPlan;
     @endphp
 
     <div class="card card-border-shadow-{{ $isActive ? 'success' : ($isTrial ? 'warning' : 'secondary') }}">
-        <div class="card-body">
+        <div class="card-body" style="padding-top: 0 !important; padding-bottom: 5px !important;">
             <div class="d-flex align-items-center justify-content-between">
                 <div class="d-flex align-items-center">
                     <div class="avatar me-4">
@@ -198,9 +198,9 @@ $hasSubscription = $user && $user->subscriptionPlan;
                                 </span>
                             </div>
                         </div>
-                        
+
                         <div class="row g-3">
-                            <div class="col-lg-4 col-md-6">
+                            <div class="col-lg-2 col-md-6">
                                 <a href="{{ route('colis.create') }}" class="btn btn-outline-primary w-100 quick-action-btn d-flex flex-column align-items-center justify-content-center py-4">
                                     <div class="avatar mb-3">
                                         <span class="avatar-initial rounded bg-label-primary">
@@ -211,8 +211,8 @@ $hasSubscription = $user && $user->subscriptionPlan;
                                     <small class="text-muted text-center">Nouveau colis à livrer</small>
                                 </a>
                             </div>
-                            
-                            <div class="col-lg-4 col-md-6">
+
+                            <div class="col-lg-3 col-md-6">
                                 <a href="{{ route('ramassages.create') }}" class="btn btn-outline-success w-100 quick-action-btn d-flex flex-column align-items-center justify-content-center py-4">
                                     <div class="avatar mb-3">
                                         <span class="avatar-initial rounded bg-label-success">
@@ -223,8 +223,8 @@ $hasSubscription = $user && $user->subscriptionPlan;
                                     <small class="text-muted text-center">Nouveau ramassage</small>
                                 </a>
                             </div>
-                            
-                            <div class="col-lg-4 col-md-6">
+
+                            <div class="col-lg-3 col-md-6">
                                 <a href="{{ route('marchands.create') }}" class="btn btn-outline-info w-100 quick-action-btn d-flex flex-column align-items-center justify-content-center py-4">
                                     <div class="avatar mb-3">
                                         <span class="avatar-initial rounded bg-label-info">
@@ -235,10 +235,8 @@ $hasSubscription = $user && $user->subscriptionPlan;
                                     <small class="text-muted text-center">Nouveau marchand</small>
                                 </a>
                             </div>
-                        </div>
-                        
-                        <div class="row g-3 mt-2">
-                            <div class="col-lg-4 col-md-6">
+
+                            <div class="col-lg-2 col-md-6">
                                 <a href="{{ route('livreurs.create') }}" class="btn btn-outline-warning w-100 quick-action-btn d-flex flex-column align-items-center justify-content-center py-4">
                                     <div class="avatar mb-3">
                                         <span class="avatar-initial rounded bg-label-warning">
@@ -249,8 +247,7 @@ $hasSubscription = $user && $user->subscriptionPlan;
                                     <small class="text-muted text-center">Nouveau livreur</small>
                                 </a>
                             </div>
-                            
-                            <div class="col-lg-4 col-md-6">
+                            <div class="col-lg-2 col-md-6">
                                 <a href="{{ route('boutiques.create') }}" class="btn btn-outline-secondary w-100 quick-action-btn d-flex flex-column align-items-center justify-content-center py-4">
                                     <div class="avatar mb-3">
                                         <span class="avatar-initial rounded bg-label-secondary">
@@ -259,18 +256,6 @@ $hasSubscription = $user && $user->subscriptionPlan;
                                     </div>
                                     <h6 class="mb-1">Créer une Boutique</h6>
                                     <small class="text-muted text-center">Nouvelle boutique</small>
-                                </a>
-                            </div>
-                            
-                            <div class="col-lg-4 col-md-6">
-                                <a href="{{ route('zones.create') }}" class="btn btn-outline-dark w-100 quick-action-btn d-flex flex-column align-items-center justify-content-center py-4">
-                                    <div class="avatar mb-3">
-                                        <span class="avatar-initial rounded bg-label-dark">
-                                            <i class="ti ti-map-pin ti-24px"></i>
-                                        </span>
-                                    </div>
-                                    <h6 class="mb-1">Créer une Zone</h6>
-                                    <small class="text-muted text-center">Nouvelle zone de livraison</small>
                                 </a>
                             </div>
                         </div>
