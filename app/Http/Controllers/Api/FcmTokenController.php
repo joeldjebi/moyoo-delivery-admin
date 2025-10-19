@@ -19,6 +19,94 @@ class FcmTokenController extends Controller
 {
     /**
      * @OA\Post(
+     *     path="/api/fcm-token",
+     *     summary="Mettre à jour le token FCM de l'utilisateur connecté (Admin/User)",
+     *     tags={"FCM Token"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"fcm_token"},
+     *             @OA\Property(property="fcm_token", type="string", description="Token FCM de l'utilisateur"),
+     *             @OA\Property(property="device_type", type="string", description="Type d'appareil (android/ios)", example="android")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Token FCM mis à jour avec succès",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Token FCM mis à jour avec succès"),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="user_id", type="integer", example=1),
+     *                 @OA\Property(property="fcm_token", type="string", example="fcm_token_example"),
+     *                 @OA\Property(property="updated_at", type="string", format="datetime")
+     *             )
+     *         )
+     *     )
+     * )
+     */
+    public function store(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'fcm_token' => 'required|string|min:10',
+            'device_type' => 'nullable|string|in:android,ios'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Données invalides',
+                'errors' => $validator->errors()
+            ], 400);
+        }
+
+        try {
+            $user = auth('sanctum')->user();
+
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Utilisateur non trouvé'
+                ], 404);
+            }
+
+            // Mettre à jour le token FCM
+            $user->update([
+                'fcm_token' => $request->fcm_token
+            ]);
+
+            Log::info('Token FCM mis à jour pour l\'utilisateur', [
+                'user_id' => $user->id,
+                'user_type' => $user->user_type,
+                'device_type' => $request->device_type
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Token FCM mis à jour avec succès',
+                'data' => [
+                    'user_id' => $user->id,
+                    'user_type' => $user->user_type,
+                    'fcm_token' => $user->fcm_token,
+                    'updated_at' => $user->updated_at
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Erreur mise à jour token FCM utilisateur', [
+                'user_id' => auth('sanctum')->id(),
+                'error' => $e->getMessage()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de la mise à jour du token FCM'
+            ], 500);
+        }
+    }
+    /**
+     * @OA\Post(
      *     path="/api/livreur/fcm-token",
      *     summary="Mettre à jour le token FCM d'un livreur",
      *     tags={"FCM Token"},

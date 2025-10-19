@@ -30,6 +30,7 @@ class User extends Authenticatable
         'permissions',
         'status',
         'created_by',
+        'fcm_token',
         'subscription_plan_id',
         'subscription_started_at',
         'subscription_expires_at',

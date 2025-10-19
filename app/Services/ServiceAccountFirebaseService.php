@@ -424,6 +424,200 @@ class ServiceAccountFirebaseService
     }
 
     /**
+     * Envoyer une notification à l'admin lors de la fin d'une livraison
+     */
+    public function sendDeliveryCompletedNotificationToAdmin($colis, $livreur, $adminToken)
+    {
+        try {
+            $payload = [
+                'message' => [
+                    'token' => $adminToken,
+                    'notification' => [
+                        'title' => 'Livraison Terminée',
+                        'body' => "Le colis {$colis->code} a été livré par {$livreur->first_name} {$livreur->last_name}"
+                    ],
+                    'data' => [
+                        'type' => 'delivery_completed',
+                        'colis_id' => (string)$colis->id,
+                        'colis_code' => $colis->code,
+                        'livreur_id' => (string)$livreur->id,
+                        'livreur_name' => "{$livreur->first_name} {$livreur->last_name}",
+                        'client_name' => $colis->nom_client ?? 'N/A',
+                        'timestamp' => now()->toISOString(),
+                        'app' => 'moyoo_admin'
+                    ],
+                    'android' => [
+                        'priority' => 'high',
+                        'notification' => [
+                            'icon' => 'ic_notification',
+                            'color' => '#4CAF50',
+                            'sound' => 'default'
+                        ]
+                    ],
+                    'apns' => [
+                        'payload' => [
+                            'aps' => [
+                                'sound' => 'default',
+                                'badge' => 1
+                            ]
+                        ]
+                    ]
+                ]
+            ];
+
+            $accessToken = $this->getAccessToken();
+            $url = "https://fcm.googleapis.com/v1/projects/{$this->projectId}/messages:send";
+
+            $response = Http::withHeaders([
+                'Authorization' => 'Bearer ' . $accessToken,
+                'Content-Type' => 'application/json',
+            ])->post($url, $payload);
+
+            $result = $response->json();
+
+            if ($response->successful()) {
+                Log::info('Notification de livraison terminée envoyée à l\'admin', [
+                    'colis_id' => $colis->id,
+                    'colis_code' => $colis->code,
+                    'livreur_id' => $livreur->id,
+                    'admin_token' => substr($adminToken, 0, 20) . '...',
+                    'response' => $result
+                ]);
+
+                return [
+                    'success' => true,
+                    'message' => 'Notification de livraison terminée envoyée à l\'admin',
+                    'response' => $result
+                ];
+            } else {
+                Log::error('Erreur envoi notification livraison terminée à l\'admin', [
+                    'colis_id' => $colis->id,
+                    'error' => $result,
+                    'status_code' => $response->status()
+                ]);
+
+                return [
+                    'success' => false,
+                    'message' => 'Erreur lors de l\'envoi de la notification à l\'admin',
+                    'error' => $result,
+                    'status_code' => $response->status()
+                ];
+            }
+
+        } catch (Exception $e) {
+            Log::error('Erreur notification livraison terminée à l\'admin', [
+                'colis_id' => $colis->id,
+                'error' => $e->getMessage(),
+                'payload' => $payload
+            ]);
+
+            return [
+                'success' => false,
+                'message' => 'Erreur lors de l\'envoi de la notification à l\'admin: ' . $e->getMessage(),
+                'error' => $e->getMessage()
+            ];
+        }
+    }
+
+    /**
+     * Envoyer une notification à l'admin lors de la fin d'un ramassage
+     */
+    public function sendRamassageCompletedNotificationToAdmin($ramassage, $livreur, $adminToken)
+    {
+        try {
+            $payload = [
+                'message' => [
+                    'token' => $adminToken,
+                    'notification' => [
+                        'title' => 'Ramassage Terminé',
+                        'body' => "Le ramassage {$ramassage->code_ramassage} a été terminé par {$livreur->first_name} {$livreur->last_name}"
+                    ],
+                    'data' => [
+                        'type' => 'ramassage_completed',
+                        'ramassage_id' => (string)$ramassage->id,
+                        'ramassage_code' => $ramassage->code_ramassage,
+                        'livreur_id' => (string)$livreur->id,
+                        'livreur_name' => "{$livreur->first_name} {$livreur->last_name}",
+                        'marchand_name' => $ramassage->marchand->first_name ?? 'N/A',
+                        'boutique_name' => $ramassage->boutique->libelle ?? 'N/A',
+                        'nombre_colis' => (string)($ramassage->nombre_colis_reel ?? 0),
+                        'timestamp' => now()->toISOString(),
+                        'app' => 'moyoo_admin'
+                    ],
+                    'android' => [
+                        'priority' => 'high',
+                        'notification' => [
+                            'icon' => 'ic_notification',
+                            'color' => '#2196F3',
+                            'sound' => 'default'
+                        ]
+                    ],
+                    'apns' => [
+                        'payload' => [
+                            'aps' => [
+                                'sound' => 'default',
+                                'badge' => 1
+                            ]
+                        ]
+                    ]
+                ]
+            ];
+
+            $accessToken = $this->getAccessToken();
+            $url = "https://fcm.googleapis.com/v1/projects/{$this->projectId}/messages:send";
+
+            $response = Http::withHeaders([
+                'Authorization' => 'Bearer ' . $accessToken,
+                'Content-Type' => 'application/json',
+            ])->post($url, $payload);
+
+            $result = $response->json();
+
+            if ($response->successful()) {
+                Log::info('Notification de ramassage terminé envoyée à l\'admin', [
+                    'ramassage_id' => $ramassage->id,
+                    'ramassage_code' => $ramassage->code_ramassage,
+                    'livreur_id' => $livreur->id,
+                    'admin_token' => substr($adminToken, 0, 20) . '...',
+                    'response' => $result
+                ]);
+
+                return [
+                    'success' => true,
+                    'message' => 'Notification de ramassage terminé envoyée à l\'admin',
+                    'response' => $result
+                ];
+            } else {
+                Log::error('Erreur envoi notification ramassage terminé à l\'admin', [
+                    'ramassage_id' => $ramassage->id,
+                    'error' => $result,
+                    'status_code' => $response->status()
+                ]);
+
+                return [
+                    'success' => false,
+                    'message' => 'Erreur lors de l\'envoi de la notification à l\'admin',
+                    'error' => $result,
+                    'status_code' => $response->status()
+                ];
+            }
+
+        } catch (Exception $e) {
+            Log::error('Erreur notification ramassage terminé à l\'admin', [
+                'ramassage_id' => $ramassage->id,
+                'error' => $e->getMessage(),
+                'payload' => $payload
+            ]);
+
+            return [
+                'success' => false,
+                'message' => 'Erreur lors de l\'envoi de la notification à l\'admin: ' . $e->getMessage(),
+                'error' => $e->getMessage()
+            ];
+        }
+    }
+
+    /**
      * Valider un token FCM
      */
     public function validateToken(string $token): bool

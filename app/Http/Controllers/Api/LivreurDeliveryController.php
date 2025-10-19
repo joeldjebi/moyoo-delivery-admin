@@ -732,6 +732,9 @@ class LivreurDeliveryController extends Controller
                 }
             }
 
+            // Envoyer une notification à l'admin
+            $this->sendDeliveryCompletedNotificationToAdmin($colis, $livreur);
+
             return response()->json([
                 'success' => true,
                 'message' => 'Livraison finalisée avec succès',
@@ -1155,6 +1158,53 @@ class LivreurDeliveryController extends Controller
                 'colis_id' => $colis->id,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
+            ]);
+        }
+    }
+
+    /**
+     * Envoyer une notification à l'admin lors de la fin d'une livraison
+     */
+    private function sendDeliveryCompletedNotificationToAdmin($colis, $livreur)
+    {
+        try {
+            // Récupérer l'admin de l'entreprise
+            $admin = \App\Models\User::where('entreprise_id', $colis->entreprise_id)
+                ->where('user_type', 'admin')
+                ->whereNotNull('fcm_token')
+                ->first();
+
+            if (!$admin) {
+                \Log::warning('Aucun admin trouvé avec un token FCM pour l\'entreprise', [
+                    'entreprise_id' => $colis->entreprise_id,
+                    'colis_id' => $colis->id
+                ]);
+                return;
+            }
+
+            // Utiliser le service Firebase
+            $firebaseService = new \App\Services\ServiceAccountFirebaseService();
+            $result = $firebaseService->sendDeliveryCompletedNotificationToAdmin($colis, $livreur, $admin->fcm_token);
+
+            if ($result['success']) {
+                \Log::info('Notification de livraison terminée envoyée à l\'admin', [
+                    'admin_id' => $admin->id,
+                    'colis_id' => $colis->id,
+                    'livreur_id' => $livreur->id
+                ]);
+            } else {
+                \Log::warning('Échec envoi notification livraison terminée à l\'admin', [
+                    'admin_id' => $admin->id,
+                    'colis_id' => $colis->id,
+                    'error' => $result['message']
+                ]);
+            }
+
+        } catch (\Exception $e) {
+            \Log::error('Erreur lors de l\'envoi de notification à l\'admin', [
+                'colis_id' => $colis->id,
+                'livreur_id' => $livreur->id,
+                'error' => $e->getMessage()
             ]);
         }
     }

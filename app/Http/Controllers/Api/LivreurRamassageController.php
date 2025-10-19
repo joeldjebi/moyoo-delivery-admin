@@ -620,6 +620,9 @@ class LivreurRamassageController extends Controller
 
             DB::commit();
 
+            // Envoyer une notification à l'admin
+            $this->sendRamassageCompletedNotificationToAdmin($ramassage, $livreur);
+
             // Préparer les informations de différence pour la réponse
             $differenceInfo = null;
             if ($difference != 0) {
@@ -923,6 +926,53 @@ class LivreurRamassageController extends Controller
                 'success' => false,
                 'message' => 'Erreur lors de l\'annulation du ramassage: ' . $e->getMessage()
             ], 500);
+        }
+    }
+
+    /**
+     * Envoyer une notification à l'admin lors de la fin d'un ramassage
+     */
+    private function sendRamassageCompletedNotificationToAdmin($ramassage, $livreur)
+    {
+        try {
+            // Récupérer l'admin de l'entreprise
+            $admin = \App\Models\User::where('entreprise_id', $ramassage->entreprise_id)
+                ->where('user_type', 'admin')
+                ->whereNotNull('fcm_token')
+                ->first();
+
+            if (!$admin) {
+                \Log::warning('Aucun admin trouvé avec un token FCM pour l\'entreprise', [
+                    'entreprise_id' => $ramassage->entreprise_id,
+                    'ramassage_id' => $ramassage->id
+                ]);
+                return;
+            }
+
+            // Utiliser le service Firebase
+            $firebaseService = new \App\Services\ServiceAccountFirebaseService();
+            $result = $firebaseService->sendRamassageCompletedNotificationToAdmin($ramassage, $livreur, $admin->fcm_token);
+
+            if ($result['success']) {
+                \Log::info('Notification de ramassage terminé envoyée à l\'admin', [
+                    'admin_id' => $admin->id,
+                    'ramassage_id' => $ramassage->id,
+                    'livreur_id' => $livreur->id
+                ]);
+            } else {
+                \Log::warning('Échec envoi notification ramassage terminé à l\'admin', [
+                    'admin_id' => $admin->id,
+                    'ramassage_id' => $ramassage->id,
+                    'error' => $result['message']
+                ]);
+            }
+
+        } catch (\Exception $e) {
+            \Log::error('Erreur lors de l\'envoi de notification à l\'admin', [
+                'ramassage_id' => $ramassage->id,
+                'livreur_id' => $livreur->id,
+                'error' => $e->getMessage()
+            ]);
         }
     }
 }
