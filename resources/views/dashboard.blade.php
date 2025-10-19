@@ -287,7 +287,7 @@
             $user = Auth::user();
             $hasSubscription = $user && $user->subscriptionPlan;
         @endphp
-        
+
         @if($hasSubscription)
         <div class="row g-4 mb-4">
             <div class="col-12">
@@ -296,7 +296,7 @@
                     $isTrial = $user->is_trial;
                     $isExpired = $user->subscription_expires_at && $user->subscription_expires_at->isPast();
                     $isTrialExpired = $user->trial_expires_at && $user->trial_expires_at->isPast();
-                    
+
                     // Calculer les jours restants
                     $daysRemaining = 0;
                     if ($isTrial && $user->trial_expires_at) {
@@ -305,7 +305,7 @@
                         $daysRemaining = max(0, now()->diffInDays($user->subscription_expires_at, false));
                     }
                 @endphp
-                
+
                 <div class="card card-border-shadow-{{ $isActive ? 'success' : ($isTrial ? 'warning' : 'secondary') }}">
                     <div class="card-body">
                         <div class="d-flex align-items-center justify-content-between">
@@ -375,14 +375,14 @@
                                 </div>
                             </div>
                         </div>
-                        
+
                         @if($isTrial && $daysRemaining <= 7)
                         <div class="alert alert-warning mt-3 mb-0">
                             <div class="d-flex align-items-center">
                                 <i class="ti ti-alert-triangle me-2"></i>
                                 <div>
                                     <strong>Période d'essai bientôt expirée !</strong>
-                                    Votre période d'essai se termine dans {{ floor($daysRemaining) }} jour{{ floor($daysRemaining) > 1 ? 's' : '' }}. 
+                                    Votre période d'essai se termine dans {{ floor($daysRemaining) }} jour{{ floor($daysRemaining) > 1 ? 's' : '' }}.
                                     <a href="{{ route('subscriptions.index') }}" class="alert-link">Passez au Premium</a> pour continuer à profiter de toutes les fonctionnalités.
                                 </div>
                             </div>
@@ -393,7 +393,7 @@
                                 <i class="ti ti-alert-circle me-2"></i>
                                 <div>
                                     <strong>Abonnement expiré !</strong>
-                                    Votre abonnement a expiré. 
+                                    Votre abonnement a expiré.
                                     <a href="{{ route('subscriptions.index') }}" class="alert-link">Renouvelez maintenant</a> pour continuer à utiliser la plateforme.
                                 </div>
                             </div>

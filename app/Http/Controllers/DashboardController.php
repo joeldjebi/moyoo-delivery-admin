@@ -53,10 +53,6 @@ class DashboardController extends Controller
 
             // Données d'abonnement
             $data['subscription'] = $this->getSubscriptionData($user);
-            \Log::info('DashboardController::dashboard - Données d\'abonnement', [
-                'user_id' => $user->id,
-                'subscription_data' => $data['subscription']
-            ]);
 
         return view('dashboard', $data);
         } catch (\Exception $e) {
