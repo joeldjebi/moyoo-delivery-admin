@@ -51,6 +51,9 @@ class DashboardController extends Controller
             // Ramassages récents
             $data['ramassages'] = $this->getRecentRamassages($entrepriseId);
 
+            // Données d'abonnement
+            $data['subscription'] = $this->getSubscriptionData($user);
+
         return view('dashboard', $data);
         } catch (\Exception $e) {
             \Log::error('Erreur Dashboard: ' . $e->getMessage());
@@ -934,5 +937,43 @@ class DashboardController extends Controller
             ->orderBy('created_at', 'desc')
             ->limit(10)
             ->get();
+    }
+
+    /**
+     * Obtenir les données d'abonnement de l'utilisateur
+     */
+    private function getSubscriptionData($user)
+    {
+        $subscription = [
+            'plan' => null,
+            'status' => 'Inactif',
+            'expires_at' => null,
+            'is_trial' => false,
+            'trial_expires_at' => null,
+            'days_remaining' => 0,
+            'is_active' => false,
+            'is_expired' => false,
+            'is_trial_expired' => false
+        ];
+
+        if ($user->subscriptionPlan) {
+            $subscription['plan'] = $user->subscriptionPlan;
+            $subscription['status'] = $user->subscription_status;
+            $subscription['expires_at'] = $user->subscription_expires_at;
+            $subscription['is_trial'] = $user->is_trial;
+            $subscription['trial_expires_at'] = $user->trial_expires_at;
+            $subscription['is_active'] = $user->hasActiveSubscription();
+            $subscription['is_expired'] = $user->subscription_expires_at && $user->subscription_expires_at->isPast();
+            $subscription['is_trial_expired'] = $user->trial_expires_at && $user->trial_expires_at->isPast();
+
+            // Calculer les jours restants
+            if ($user->is_trial && $user->trial_expires_at) {
+                $subscription['days_remaining'] = max(0, now()->diffInDays($user->trial_expires_at, false));
+            } elseif ($user->subscription_expires_at) {
+                $subscription['days_remaining'] = max(0, now()->diffInDays($user->subscription_expires_at, false));
+            }
+        }
+
+        return $subscription;
     }
 }
