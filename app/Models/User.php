@@ -61,6 +61,7 @@ class User extends Authenticatable
             'permissions' => 'array',
             'subscription_started_at' => 'datetime',
             'subscription_expires_at' => 'datetime',
+            'subscription_status' => 'string',
             'trial_expires_at' => 'datetime',
             'is_trial' => 'boolean',
         ];
@@ -400,8 +401,8 @@ class User extends Authenticatable
      */
     public function hasActiveSubscription()
     {
-        return $this->subscription_status === 'active' &&
-               $this->subscription_expires_at &&
+        return $this->getAttribute('subscription_status') === 'active' && 
+               $this->subscription_expires_at && 
                $this->subscription_expires_at->isFuture() &&
                !$this->is_trial;
     }
@@ -484,11 +485,12 @@ class User extends Authenticatable
             return 'Actif';
         }
 
-        if ($this->subscription_status === 'expired') {
+        $status = $this->getAttribute('subscription_status');
+        if ($status === 'expired') {
             return 'Expiré';
         }
 
-        if ($this->subscription_status === 'cancelled') {
+        if ($status === 'cancelled') {
             return 'Annulé';
         }
 
