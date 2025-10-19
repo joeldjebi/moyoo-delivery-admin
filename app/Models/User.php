@@ -401,8 +401,8 @@ class User extends Authenticatable
      */
     public function hasActiveSubscription()
     {
-        return ($this->attributes['subscription_status'] ?? null) === 'active' && 
-               $this->subscription_expires_at && 
+        return ($this->attributes['subscription_status'] ?? null) === 'active' &&
+               $this->subscription_expires_at &&
                $this->subscription_expires_at->isFuture() &&
                !$this->is_trial;
     }

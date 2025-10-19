@@ -36,7 +36,248 @@
 #perPageSelect {
     min-width: 70px;
 }
+
+/* Styles pour les boutons d'action rapide */
+.quick-action-btn {
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+    min-height: 120px;
+}
+
+.quick-action-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    border-color: currentColor;
+}
+
+.quick-action-btn .avatar {
+    transition: transform 0.3s ease;
+}
+
+.quick-action-btn:hover .avatar {
+    transform: scale(1.1);
+}
 </style>
+
+<!-- Informations d'Abonnement -->
+@php
+$user = Auth::user();
+$hasSubscription = $user && $user->subscriptionPlan;
+@endphp
+
+@if($hasSubscription)
+<div class="row g-4 mb-4">
+<div class="col-12">
+    @php
+        $isActive = $user->hasActiveSubscription();
+        $isTrial = $user->is_trial;
+        $isExpired = $user->subscription_expires_at && $user->subscription_expires_at->isPast();
+        $isTrialExpired = $user->trial_expires_at && $user->trial_expires_at->isPast();
+
+        // Calculer les jours restants
+        $daysRemaining = 0;
+        if ($isTrial && $user->trial_expires_at) {
+            $daysRemaining = max(0, now()->diffInDays($user->trial_expires_at, false));
+        } elseif ($user->subscription_expires_at) {
+            $daysRemaining = max(0, now()->diffInDays($user->subscription_expires_at, false));
+        }
+    @endphp
+
+    <div class="card card-border-shadow-{{ $isActive ? 'success' : ($isTrial ? 'warning' : 'secondary') }}">
+        <div class="card-body">
+            <div class="d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center">
+                    <div class="avatar me-4">
+                        <span class="avatar-initial rounded bg-label-{{ $isActive ? 'success' : ($isTrial ? 'warning' : 'secondary') }}">
+                            <i class="ti ti-crown ti-28px"></i>
+                        </span>
+                    </div>
+                    <div>
+                        <h5 class="mb-1">
+                            Abonnement {{ $user->subscriptionPlan->name }}
+                            @if($isTrial)
+                                <span class="badge bg-label-warning ms-2">Période d'essai</span>
+                            @elseif($isActive)
+                                <span class="badge bg-label-success ms-2">Actif</span>
+                            @elseif($isExpired)
+                                <span class="badge bg-label-danger ms-2">Expiré</span>
+                            @else
+                                <span class="badge bg-label-secondary ms-2">Inactif</span>
+                            @endif
+                        </h5>
+                        <p class="mb-0 text-muted">
+                            @if($isTrial && $user->trial_expires_at)
+                                Période d'essai jusqu'au {{ $user->trial_expires_at->format('d/m/Y à H:i') }}
+                            @elseif($user->subscription_expires_at)
+                                Abonnement jusqu'au {{ $user->subscription_expires_at->format('d/m/Y à H:i') }}
+                            @else
+                                Aucun abonnement actif
+                            @endif
+                        </p>
+                    </div>
+                </div>
+                <div class="text-end">
+                    @if($daysRemaining > 0)
+                        <div class="mb-2">
+                            <h4 class="mb-0 text-{{ $daysRemaining <= 7 ? 'danger' : ($daysRemaining <= 30 ? 'warning' : 'success') }}">
+                                {{ floor($daysRemaining) }}
+                            </h4>
+                            <small class="text-muted">
+                                jour{{ floor($daysRemaining) > 1 ? 's' : '' }} restant{{ floor($daysRemaining) > 1 ? 's' : '' }}
+                            </small>
+                        </div>
+                    @endif
+                    <div>
+                        @if($isTrial && $daysRemaining <= 7)
+                            <a href="{{ route('subscriptions.index') }}" class="btn btn-warning btn-sm">
+                                <i class="ti ti-crown me-1"></i>
+                                Passer au Premium
+                            </a>
+                        @elseif($isExpired || $isTrialExpired)
+                            <a href="{{ route('subscriptions.index') }}" class="btn btn-primary btn-sm">
+                                <i class="ti ti-refresh me-1"></i>
+                                Renouveler
+                            </a>
+                        @elseif(!$isActive)
+                            <a href="{{ route('subscriptions.index') }}" class="btn btn-outline-primary btn-sm">
+                                <i class="ti ti-crown me-1"></i>
+                                Gérer l'abonnement
+                            </a>
+                        @else
+                            <a href="{{ route('subscriptions.index') }}" class="btn btn-outline-success btn-sm">
+                                <i class="ti ti-settings me-1"></i>
+                                Gérer
+                            </a>
+                        @endif
+                    </div>
+                </div>
+            </div>
+
+            @if($isTrial && $daysRemaining <= 7)
+            <div class="alert alert-warning mt-3 mb-0">
+                <div class="d-flex align-items-center">
+                    <i class="ti ti-alert-triangle me-2"></i>
+                    <div>
+                        <strong>Période d'essai bientôt expirée !</strong>
+                        Votre période d'essai se termine dans {{ floor($daysRemaining) }} jour{{ floor($daysRemaining) > 1 ? 's' : '' }}.
+                        <a href="{{ route('subscriptions.index') }}" class="alert-link">Passez au Premium</a> pour continuer à profiter de toutes les fonctionnalités.
+                    </div>
+                </div>
+            </div>
+            @elseif($isExpired)
+            <div class="alert alert-danger mt-3 mb-0">
+                <div class="d-flex align-items-center">
+                    <i class="ti ti-alert-circle me-2"></i>
+                    <div>
+                        <strong>Abonnement expiré !</strong>
+                        Votre abonnement a expiré.
+                        <a href="{{ route('subscriptions.index') }}" class="alert-link">Renouvelez maintenant</a> pour continuer à utiliser la plateforme.
+                    </div>
+                </div>
+            </div>
+            @endif
+        </div>
+    </div>
+</div>
+</div>
+@endif
+
+        <!-- Boutons d'Action Rapide -->
+        <div class="row g-4 mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center justify-content-between mb-3">
+                            <div>
+                                <h5 class="card-title mb-1">Actions Rapides</h5>
+                                <p class="text-muted mb-0">Créez rapidement de nouveaux éléments</p>
+                            </div>
+                            <div class="avatar">
+                                <span class="avatar-initial rounded bg-label-primary">
+                                    <i class="ti ti-bolt ti-24px"></i>
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <div class="row g-3">
+                            <div class="col-lg-4 col-md-6">
+                                <a href="{{ route('colis.create') }}" class="btn btn-outline-primary w-100 quick-action-btn d-flex flex-column align-items-center justify-content-center py-4">
+                                    <div class="avatar mb-3">
+                                        <span class="avatar-initial rounded bg-label-primary">
+                                            <i class="ti ti-package ti-24px"></i>
+                                        </span>
+                                    </div>
+                                    <h6 class="mb-1">Créer un Colis</h6>
+                                    <small class="text-muted text-center">Nouveau colis à livrer</small>
+                                </a>
+                            </div>
+                            
+                            <div class="col-lg-4 col-md-6">
+                                <a href="{{ route('ramassages.create') }}" class="btn btn-outline-success w-100 quick-action-btn d-flex flex-column align-items-center justify-content-center py-4">
+                                    <div class="avatar mb-3">
+                                        <span class="avatar-initial rounded bg-label-success">
+                                            <i class="ti ti-truck ti-24px"></i>
+                                        </span>
+                                    </div>
+                                    <h6 class="mb-1">Créer un Ramassage</h6>
+                                    <small class="text-muted text-center">Nouveau ramassage</small>
+                                </a>
+                            </div>
+                            
+                            <div class="col-lg-4 col-md-6">
+                                <a href="{{ route('marchands.create') }}" class="btn btn-outline-info w-100 quick-action-btn d-flex flex-column align-items-center justify-content-center py-4">
+                                    <div class="avatar mb-3">
+                                        <span class="avatar-initial rounded bg-label-info">
+                                            <i class="ti ti-user-plus ti-24px"></i>
+                                        </span>
+                                    </div>
+                                    <h6 class="mb-1">Créer un Marchand</h6>
+                                    <small class="text-muted text-center">Nouveau marchand</small>
+                                </a>
+                            </div>
+                        </div>
+                        
+                        <div class="row g-3 mt-2">
+                            <div class="col-lg-4 col-md-6">
+                                <a href="{{ route('livreurs.create') }}" class="btn btn-outline-warning w-100 quick-action-btn d-flex flex-column align-items-center justify-content-center py-4">
+                                    <div class="avatar mb-3">
+                                        <span class="avatar-initial rounded bg-label-warning">
+                                            <i class="ti ti-truck-delivery ti-24px"></i>
+                                        </span>
+                                    </div>
+                                    <h6 class="mb-1">Créer un Livreur</h6>
+                                    <small class="text-muted text-center">Nouveau livreur</small>
+                                </a>
+                            </div>
+                            
+                            <div class="col-lg-4 col-md-6">
+                                <a href="{{ route('boutiques.create') }}" class="btn btn-outline-secondary w-100 quick-action-btn d-flex flex-column align-items-center justify-content-center py-4">
+                                    <div class="avatar mb-3">
+                                        <span class="avatar-initial rounded bg-label-secondary">
+                                            <i class="ti ti-building-store ti-24px"></i>
+                                        </span>
+                                    </div>
+                                    <h6 class="mb-1">Créer une Boutique</h6>
+                                    <small class="text-muted text-center">Nouvelle boutique</small>
+                                </a>
+                            </div>
+                            
+                            <div class="col-lg-4 col-md-6">
+                                <a href="{{ route('zones.create') }}" class="btn btn-outline-dark w-100 quick-action-btn d-flex flex-column align-items-center justify-content-center py-4">
+                                    <div class="avatar mb-3">
+                                        <span class="avatar-initial rounded bg-label-dark">
+                                            <i class="ti ti-map-pin ti-24px"></i>
+                                        </span>
+                                    </div>
+                                    <h6 class="mb-1">Créer une Zone</h6>
+                                    <small class="text-muted text-center">Nouvelle zone de livraison</small>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
         <!-- Statistiques des Frais de Livraison -->
         <div class="row g-4 mb-4">
@@ -282,128 +523,7 @@
             </div>
         </div>
 
-        <!-- Informations d'Abonnement -->
-        @php
-            $user = Auth::user();
-            $hasSubscription = $user && $user->subscriptionPlan;
-        @endphp
 
-        @if($hasSubscription)
-        <div class="row g-4 mb-4">
-            <div class="col-12">
-                @php
-                    $isActive = $user->hasActiveSubscription();
-                    $isTrial = $user->is_trial;
-                    $isExpired = $user->subscription_expires_at && $user->subscription_expires_at->isPast();
-                    $isTrialExpired = $user->trial_expires_at && $user->trial_expires_at->isPast();
-
-                    // Calculer les jours restants
-                    $daysRemaining = 0;
-                    if ($isTrial && $user->trial_expires_at) {
-                        $daysRemaining = max(0, now()->diffInDays($user->trial_expires_at, false));
-                    } elseif ($user->subscription_expires_at) {
-                        $daysRemaining = max(0, now()->diffInDays($user->subscription_expires_at, false));
-                    }
-                @endphp
-
-                <div class="card card-border-shadow-{{ $isActive ? 'success' : ($isTrial ? 'warning' : 'secondary') }}">
-                    <div class="card-body">
-                        <div class="d-flex align-items-center justify-content-between">
-                            <div class="d-flex align-items-center">
-                                <div class="avatar me-4">
-                                    <span class="avatar-initial rounded bg-label-{{ $isActive ? 'success' : ($isTrial ? 'warning' : 'secondary') }}">
-                                        <i class="ti ti-crown ti-28px"></i>
-                                    </span>
-                                </div>
-                                <div>
-                                    <h5 class="mb-1">
-                                        Abonnement {{ $user->subscriptionPlan->name }}
-                                        @if($isTrial)
-                                            <span class="badge bg-label-warning ms-2">Période d'essai</span>
-                                        @elseif($isActive)
-                                            <span class="badge bg-label-success ms-2">Actif</span>
-                                        @elseif($isExpired)
-                                            <span class="badge bg-label-danger ms-2">Expiré</span>
-                                        @else
-                                            <span class="badge bg-label-secondary ms-2">Inactif</span>
-                                        @endif
-                                    </h5>
-                                    <p class="mb-0 text-muted">
-                                        @if($isTrial && $user->trial_expires_at)
-                                            Période d'essai jusqu'au {{ $user->trial_expires_at->format('d/m/Y à H:i') }}
-                                        @elseif($user->subscription_expires_at)
-                                            Abonnement jusqu'au {{ $user->subscription_expires_at->format('d/m/Y à H:i') }}
-                                        @else
-                                            Aucun abonnement actif
-                                        @endif
-                                    </p>
-                                </div>
-                            </div>
-                            <div class="text-end">
-                                @if($daysRemaining > 0)
-                                    <div class="mb-2">
-                                        <h4 class="mb-0 text-{{ $daysRemaining <= 7 ? 'danger' : ($daysRemaining <= 30 ? 'warning' : 'success') }}">
-                                            {{ floor($daysRemaining) }}
-                                        </h4>
-                                        <small class="text-muted">
-                                            jour{{ floor($daysRemaining) > 1 ? 's' : '' }} restant{{ floor($daysRemaining) > 1 ? 's' : '' }}
-                                        </small>
-                                    </div>
-                                @endif
-                                <div>
-                                    @if($isTrial && $daysRemaining <= 7)
-                                        <a href="{{ route('subscriptions.index') }}" class="btn btn-warning btn-sm">
-                                            <i class="ti ti-crown me-1"></i>
-                                            Passer au Premium
-                                        </a>
-                                    @elseif($isExpired || $isTrialExpired)
-                                        <a href="{{ route('subscriptions.index') }}" class="btn btn-primary btn-sm">
-                                            <i class="ti ti-refresh me-1"></i>
-                                            Renouveler
-                                        </a>
-                                    @elseif(!$isActive)
-                                        <a href="{{ route('subscriptions.index') }}" class="btn btn-outline-primary btn-sm">
-                                            <i class="ti ti-crown me-1"></i>
-                                            Gérer l'abonnement
-                                        </a>
-                                    @else
-                                        <a href="{{ route('subscriptions.index') }}" class="btn btn-outline-success btn-sm">
-                                            <i class="ti ti-settings me-1"></i>
-                                            Gérer
-                                        </a>
-                                    @endif
-                                </div>
-                            </div>
-                        </div>
-
-                        @if($isTrial && $daysRemaining <= 7)
-                        <div class="alert alert-warning mt-3 mb-0">
-                            <div class="d-flex align-items-center">
-                                <i class="ti ti-alert-triangle me-2"></i>
-                                <div>
-                                    <strong>Période d'essai bientôt expirée !</strong>
-                                    Votre période d'essai se termine dans {{ floor($daysRemaining) }} jour{{ floor($daysRemaining) > 1 ? 's' : '' }}.
-                                    <a href="{{ route('subscriptions.index') }}" class="alert-link">Passez au Premium</a> pour continuer à profiter de toutes les fonctionnalités.
-                                </div>
-                            </div>
-                        </div>
-                        @elseif($isExpired)
-                        <div class="alert alert-danger mt-3 mb-0">
-                            <div class="d-flex align-items-center">
-                                <i class="ti ti-alert-circle me-2"></i>
-                                <div>
-                                    <strong>Abonnement expiré !</strong>
-                                    Votre abonnement a expiré.
-                                    <a href="{{ route('subscriptions.index') }}" class="alert-link">Renouvelez maintenant</a> pour continuer à utiliser la plateforme.
-                                </div>
-                            </div>
-                        </div>
-                        @endif
-                    </div>
-                </div>
-            </div>
-        </div>
-        @endif
 
         <!-- Activités Récentes -->
         <div class="row g-4 mb-4">
