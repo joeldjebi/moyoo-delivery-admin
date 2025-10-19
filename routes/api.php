@@ -24,6 +24,7 @@ use App\Http\Controllers\SwaggerController;
 // Routes pour l'enregistrement des tokens FCM
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('fcm-token', [FcmTokenController::class, 'store']);
+    Route::delete('fcm-token', [FcmTokenController::class, 'destroy']);
 });
 
 // Routes publiques pour l'authentification des livreurs

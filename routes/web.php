@@ -573,6 +573,11 @@ Route::middleware(['auth', 'tenant'])->group(function () {
     Route::post('/subscriptions/cancel', [App\Http\Controllers\SubscriptionController::class, 'cancel'])->name('subscriptions.cancel');
 });
 
+// Routes des notifications
+Route::middleware(['auth', 'tenant'])->group(function () {
+    Route::get('/notifications/settings', [App\Http\Controllers\NotificationController::class, 'settings'])->name('notifications.settings');
+});
+
 // API Routes pour les abonnements
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/api/subscriptions/plans', [App\Http\Controllers\SubscriptionController::class, 'getPlans']);

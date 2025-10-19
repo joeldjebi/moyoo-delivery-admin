@@ -407,4 +407,60 @@ class FcmTokenController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * @OA\Delete(
+     *     path="/api/fcm-token",
+     *     summary="Supprimer le token FCM de l'utilisateur connecté",
+     *     tags={"FCM Token"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Token FCM supprimé avec succès",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Token FCM supprimé avec succès")
+     *         )
+     *     )
+     * )
+     */
+    public function destroy()
+    {
+        try {
+            $user = auth('sanctum')->user();
+
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Utilisateur non trouvé'
+                ], 404);
+            }
+
+            // Supprimer le token FCM
+            $user->update([
+                'fcm_token' => null
+            ]);
+
+            Log::info('Token FCM supprimé pour l\'utilisateur', [
+                'user_id' => $user->id,
+                'user_type' => $user->user_type
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Token FCM supprimé avec succès'
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Erreur suppression token FCM utilisateur', [
+                'user_id' => auth('sanctum')->id(),
+                'error' => $e->getMessage()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de la suppression du token FCM'
+            ], 500);
+        }
+    }
 }
