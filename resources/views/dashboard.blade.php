@@ -283,36 +283,56 @@
         </div>
 
         <!-- Informations d'Abonnement -->
-        @if(isset($subscription) && $subscription['plan'])
+        @php
+            $user = Auth::user();
+            $hasSubscription = $user && $user->subscriptionPlan;
+        @endphp
+        
+        @if($hasSubscription)
         <div class="row g-4 mb-4">
             <div class="col-12">
-                <div class="card card-border-shadow-{{ $subscription['is_active'] ? 'success' : ($subscription['is_trial'] ? 'warning' : 'secondary') }}">
+                @php
+                    $isActive = $user->hasActiveSubscription();
+                    $isTrial = $user->is_trial;
+                    $isExpired = $user->subscription_expires_at && $user->subscription_expires_at->isPast();
+                    $isTrialExpired = $user->trial_expires_at && $user->trial_expires_at->isPast();
+                    
+                    // Calculer les jours restants
+                    $daysRemaining = 0;
+                    if ($isTrial && $user->trial_expires_at) {
+                        $daysRemaining = max(0, now()->diffInDays($user->trial_expires_at, false));
+                    } elseif ($user->subscription_expires_at) {
+                        $daysRemaining = max(0, now()->diffInDays($user->subscription_expires_at, false));
+                    }
+                @endphp
+                
+                <div class="card card-border-shadow-{{ $isActive ? 'success' : ($isTrial ? 'warning' : 'secondary') }}">
                     <div class="card-body">
                         <div class="d-flex align-items-center justify-content-between">
                             <div class="d-flex align-items-center">
                                 <div class="avatar me-4">
-                                    <span class="avatar-initial rounded bg-label-{{ $subscription['is_active'] ? 'success' : ($subscription['is_trial'] ? 'warning' : 'secondary') }}">
+                                    <span class="avatar-initial rounded bg-label-{{ $isActive ? 'success' : ($isTrial ? 'warning' : 'secondary') }}">
                                         <i class="ti ti-crown ti-28px"></i>
                                     </span>
                                 </div>
                                 <div>
                                     <h5 class="mb-1">
-                                        Abonnement {{ $subscription['plan']->name }}
-                                        @if($subscription['is_trial'])
+                                        Abonnement {{ $user->subscriptionPlan->name }}
+                                        @if($isTrial)
                                             <span class="badge bg-label-warning ms-2">Période d'essai</span>
-                                        @elseif($subscription['is_active'])
+                                        @elseif($isActive)
                                             <span class="badge bg-label-success ms-2">Actif</span>
-                                        @elseif($subscription['is_expired'])
+                                        @elseif($isExpired)
                                             <span class="badge bg-label-danger ms-2">Expiré</span>
                                         @else
                                             <span class="badge bg-label-secondary ms-2">Inactif</span>
                                         @endif
                                     </h5>
                                     <p class="mb-0 text-muted">
-                                        @if($subscription['is_trial'] && $subscription['trial_expires_at'])
-                                            Période d'essai jusqu'au {{ $subscription['trial_expires_at']->format('d/m/Y à H:i') }}
-                                        @elseif($subscription['expires_at'])
-                                            Abonnement jusqu'au {{ $subscription['expires_at']->format('d/m/Y à H:i') }}
+                                        @if($isTrial && $user->trial_expires_at)
+                                            Période d'essai jusqu'au {{ $user->trial_expires_at->format('d/m/Y à H:i') }}
+                                        @elseif($user->subscription_expires_at)
+                                            Abonnement jusqu'au {{ $user->subscription_expires_at->format('d/m/Y à H:i') }}
                                         @else
                                             Aucun abonnement actif
                                         @endif
@@ -320,28 +340,28 @@
                                 </div>
                             </div>
                             <div class="text-end">
-                                @if($subscription['days_remaining'] > 0)
+                                @if($daysRemaining > 0)
                                     <div class="mb-2">
-                                        <h4 class="mb-0 text-{{ $subscription['days_remaining'] <= 7 ? 'danger' : ($subscription['days_remaining'] <= 30 ? 'warning' : 'success') }}">
-                                            {{ $subscription['days_remaining'] }}
+                                        <h4 class="mb-0 text-{{ $daysRemaining <= 7 ? 'danger' : ($daysRemaining <= 30 ? 'warning' : 'success') }}">
+                                            {{ floor($daysRemaining) }}
                                         </h4>
                                         <small class="text-muted">
-                                            jour{{ $subscription['days_remaining'] > 1 ? 's' : '' }} restant{{ $subscription['days_remaining'] > 1 ? 's' : '' }}
+                                            jour{{ floor($daysRemaining) > 1 ? 's' : '' }} restant{{ floor($daysRemaining) > 1 ? 's' : '' }}
                                         </small>
                                     </div>
                                 @endif
                                 <div>
-                                    @if($subscription['is_trial'] && $subscription['days_remaining'] <= 7)
+                                    @if($isTrial && $daysRemaining <= 7)
                                         <a href="{{ route('subscriptions.index') }}" class="btn btn-warning btn-sm">
                                             <i class="ti ti-crown me-1"></i>
                                             Passer au Premium
                                         </a>
-                                    @elseif($subscription['is_expired'] || $subscription['is_trial_expired'])
+                                    @elseif($isExpired || $isTrialExpired)
                                         <a href="{{ route('subscriptions.index') }}" class="btn btn-primary btn-sm">
                                             <i class="ti ti-refresh me-1"></i>
                                             Renouveler
                                         </a>
-                                    @elseif(!$subscription['is_active'])
+                                    @elseif(!$isActive)
                                         <a href="{{ route('subscriptions.index') }}" class="btn btn-outline-primary btn-sm">
                                             <i class="ti ti-crown me-1"></i>
                                             Gérer l'abonnement
@@ -356,18 +376,18 @@
                             </div>
                         </div>
                         
-                        @if($subscription['is_trial'] && $subscription['days_remaining'] <= 7)
+                        @if($isTrial && $daysRemaining <= 7)
                         <div class="alert alert-warning mt-3 mb-0">
                             <div class="d-flex align-items-center">
                                 <i class="ti ti-alert-triangle me-2"></i>
                                 <div>
                                     <strong>Période d'essai bientôt expirée !</strong>
-                                    Votre période d'essai se termine dans {{ $subscription['days_remaining'] }} jour{{ $subscription['days_remaining'] > 1 ? 's' : '' }}. 
+                                    Votre période d'essai se termine dans {{ floor($daysRemaining) }} jour{{ floor($daysRemaining) > 1 ? 's' : '' }}. 
                                     <a href="{{ route('subscriptions.index') }}" class="alert-link">Passez au Premium</a> pour continuer à profiter de toutes les fonctionnalités.
                                 </div>
                             </div>
                         </div>
-                        @elseif($subscription['is_expired'])
+                        @elseif($isExpired)
                         <div class="alert alert-danger mt-3 mb-0">
                             <div class="d-flex align-items-center">
                                 <i class="ti ti-alert-circle me-2"></i>
