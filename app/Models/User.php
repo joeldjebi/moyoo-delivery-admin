@@ -394,14 +394,14 @@ class User extends Authenticatable
     /**
      * Méthodes pour la gestion des abonnements
      */
-    
+
     /**
      * Vérifier si l'utilisateur a un abonnement actif
      */
     public function hasActiveSubscription()
     {
-        return $this->subscription_status === 'active' && 
-               $this->subscription_expires_at && 
+        return $this->subscription_status === 'active' &&
+               $this->subscription_expires_at &&
                $this->subscription_expires_at->isFuture() &&
                !$this->is_trial;
     }
@@ -411,8 +411,8 @@ class User extends Authenticatable
      */
     public function isOnTrial()
     {
-        return $this->is_trial && 
-               $this->trial_expires_at && 
+        return $this->is_trial &&
+               $this->trial_expires_at &&
                $this->trial_expires_at->isFuture();
     }
 
@@ -454,7 +454,7 @@ class User extends Authenticatable
     public function assignSubscriptionPlan($planId, $isTrial = true)
     {
         $plan = \App\Models\SubscriptionPlan::find($planId);
-        
+
         if (!$plan) {
             return false;
         }

@@ -17,22 +17,18 @@ class SubscriptionPlanSeeder extends Seeder
         SubscriptionPlan::create([
             'name' => 'Free',
             'slug' => 'free',
-            'description' => 'Plan gratuit avec fonctionnalités de base',
+            'description' => 'Plan gratuit',
             'price' => 0.00,
             'currency' => 'XOF',
             'duration_days' => 30,
             'features' => [
-                'Gestion de base des colis',
-                'Jusqu\'à 50 colis par mois',
-                'Jusqu\'à 2 livreurs',
-                'Jusqu\'à 3 marchands',
-                'Support par email'
+                'Accès de base à la plateforme'
             ],
-            'max_colis_per_month' => 50,
-            'max_livreurs' => 2,
-            'max_marchands' => 3,
+            'max_colis_per_month' => null,
+            'max_livreurs' => null,
+            'max_marchands' => null,
             'whatsapp_notifications' => false,
-            'firebase_notifications' => true,
+            'firebase_notifications' => false,
             'api_access' => false,
             'advanced_reports' => false,
             'priority_support' => false,
@@ -44,24 +40,16 @@ class SubscriptionPlanSeeder extends Seeder
         SubscriptionPlan::create([
             'name' => 'Premium',
             'slug' => 'premium',
-            'description' => 'Plan premium avec toutes les fonctionnalités avancées',
+            'description' => 'Plan premium',
             'price' => 12900.00,
             'currency' => 'XOF',
             'duration_days' => 30,
             'features' => [
-                'Gestion complète des colis',
-                'Colis illimités',
-                'Livreurs illimités',
-                'Marchands illimités',
-                'Notifications WhatsApp',
-                'Notifications Push',
-                'Accès API complet',
-                'Rapports avancés',
-                'Support prioritaire'
+                'Accès complet à toutes les fonctionnalités'
             ],
-            'max_colis_per_month' => null, // Illimité
-            'max_livreurs' => null, // Illimité
-            'max_marchands' => null, // Illimité
+            'max_colis_per_month' => null,
+            'max_livreurs' => null,
+            'max_marchands' => null,
             'whatsapp_notifications' => true,
             'firebase_notifications' => true,
             'api_access' => true,
