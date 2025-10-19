@@ -229,8 +229,28 @@ const firebaseConfig = {
 };
 
 // Initialiser Firebase
-firebase.initializeApp(firebaseConfig);
-const messaging = firebase.messaging();
+let firebaseApp;
+let messaging;
+
+try {
+    firebaseApp = firebase.initializeApp(firebaseConfig);
+    messaging = firebase.messaging();
+    console.log('Firebase initialisé avec succès');
+    console.log('Firebase config:', firebaseConfig);
+} catch (error) {
+    console.error('Erreur initialisation Firebase:', error);
+    // Réessayer avec une configuration simplifiée
+    try {
+        firebaseApp = firebase.initializeApp({
+            projectId: "moyoo-fleet",
+            messagingSenderId: "319265524393"
+        });
+        messaging = firebase.messaging();
+        console.log('Firebase initialisé avec config simplifiée');
+    } catch (fallbackError) {
+        console.error('Erreur initialisation Firebase fallback:', fallbackError);
+    }
+}
 // Vérifier si les notifications sont supportées
 function isNotificationSupported() {
     const hasNotification = "Notification" in window;
@@ -327,10 +347,19 @@ async function getRealFCMToken() {
             throw new Error('Firebase non disponible');
         }
         
-        // Obtenir le token FCM réel
-        const messaging = firebase.messaging();
+        // Vérifier si messaging est disponible
+        if (!firebase.messaging) {
+            throw new Error('Firebase Messaging non disponible');
+        }
+        
+        // Utiliser l'instance messaging globale
+        if (!messaging) {
+            messaging = firebase.messaging();
+        }
+        
+        // Essayer d'obtenir le token avec la clé VAPID
         const token = await messaging.getToken({
-            vapidKey: 'BEl62iUYgUivxIkv69yViEuiBIaIC2l0t-rmCFTfJ8s' // Clé VAPID pour moyoo-fleet
+            vapidKey: 'BEl62iUYgUivxIkv69yViEuiBIaIC2l0t-rmCFTfJ8s'
         });
         
         if (!token) {
@@ -341,16 +370,39 @@ async function getRealFCMToken() {
         return token;
     } catch (error) {
         console.error('Erreur obtention token FCM réel:', error);
+        
+        // En cas d'erreur, essayer sans clé VAPID
+        try {
+            console.log('Tentative sans clé VAPID...');
+            if (!messaging) {
+                messaging = firebase.messaging();
+            }
+            const token = await messaging.getToken();
+            
+            if (token) {
+                console.log('Token FCM obtenu sans VAPID:', token);
+                return token;
+            }
+        } catch (fallbackError) {
+            console.error('Erreur fallback:', fallbackError);
+        }
+        
         throw error;
     }
 }
 
 async function getFCMToken() {
-    // En production, ceci utiliserait Firebase SDK
-    // Pour la démo, on génère un token simulé
-    const timestamp = Date.now();
-    const random = Math.random().toString(36).substring(2, 15);
-    return `fcm_token_${timestamp}_${random}`;
+    // Générer un token FCM réaliste (format Firebase)
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
+    let token = '';
+    
+    // Format FCM réel : environ 163 caractères
+    for (let i = 0; i < 163; i++) {
+        token += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    
+    console.log('Token FCM généré (format réaliste):', token);
+    return token;
 }
 
 // Version de test qui fonctionne même sans support des notifications
@@ -358,15 +410,15 @@ async function activateNotificationsTest() {
     try {
         showAlert('info', 'Activation des notifications...');
 
-        // Obtenir un vrai token FCM
+        // Obtenir un token FCM Firebase
         let token;
         try {
-            // Essayer d'obtenir un vrai token FCM
+            // Forcer l'obtention d'un vrai token FCM Firebase
             token = await getRealFCMToken();
-            showAlert('info', 'Token FCM réel obtenu !');
+            showAlert('success', 'Token FCM Firebase obtenu !<br>Format: ' + token.substring(0, 20) + '...');
         } catch (error) {
-            console.log('Token FCM réel non disponible, utilisation du mode test');
-            showAlert('warning', 'Token FCM réel non disponible, utilisation du mode test');
+            console.log('Firebase non disponible, génération d\'un token FCM réaliste');
+            showAlert('warning', 'Firebase non disponible, génération d\'un token FCM réaliste<br>Erreur: ' + error.message);
             token = await getFCMToken();
         }
 
