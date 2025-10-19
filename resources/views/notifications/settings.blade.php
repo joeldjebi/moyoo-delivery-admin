@@ -189,7 +189,7 @@
                     </div>
                     <h6 class="mb-2">Autoriser les notifications ?</h6>
                     <p class="text-muted mb-0">
-                        Cette action vous permettra de recevoir des notifications push 
+                        Cette action vous permettra de recevoir des notifications push
                         quand les livreurs terminent leurs missions.
                     </p>
                 </div>
@@ -198,7 +198,7 @@
                 <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
                     Annuler
                 </button>
-                <button type="button" class="btn btn-primary" onclick="activateNotifications()">
+                <button type="button" class="btn btn-primary" id="activateBtn">
                     <i class="ti ti-bell-plus me-2"></i>
                     Activer
                 </button>
@@ -212,7 +212,19 @@
 <script>
 // Vérifier si les notifications sont supportées
 function isNotificationSupported() {
-    return "Notification" in window && "serviceWorker" in navigator;
+    const hasNotification = "Notification" in window;
+    const hasServiceWorker = "serviceWorker" in navigator;
+    const isSecureContext = window.isSecureContext || location.protocol === 'https:' || location.hostname === 'localhost';
+    
+    console.log('Support des notifications:', {
+        hasNotification,
+        hasServiceWorker,
+        isSecureContext,
+        protocol: location.protocol,
+        hostname: location.hostname
+    });
+    
+    return hasNotification && hasServiceWorker && isSecureContext;
 }
 
 // Demander la permission de notification
@@ -227,29 +239,36 @@ function requestNotificationPermission() {
     modal.show();
 }
 
+// Version de test pour les navigateurs non compatibles
+function requestNotificationPermissionTest() {
+    // Afficher le modal de confirmation
+    const modal = new bootstrap.Modal(document.getElementById('notificationModal'));
+    modal.show();
+}
+
 // Activer les notifications
 async function activateNotifications() {
     try {
         // Demander la permission
         const permission = await Notification.requestPermission();
-        
+
         if (permission === 'granted') {
             // Enregistrer le service worker
             await registerServiceWorker();
-            
+
             // Obtenir le token FCM
             const token = await getFCMToken();
-            
+
             if (token) {
                 // Envoyer le token au serveur
                 await sendTokenToServer(token);
-                
+
                 showAlert('success', 'Notifications activées avec succès !');
-                
+
                 // Fermer le modal
                 const modal = bootstrap.Modal.getInstance(document.getElementById('notificationModal'));
                 modal.hide();
-                
+
                 // Recharger la page pour mettre à jour l'interface
                 setTimeout(() => {
                     window.location.reload();
@@ -287,6 +306,34 @@ async function getFCMToken() {
     return `fcm_token_${timestamp}_${random}`;
 }
 
+// Version de test qui fonctionne même sans support des notifications
+async function activateNotificationsTest() {
+    try {
+        showAlert('info', 'Mode test activé - Simulation des notifications...');
+        
+        // Simuler l'obtention d'un token
+        const token = await getFCMToken();
+        
+        // Envoyer le token au serveur
+        await sendTokenToServer(token);
+        
+        showAlert('success', 'Notifications activées en mode test !');
+        
+        // Fermer le modal
+        const modal = bootstrap.Modal.getInstance(document.getElementById('notificationModal'));
+        modal.hide();
+        
+        // Recharger la page pour mettre à jour l'interface
+        setTimeout(() => {
+            window.location.reload();
+        }, 1500);
+        
+    } catch (error) {
+        console.error('Erreur lors de l\'activation des notifications (test):', error);
+        showAlert('error', 'Erreur lors de l\'activation des notifications.');
+    }
+}
+
 // Envoyer le token au serveur
 async function sendTokenToServer(token) {
     try {
@@ -304,11 +351,11 @@ async function sendTokenToServer(token) {
         });
 
         const data = await response.json();
-        
+
         if (!response.ok) {
             throw new Error(data.message || 'Erreur lors de l\'enregistrement du token');
         }
-        
+
         return data;
     } catch (error) {
         console.error('Erreur envoi token:', error);
@@ -381,11 +428,43 @@ function showAlert(type, message) {
 
 // Vérifier le support des notifications au chargement
 document.addEventListener('DOMContentLoaded', function() {
+    const activateBtn = document.querySelector('[onclick="requestNotificationPermission()"]');
+    const modalActivateBtn = document.getElementById('activateBtn');
+    
     if (!isNotificationSupported()) {
-        const activateBtn = document.querySelector('[onclick="requestNotificationPermission()"]');
         if (activateBtn) {
-            activateBtn.disabled = true;
-            activateBtn.innerHTML = '<i class="ti ti-x me-2"></i>Non supporté par ce navigateur';
+            // Diagnostic plus détaillé
+            const hasNotification = "Notification" in window;
+            const hasServiceWorker = "serviceWorker" in navigator;
+            const isSecureContext = window.isSecureContext || location.protocol === 'https:' || location.hostname === 'localhost';
+            
+            let errorMessage = 'Non supporté';
+            if (!hasNotification) {
+                errorMessage = 'API Notification manquante';
+            } else if (!hasServiceWorker) {
+                errorMessage = 'Service Worker non supporté';
+            } else if (!isSecureContext) {
+                errorMessage = 'Contexte non sécurisé (HTTPS requis)';
+            }
+            
+            // Changer le bouton pour utiliser le mode test
+            activateBtn.disabled = false;
+            activateBtn.onclick = function() { requestNotificationPermissionTest(); };
+            activateBtn.innerHTML = `<i class="ti ti-flask me-2"></i>Activer (Mode Test)`;
+            
+            // Configurer le bouton du modal pour le mode test
+            if (modalActivateBtn) {
+                modalActivateBtn.onclick = function() { activateNotificationsTest(); };
+                modalActivateBtn.innerHTML = `<i class="ti ti-flask me-2"></i>Activer (Mode Test)`;
+            }
+            
+            // Afficher une alerte informative
+            showAlert('warning', `Notifications natives non disponibles: ${errorMessage}. Mode test activé.`);
+        }
+    } else {
+        // Configurer le bouton du modal pour le mode normal
+        if (modalActivateBtn) {
+            modalActivateBtn.onclick = function() { activateNotifications(); };
         }
     }
 });

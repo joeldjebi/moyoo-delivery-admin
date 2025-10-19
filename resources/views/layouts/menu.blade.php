@@ -227,12 +227,6 @@
                   <div data-i18n="Abonnements">Abonnements</div>
                 </a>
               </li>
-              <li class="menu-item {{ $menu == 'notifications' ? 'active' : '' }}">
-                <a href="{{ route('notifications.settings') }}" class="menu-link">
-                  <i class="menu-icon tf-icons ti ti-bell"></i>
-                  <div data-i18n="Notifications">Notifications</div>
-                </a>
-              </li>
               @if(auth()->user()->hasPermission('settings.update'))
               <li class="menu-item {{ $menu == 'role-permissions' ? 'active' : '' }}">
                 <a href="{{ route('role-permissions.index') }}" class="menu-link">
@@ -284,6 +278,12 @@
 
 
               <!-- Misc -->
+              <li class="menu-item {{ $menu == 'notifications' ? 'active' : '' }}">
+                <a href="{{ route('notifications.settings') }}" class="menu-link">
+                  <i class="menu-icon tf-icons ti ti-bell"></i>
+                  <div data-i18n="Notifications">Notifications</div>
+                </a>
+              </li>
               <li class="menu-header small">
                 <span class="menu-header-text" data-i18n="Support & Documentation">Support & Documentation</span>
               </li>
