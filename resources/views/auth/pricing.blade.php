@@ -14,6 +14,12 @@
                 <div class="col-sm-5 text-center text-sm-left">
                     <div class="card-body pb-0 px-0 px-md-4">
                         <div class="d-flex gap-2 justify-content-end">
+                            @auth
+                                <a href="{{ route('subscriptions.index') }}" class="btn btn-outline-primary">
+                                    <i class="ti ti-crown me-1"></i>
+                                    Mes Abonnements
+                                </a>
+                            @endauth
                             <a href="{{ route('auth.subscription-history') }}" class="btn btn-outline-info">
                                 <i class="ti ti-history me-1"></i>
                                 Mon Historique
@@ -68,9 +74,32 @@
                                 </div>
 
                                 <div class="card-footer text-center">
-                                    <button class="btn {{ $plan['button_class'] }} w-100">
-                                        {{ $plan['button_text'] }}
-                                    </button>
+                                    @auth
+                                        @if(auth()->user()->subscription_plan_id == $plan['id'])
+                                            <button class="btn btn-outline-success w-100" disabled>
+                                                <i class="ti ti-check me-1"></i>
+                                                Plan actuel
+                                            </button>
+                                        @else
+                                            <form method="POST" action="{{ route('subscriptions.change-plan') }}" class="d-inline w-100">
+                                                @csrf
+                                                <input type="hidden" name="plan_id" value="{{ $plan['id'] }}">
+                                                <button type="submit" class="btn {{ $plan['button_class'] }} w-100">
+                                                    @if($plan['name'] === 'Free')
+                                                        <i class="ti ti-arrow-right me-1"></i>
+                                                        Passer au Free
+                                                    @else
+                                                        <i class="ti ti-credit-card me-1"></i>
+                                                        S'abonner - {{ $plan['price'] }} {{ $plan['currency'] }}
+                                                    @endif
+                                                </button>
+                                            </form>
+                                        @endif
+                                    @else
+                                        <a href="{{ route('auth.register') }}" class="btn {{ $plan['button_class'] }} w-100">
+                                            {{ $plan['button_text'] }}
+                                        </a>
+                                    @endauth
                                 </div>
                             </div>
                         </div>
@@ -102,12 +131,12 @@
                         <tbody>
                             @php
                                 $features = [
-                                    'Livraisons par mois' => ['100', 'Illimitées', 'Illimitées'],
-                                    'Support' => ['Email', '24/7', 'Dédié'],
-                                    'Analytics' => ['Basique', 'Avancées', 'Avancées'],
-                                    'API' => [false, true, true],
-                                    'White-label' => [false, false, true],
-                                    'Formation' => ['Documentation', 'Webinaires', 'Personnalisée']
+                                    'Accès à la plateforme' => [true, true],
+                                    'Notifications WhatsApp' => [false, true],
+                                    'Notifications Push' => [false, true],
+                                    'Accès API' => [false, true],
+                                    'Rapports avancés' => [false, true],
+                                    'Support prioritaire' => [false, true]
                                 ];
                             @endphp
 

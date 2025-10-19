@@ -884,22 +884,22 @@ class AuthController extends Controller
         $data['title'] = 'Forfaits';
         $data['menu'] = 'pricing';
 
-        // Récupérer les plans de tarification depuis la base de données
-        $data['plans'] = PricingPlan::active()
+        // Récupérer les plans d'abonnement depuis la base de données
+        $data['plans'] = \App\Models\SubscriptionPlan::active()
             ->ordered()
             ->get()
             ->map(function ($plan) {
                 return [
                     'id' => $plan->id,
                     'name' => $plan->name,
-                    'price' => $plan->price,
+                    'price' => number_format($plan->price, 0, ',', ' '),
                     'currency' => $plan->currency,
-                    'period' => $plan->formatted_period,
+                    'period' => 'mois',
                     'description' => $plan->description,
-                    'features' => $plan->features ?? [],
-                    'popular' => $plan->is_popular,
-                    'button_text' => $plan->is_popular ? 'Choisir ' . $plan->name : 'Commencer',
-                    'button_class' => $plan->is_popular ? 'btn-primary' : 'btn-outline-primary'
+                    'features' => $plan->formatted_features,
+                    'popular' => $plan->slug === 'premium', // Premium est populaire
+                    'button_text' => $plan->slug === 'premium' ? 'Choisir ' . $plan->name : 'Commencer',
+                    'button_class' => $plan->slug === 'premium' ? 'btn-primary' : 'btn-outline-primary'
                 ];
             });
 
