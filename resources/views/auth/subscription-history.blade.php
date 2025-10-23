@@ -87,22 +87,22 @@
                                         </td>
                                         <td>
                                             <div>
-                                                <span class="fw-semibold">{{ $subscription->start_date->format('d/m/Y') }}</span>
+                                                <span class="fw-semibold">{{ $subscription->starts_at->format('d/m/Y') }}</span>
                                                 <br>
-                                                <small class="text-muted">{{ $subscription->start_date->format('H:i') }}</small>
+                                                <small class="text-muted">{{ $subscription->starts_at->format('H:i') }}</small>
                                             </div>
                                         </td>
                                         <td>
                                             <div>
-                                                <span class="fw-semibold">{{ $subscription->end_date->format('d/m/Y') }}</span>
+                                                <span class="fw-semibold">{{ $subscription->expires_at->format('d/m/Y') }}</span>
                                                 <br>
-                                                <small class="text-muted">{{ $subscription->end_date->format('H:i') }}</small>
+                                                <small class="text-muted">{{ $subscription->expires_at->format('H:i') }}</small>
                                             </div>
                                         </td>
                                         <td>
-                                            @if($subscription->features && count($subscription->features) > 0)
+                                            @if($subscription->pricingPlan && $subscription->pricingPlan->features && count($subscription->pricingPlan->features) > 0)
                                                 <div class="d-flex flex-wrap gap-1">
-                                                    @foreach($subscription->features as $feature)
+                                                    @foreach($subscription->pricingPlan->features as $feature)
                                                         <span class="badge bg-label-info">{{ $feature }}</span>
                                                     @endforeach
                                                 </div>

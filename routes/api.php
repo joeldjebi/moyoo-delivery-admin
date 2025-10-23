@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\LivreurRamassageController;
 use App\Http\Controllers\Api\LivreurOtpController;
 use App\Http\Controllers\Api\FcmTokenController;
 use App\Http\Controllers\Api\FirebaseNotificationController;
+use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\SwaggerController;
 
 /*
@@ -31,6 +32,13 @@ Route::middleware(['auth:sanctum'])->group(function () {
 Route::middleware(['web', 'auth'])->group(function () {
     Route::post('fcm-token-web', [FcmTokenController::class, 'store']);
     Route::delete('fcm-token-web', [FcmTokenController::class, 'destroy']);
+
+    // Routes pour les notifications
+    Route::get('notifications', [NotificationController::class, 'index']);
+    Route::get('notifications/unread-count', [NotificationController::class, 'unreadCount']);
+    Route::put('notifications/{id}/read', [NotificationController::class, 'markAsRead']);
+    Route::put('notifications/mark-all-read', [NotificationController::class, 'markAllAsRead']);
+    Route::delete('notifications/{id}', [NotificationController::class, 'destroy']);
 });
 
 // Routes publiques pour l'authentification des livreurs

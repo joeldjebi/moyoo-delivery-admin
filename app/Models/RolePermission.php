@@ -8,7 +8,8 @@ class RolePermission extends Model
 {
     protected $fillable = [
         'role',
-        'permissions'
+        'permissions',
+        'entreprise_id'
     ];
 
     protected $casts = [
@@ -41,5 +42,13 @@ class RolePermission extends Model
     public static function getAllRolePermissions()
     {
         return self::all()->pluck('permissions', 'role')->toArray();
+    }
+
+    /**
+     * Scope: filtrer par entreprise
+     */
+    public function scopeByEntreprise($query, $entrepriseId)
+    {
+        return $query->where('entreprise_id', $entrepriseId);
     }
 }

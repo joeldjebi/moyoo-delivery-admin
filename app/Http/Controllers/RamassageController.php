@@ -392,6 +392,7 @@ class RamassageController extends Controller
         PlanificationRamassage::create([
             'ramassage_id' => $ramassage->id,
             'livreur_id' => $request->livreur_id,
+            'entreprise_id' => $ramassage->entreprise_id,
             'date_planifiee' => $dateTimePlanifiee,
             'heure_debut' => $request->heure_debut,
             'heure_fin' => $request->heure_fin,

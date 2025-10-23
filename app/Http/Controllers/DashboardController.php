@@ -160,31 +160,39 @@ class DashboardController extends Controller
      */
     private function getFraisStats($entrepriseId)
     {
-        // Utiliser uniquement les livraisons effectuées avec succès
-        $query = Historique_livraison::where('entreprise_id', $entrepriseId)
-                                   ->where('status', 'livre'); // Seulement les livraisons réussies
+        // Fonction helper pour créer une nouvelle requête
+        $createQuery = function() use ($entrepriseId) {
+            return Historique_livraison::where('entreprise_id', $entrepriseId)
+                                      ->where('status', 'livre');
+        };
 
         // Total des frais aujourd'hui (livraisons réussies)
-        $fraisAujourdhui = $query->whereDate('created_at', today())
-                                ->sum('montant_de_la_livraison');
+        $fraisAujourdhui = $createQuery()->whereDate('created_at', today())
+                                        ->sum('montant_de_la_livraison');
 
         // Total des frais cette semaine (livraisons réussies)
-        $fraisCetteSemaine = $query->whereBetween('created_at', [
+        $fraisCetteSemaine = $createQuery()->whereBetween('created_at', [
             now()->startOfWeek(),
             now()->endOfWeek()
         ])->sum('montant_de_la_livraison');
 
         // Total des frais ce mois (livraisons réussies)
-        $fraisCeMois = $query->whereMonth('created_at', now()->month)
-                            ->whereYear('created_at', now()->year)
-                            ->sum('montant_de_la_livraison');
+        $fraisCeMois = $createQuery()->whereMonth('created_at', now()->month)
+                                    ->whereYear('created_at', now()->year)
+                                    ->sum('montant_de_la_livraison');
 
         // Total des frais (tous les temps - livraisons réussies)
-        $totalFrais = $query->sum('montant_de_la_livraison');
+        $totalFrais = $createQuery()->sum('montant_de_la_livraison');
 
-        // Si pas de données récentes, utiliser les 7 derniers jours
+        // Si pas de données aujourd'hui, afficher les données d'hier
+        if ($fraisAujourdhui == 0) {
+            $fraisAujourdhui = $createQuery()->whereDate('created_at', now()->subDay())
+                                           ->sum('montant_de_la_livraison');
+        }
+
+        // Si pas de données cette semaine, utiliser les 7 derniers jours
         if ($fraisCetteSemaine == 0) {
-            $fraisCetteSemaine = $query->whereBetween('created_at', [
+            $fraisCetteSemaine = $createQuery()->whereBetween('created_at', [
                 now()->subDays(7),
                 now()
             ])->sum('montant_de_la_livraison');
@@ -192,7 +200,7 @@ class DashboardController extends Controller
 
         // Si pas de données ce mois, utiliser les 30 derniers jours
         if ($fraisCeMois == 0) {
-            $fraisCeMois = $query->whereBetween('created_at', [
+            $fraisCeMois = $createQuery()->whereBetween('created_at', [
                 now()->subDays(30),
                 now()
             ])->sum('montant_de_la_livraison');
@@ -219,8 +227,8 @@ class DashboardController extends Controller
         }
 
         // Ajouter les statistiques du jour précédent (livraisons réussies)
-        $fraisHier = $query->whereDate('created_at', now()->subDay())
-                          ->sum('montant_de_la_livraison');
+        $fraisHier = $createQuery()->whereDate('created_at', now()->subDay())
+                                  ->sum('montant_de_la_livraison');
 
         // Log pour debug
         \Log::info("Statistiques frais de livraison (livraisons réussies uniquement)", [

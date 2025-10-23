@@ -7,19 +7,30 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Zone_activite extends Model
 {
-    use SoftDeletes;
+	use SoftDeletes;
 
-    protected $table = 'zone_activites';
+	protected $table = 'zone_activites';
 
-    protected $fillable = [
-        'code',
-        'libelle',
-        'created_by'
-    ];
+	protected $fillable = [
+		'code',
+		'libelle',
+		'created_by',
+		'entreprise_id'
+	];
 
-    protected $casts = [
-        'created_at' => 'datetime',
-        'updated_at' => 'datetime',
-        'deleted_at' => 'datetime'
-    ];
+	protected $casts = [
+		'created_at' => 'datetime',
+		'updated_at' => 'datetime',
+		'deleted_at' => 'datetime'
+	];
+
+	public function entreprise()
+	{
+		return $this->belongsTo(Entreprise::class);
+	}
+
+	public function scopeByEntreprise($query, $entrepriseId)
+	{
+		return $query->where('entreprise_id', $entrepriseId);
+	}
 }

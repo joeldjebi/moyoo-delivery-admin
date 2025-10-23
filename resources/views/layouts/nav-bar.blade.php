@@ -186,7 +186,7 @@ id="layout-navbar">
         aria-expanded="false">
         <span class="position-relative">
           <i class="ti ti-bell ti-md"></i>
-          <span class="badge rounded-pill bg-danger badge-dot badge-notifications border"></span>
+          <span class="badge rounded-pill bg-danger badge-dot badge-notifications border" id="notification-badge" style="display: none;"></span>
         </span>
       </a>
       <ul class="dropdown-menu dropdown-menu-end p-0">
@@ -194,7 +194,7 @@ id="layout-navbar">
           <div class="dropdown-header d-flex align-items-center py-3">
             <h6 class="mb-0 me-auto">Notification</h6>
             <div class="d-flex align-items-center h6 mb-0">
-              <span class="badge bg-label-primary me-2">8 New</span>
+              <span class="badge bg-label-primary me-2" id="notification-count">0</span>
               <a
                 href="javascript:void(0)"
                 class="btn btn-text-secondary rounded-pill btn-icon dropdown-notifications-all"
@@ -207,227 +207,256 @@ id="layout-navbar">
           </div>
         </li>
         <li class="dropdown-notifications-list scrollable-container">
-          <ul class="list-group list-group-flush">
-            <li class="list-group-item list-group-item-action dropdown-notifications-item">
-              <div class="d-flex">
-                <div class="flex-shrink-0 me-3">
-                  <div class="avatar">
-                    <img src="../../assets/img/avatars/1.png" alt class="rounded-circle" />
-                  </div>
-                </div>
-                <div class="flex-grow-1">
-                  <h6 class="small mb-1">Congratulation Lettie 🎉</h6>
-                  <small class="mb-1 d-block text-body">Won the monthly best seller gold badge</small>
-                  <small class="text-muted">1h ago</small>
-                </div>
-                <div class="flex-shrink-0 dropdown-notifications-actions">
-                  <a href="javascript:void(0)" class="dropdown-notifications-read"
-                    ><span class="badge badge-dot"></span
-                  ></a>
-                  <a href="javascript:void(0)" class="dropdown-notifications-archive"
-                    ><span class="ti ti-x"></span
-                  ></a>
-                </div>
-              </div>
-            </li>
-            <li class="list-group-item list-group-item-action dropdown-notifications-item">
-              <div class="d-flex">
-                <div class="flex-shrink-0 me-3">
-                  <div class="avatar">
-                    <span class="avatar-initial rounded-circle bg-label-danger">CF</span>
-                  </div>
-                </div>
-                <div class="flex-grow-1">
-                  <h6 class="mb-1 small">Charles Franklin</h6>
-                  <small class="mb-1 d-block text-body">Accepted your connection</small>
-                  <small class="text-muted">12hr ago</small>
-                </div>
-                <div class="flex-shrink-0 dropdown-notifications-actions">
-                  <a href="javascript:void(0)" class="dropdown-notifications-read"
-                    ><span class="badge badge-dot"></span
-                  ></a>
-                  <a href="javascript:void(0)" class="dropdown-notifications-archive"
-                    ><span class="ti ti-x"></span
-                  ></a>
-                </div>
-              </div>
-            </li>
-            <li class="list-group-item list-group-item-action dropdown-notifications-item marked-as-read">
-              <div class="d-flex">
-                <div class="flex-shrink-0 me-3">
-                  <div class="avatar">
-                    <img src="../../assets/img/avatars/2.png" alt class="rounded-circle" />
-                  </div>
-                </div>
-                <div class="flex-grow-1">
-                  <h6 class="mb-1 small">New Message ✉️</h6>
-                  <small class="mb-1 d-block text-body">You have new message from Natalie</small>
-                  <small class="text-muted">1h ago</small>
-                </div>
-                <div class="flex-shrink-0 dropdown-notifications-actions">
-                  <a href="javascript:void(0)" class="dropdown-notifications-read"
-                    ><span class="badge badge-dot"></span
-                  ></a>
-                  <a href="javascript:void(0)" class="dropdown-notifications-archive"
-                    ><span class="ti ti-x"></span
-                  ></a>
-                </div>
-              </div>
-            </li>
-            <li class="list-group-item list-group-item-action dropdown-notifications-item">
-              <div class="d-flex">
-                <div class="flex-shrink-0 me-3">
-                  <div class="avatar">
-                    <span class="avatar-initial rounded-circle bg-label-success"
-                      ><i class="ti ti-shopping-cart"></i
-                    ></span>
-                  </div>
-                </div>
-                <div class="flex-grow-1">
-                  <h6 class="mb-1 small">Whoo! You have new order 🛒</h6>
-                  <small class="mb-1 d-block text-body">ACME Inc. made new order $1,154</small>
-                  <small class="text-muted">1 day ago</small>
-                </div>
-                <div class="flex-shrink-0 dropdown-notifications-actions">
-                  <a href="javascript:void(0)" class="dropdown-notifications-read"
-                    ><span class="badge badge-dot"></span
-                  ></a>
-                  <a href="javascript:void(0)" class="dropdown-notifications-archive"
-                    ><span class="ti ti-x"></span
-                  ></a>
-                </div>
-              </div>
-            </li>
-            <li class="list-group-item list-group-item-action dropdown-notifications-item marked-as-read">
-              <div class="d-flex">
-                <div class="flex-shrink-0 me-3">
-                  <div class="avatar">
-                    <img src="../../assets/img/avatars/9.png" alt class="rounded-circle" />
-                  </div>
-                </div>
-                <div class="flex-grow-1">
-                  <h6 class="mb-1 small">Application has been approved 🚀</h6>
-                  <small class="mb-1 d-block text-body"
-                    >Your ABC project application has been approved.</small
-                  >
-                  <small class="text-muted">2 days ago</small>
-                </div>
-                <div class="flex-shrink-0 dropdown-notifications-actions">
-                  <a href="javascript:void(0)" class="dropdown-notifications-read"
-                    ><span class="badge badge-dot"></span
-                  ></a>
-                  <a href="javascript:void(0)" class="dropdown-notifications-archive"
-                    ><span class="ti ti-x"></span
-                  ></a>
-                </div>
-              </div>
-            </li>
-            <li class="list-group-item list-group-item-action dropdown-notifications-item marked-as-read">
-              <div class="d-flex">
-                <div class="flex-shrink-0 me-3">
-                  <div class="avatar">
-                    <span class="avatar-initial rounded-circle bg-label-success"
-                      ><i class="ti ti-chart-pie"></i
-                    ></span>
-                  </div>
-                </div>
-                <div class="flex-grow-1">
-                  <h6 class="mb-1 small">Monthly report is generated</h6>
-                  <small class="mb-1 d-block text-body">July monthly financial report is generated </small>
-                  <small class="text-muted">3 days ago</small>
-                </div>
-                <div class="flex-shrink-0 dropdown-notifications-actions">
-                  <a href="javascript:void(0)" class="dropdown-notifications-read"
-                    ><span class="badge badge-dot"></span
-                  ></a>
-                  <a href="javascript:void(0)" class="dropdown-notifications-archive"
-                    ><span class="ti ti-x"></span
-                  ></a>
-                </div>
-              </div>
-            </li>
-            <li class="list-group-item list-group-item-action dropdown-notifications-item marked-as-read">
-              <div class="d-flex">
-                <div class="flex-shrink-0 me-3">
-                  <div class="avatar">
-                    <img src="../../assets/img/avatars/5.png" alt class="rounded-circle" />
-                  </div>
-                </div>
-                <div class="flex-grow-1">
-                  <h6 class="mb-1 small">Send connection request</h6>
-                  <small class="mb-1 d-block text-body">Peter sent you connection request</small>
-                  <small class="text-muted">4 days ago</small>
-                </div>
-                <div class="flex-shrink-0 dropdown-notifications-actions">
-                  <a href="javascript:void(0)" class="dropdown-notifications-read"
-                    ><span class="badge badge-dot"></span
-                  ></a>
-                  <a href="javascript:void(0)" class="dropdown-notifications-archive"
-                    ><span class="ti ti-x"></span
-                  ></a>
-                </div>
-              </div>
-            </li>
-            <li class="list-group-item list-group-item-action dropdown-notifications-item">
-              <div class="d-flex">
-                <div class="flex-shrink-0 me-3">
-                  <div class="avatar">
-                    <img src="../../assets/img/avatars/6.png" alt class="rounded-circle" />
-                  </div>
-                </div>
-                <div class="flex-grow-1">
-                  <h6 class="mb-1 small">New message from Jane</h6>
-                  <small class="mb-1 d-block text-body">Your have new message from Jane</small>
-                  <small class="text-muted">5 days ago</small>
-                </div>
-                <div class="flex-shrink-0 dropdown-notifications-actions">
-                  <a href="javascript:void(0)" class="dropdown-notifications-read"
-                    ><span class="badge badge-dot"></span
-                  ></a>
-                  <a href="javascript:void(0)" class="dropdown-notifications-archive"
-                    ><span class="ti ti-x"></span
-                  ></a>
-                </div>
-              </div>
-            </li>
-            <li class="list-group-item list-group-item-action dropdown-notifications-item marked-as-read">
-              <div class="d-flex">
-                <div class="flex-shrink-0 me-3">
-                  <div class="avatar">
-                    <span class="avatar-initial rounded-circle bg-label-warning"
-                      ><i class="ti ti-alert-triangle"></i
-                    ></span>
-                  </div>
-                </div>
-                <div class="flex-grow-1">
-                  <h6 class="mb-1 small">CPU is running high</h6>
-                  <small class="mb-1 d-block text-body"
-                    >CPU Utilization Percent is currently at 88.63%,</small
-                  >
-                  <small class="text-muted">5 days ago</small>
-                </div>
-                <div class="flex-shrink-0 dropdown-notifications-actions">
-                  <a href="javascript:void(0)" class="dropdown-notifications-read"
-                    ><span class="badge badge-dot"></span
-                  ></a>
-                  <a href="javascript:void(0)" class="dropdown-notifications-archive"
-                    ><span class="ti ti-x"></span
-                  ></a>
-                </div>
-              </div>
-            </li>
+          <ul class="list-group list-group-flush" id="notifications-list">
+            <!-- Les notifications seront chargées dynamiquement par JavaScript -->
           </ul>
         </li>
         <li class="border-top">
           <div class="d-grid p-4">
-            <a class="btn btn-primary btn-sm d-flex" href="javascript:void(0);">
-              <small class="align-middle">View all notifications</small>
+            <a class="btn btn-primary btn-sm d-flex" href="javascript:void(0);" id="mark-all-read-btn">
+              <small class="align-middle">Marquer tout comme lu</small>
             </a>
           </div>
         </li>
       </ul>
     </li>
     <!--/ Notification -->
+
+    <!-- Script pour les notifications en temps réel -->
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Variables globales
+        let notificationCount = 0;
+        let notifications = [];
+
+        // Fonction pour charger les notifications
+        async function loadNotifications() {
+            try {
+                // Afficher un indicateur de chargement
+                showLoadingState();
+
+                const response = await fetch('/api/notifications?limit=10');
+                const data = await response.json();
+
+                if (data.success) {
+                    notifications = data.data;
+                    notificationCount = data.unread_count;
+                    updateNotificationUI();
+                } else {
+                    console.error('Erreur API:', data.message);
+                    showErrorState();
+                }
+            } catch (error) {
+                console.error('Erreur lors du chargement des notifications:', error);
+                showErrorState();
+            }
+        }
+
+        // Fonction pour afficher l'état de chargement
+        function showLoadingState() {
+            const listElement = document.getElementById('notifications-list');
+            if (listElement) {
+                listElement.innerHTML = `
+                    <li class="list-group-item text-center py-4">
+                        <div class="text-muted">
+                            <div class="spinner-border spinner-border-sm me-2" role="status">
+                                <span class="visually-hidden">Chargement...</span>
+                            </div>
+                            Chargement des notifications...
+                        </div>
+                    </li>
+                `;
+            }
+        }
+
+        // Fonction pour afficher l'état d'erreur
+        function showErrorState() {
+            const listElement = document.getElementById('notifications-list');
+            if (listElement) {
+                listElement.innerHTML = `
+                    <li class="list-group-item text-center py-4">
+                        <div class="text-muted">
+                            <i class="ti ti-alert-circle ti-lg mb-2"></i>
+                            <p class="mb-0">Erreur lors du chargement</p>
+                            <small>Veuillez réessayer plus tard</small>
+                        </div>
+                    </li>
+                `;
+            }
+        }
+
+        // Fonction pour mettre à jour l'interface
+        function updateNotificationUI() {
+            // Mettre à jour le compteur dans le dropdown
+            const countElement = document.getElementById('notification-count');
+            if (countElement) {
+                countElement.textContent = notificationCount;
+                countElement.style.display = notificationCount > 0 ? 'inline' : 'none';
+            }
+
+            // Mettre à jour le badge rouge sur l'icône de la cloche
+            const badgeElement = document.getElementById('notification-badge');
+            if (badgeElement) {
+                badgeElement.style.display = notificationCount > 0 ? 'inline' : 'none';
+            }
+
+            // Mettre à jour la liste des notifications
+            const listElement = document.getElementById('notifications-list');
+            if (listElement) {
+                listElement.innerHTML = '';
+
+                if (notifications.length === 0) {
+                    listElement.innerHTML = `
+                        <li class="list-group-item text-center py-4">
+                            <div class="text-muted">
+                                <i class="ti ti-bell-off ti-lg mb-2"></i>
+                                <p class="mb-0">Aucune notification</p>
+                                <small>Toutes vos notifications apparaîtront ici</small>
+                            </div>
+                        </li>
+                    `;
+                } else {
+                    notifications.forEach(notification => {
+                        const isRead = notification.read_at !== null;
+                        const notificationData = notification.data;
+
+                        // Déterminer la couleur et l'icône selon le type
+                        let color = 'primary';
+                        let icon = 'ti-bell';
+
+                        if (notificationData.type === 'delivery_completed') {
+                            color = 'success';
+                            icon = 'ti-truck';
+                        } else if (notificationData.type === 'pickup_completed') {
+                            color = 'info';
+                            icon = 'ti-package';
+                        } else if (notificationData.type === 'new_colis') {
+                            color = 'primary';
+                            icon = 'ti-package';
+                        }
+
+                        listElement.innerHTML += `
+                            <li class="list-group-item list-group-item-action dropdown-notifications-item ${isRead ? 'marked-as-read' : ''}"
+                                data-notification-id="${notification.id}">
+                                <div class="d-flex">
+                                    <div class="flex-shrink-0 me-3">
+                                        <div class="avatar">
+                                            <span class="avatar-initial rounded-circle bg-label-${color}">
+                                                <i class="ti ${icon}"></i>
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <h6 class="mb-1 small">${notificationData.title || 'Notification'}</h6>
+                                        <small class="mb-1 d-block text-body">${notificationData.message || ''}</small>
+                                        <small class="text-muted">${formatTime(notification.created_at)}</small>
+                                    </div>
+                                    <div class="flex-shrink-0 dropdown-notifications-actions">
+                                        ${!isRead ? `
+                                            <a href="javascript:void(0)" class="dropdown-notifications-read"
+                                               onclick="markAsRead('${notification.id}')" title="Marquer comme lu">
+                                                <span class="badge badge-dot"></span>
+                                            </a>
+                                        ` : ''}
+                                        <a href="javascript:void(0)" class="dropdown-notifications-archive"
+                                           onclick="deleteNotification('${notification.id}')" title="Supprimer">
+                                            <span class="ti ti-x"></span>
+                                        </a>
+                                    </div>
+                                </div>
+                            </li>
+                        `;
+                    });
+                }
+            }
+        }
+
+        // Fonction pour formater le temps
+        function formatTime(timestamp) {
+            const now = new Date();
+            const time = new Date(timestamp);
+            const diff = now - time;
+
+            if (diff < 60000) return 'À l\'instant';
+            if (diff < 3600000) return `${Math.floor(diff / 60000)}min`;
+            if (diff < 86400000) return `${Math.floor(diff / 3600000)}h`;
+            return `${Math.floor(diff / 86400000)}j`;
+        }
+
+        // Fonction pour marquer comme lu
+        async function markAsRead(notificationId) {
+            try {
+                const response = await fetch(`/api/notifications/${notificationId}/read`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    }
+                });
+
+                if (response.ok) {
+                    // Recharger les notifications
+                    await loadNotifications();
+                }
+            } catch (error) {
+                console.error('Erreur lors du marquage comme lu:', error);
+            }
+        }
+
+        // Fonction pour supprimer une notification
+        async function deleteNotification(notificationId) {
+            try {
+                const response = await fetch(`/api/notifications/${notificationId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    }
+                });
+
+                if (response.ok) {
+                    // Recharger les notifications
+                    await loadNotifications();
+                }
+            } catch (error) {
+                console.error('Erreur lors de la suppression:', error);
+            }
+        }
+
+        // Fonction pour marquer toutes comme lues
+        async function markAllAsRead() {
+            try {
+                const response = await fetch('/api/notifications/mark-all-read', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    }
+                });
+
+                if (response.ok) {
+                    // Recharger les notifications
+                    await loadNotifications();
+                }
+            } catch (error) {
+                console.error('Erreur lors du marquage de toutes les notifications:', error);
+            }
+        }
+
+        // Event listeners
+        document.getElementById('mark-all-read-btn')?.addEventListener('click', markAllAsRead);
+
+        // Charger les notifications au chargement de la page
+        loadNotifications();
+
+        // Recharger les notifications toutes les 30 secondes
+        setInterval(loadNotifications, 30000);
+
+        // Exposer les fonctions globalement
+        window.markAsRead = markAsRead;
+        window.deleteNotification = deleteNotification;
+    });
+    </script>
 
     <!-- User -->
     <li class="nav-item navbar-dropdown dropdown-user dropdown">

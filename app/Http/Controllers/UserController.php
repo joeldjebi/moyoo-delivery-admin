@@ -27,16 +27,14 @@ class UserController extends Controller
             abort(403, 'Vous n\'avez pas les permissions pour voir les utilisateurs.');
         }
 
-        // Super admin voit tous les utilisateurs
+        // Super admin voit tous les utilisateurs (sauf ceux supprimés)
         if ($user->isSuperAdmin()) {
-            $data['users'] = User::withTrashed()
-                ->with('entreprise')
+            $data['users'] = User::with('entreprise')
                 ->orderBy('created_at', 'desc')
                 ->paginate(15);
         } else {
-            // Les autres utilisateurs ne voient que ceux de leur entreprise
-            $data['users'] = User::withTrashed()
-                ->forEntreprise($user->entreprise_id)
+            // Les autres utilisateurs ne voient que ceux de leur entreprise (sauf ceux supprimés)
+            $data['users'] = User::where('entreprise_id', $user->entreprise_id)
                 ->orderBy('created_at', 'desc')
                 ->paginate(15);
         }
@@ -83,7 +81,6 @@ class UserController extends Controller
                 'last_name' => 'required|string|max:255',
                 'email' => 'required|email|max:255|unique:users,email',
                 'mobile' => 'required|string|max:20',
-                'password' => 'required|string|min:8|confirmed',
                 'role' => 'required|in:admin,user,manager',
                 'user_type' => 'required|in:entreprise_admin,entreprise_user',
                 'status' => 'required|in:active,inactive',
@@ -103,9 +100,6 @@ class UserController extends Controller
                 'email.required' => 'L\'adresse email est obligatoire.',
                 'email.email' => 'L\'adresse email doit être valide.',
                 'email.unique' => 'Cette adresse email est déjà utilisée.',
-                'password.required' => 'Le mot de passe est obligatoire.',
-                'password.min' => 'Le mot de passe doit contenir au moins 8 caractères.',
-                'password.confirmed' => 'La confirmation du mot de passe ne correspond pas.',
                 'role.required' => 'Le rôle est obligatoire.',
                 'role.in' => 'Le rôle sélectionné n\'est pas valide.',
                 'user_type.required' => 'Le type d\'utilisateur est obligatoire.',
@@ -121,7 +115,9 @@ class UserController extends Controller
                 $validated['entreprise_id'] = $user->entreprise_id;
             }
 
-            $validated['password'] = Hash::make($validated['password']);
+            // Générer un mot de passe numérique à 8 chiffres
+            $generatedPassword = str_pad(random_int(0, 99999999), 8, '0', STR_PAD_LEFT);
+            $validated['password'] = Hash::make($generatedPassword);
             $validated['created_by'] = $user->id;
 
             // Gérer les permissions personnalisées
@@ -131,16 +127,20 @@ class UserController extends Controller
             // Créer l'utilisateur
             $newUser = User::create($validated);
 
+            // Envoyer le mot de passe via email
+            $this->sendPasswordViaEmail($newUser, $generatedPassword);
+
             Log::info('Utilisateur créé par un admin', [
                 'admin_id' => Auth::id(),
                 'admin_email' => Auth::user()->email,
                 'new_user_id' => $newUser->id,
                 'new_user_email' => $newUser->email,
+                'generated_password' => $generatedPassword,
                 'ip' => $request->ip()
             ]);
 
             return redirect()->route('users.index')
-                ->with('success', 'L\'utilisateur a été créé avec succès.');
+                ->with('success', 'L\'utilisateur a été créé avec succès. Le mot de passe a été envoyé par email.');
 
         } catch (\Exception $e) {
             Log::error('Erreur lors de la création d\'un utilisateur: ' . $e->getMessage(), [
@@ -361,4 +361,180 @@ class UserController extends Controller
                 ->withErrors(['error' => 'Erreur lors du changement de mot de passe. Veuillez réessayer.']);
         }
     }
+
+    /**
+     * Envoyer le mot de passe généré via email
+     */
+    private function sendPasswordViaEmail($user, $password)
+    {
+        try {
+            $toEmail = $user->email;
+            $toName = $user->first_name . ' ' . $user->last_name;
+            $subject = 'Vos identifiants de connexion - Plateforme MOYOO';
+
+            // Contenu texte
+            $textPart = "Bonjour {$toName},\n\n";
+            $textPart .= "Votre compte a été créé avec succès sur la plateforme MOYOO.\n\n";
+            $textPart .= "Vos identifiants de connexion :\n";
+            $textPart .= "Email : {$user->email}\n";
+            $textPart .= "Mot de passe : {$password}\n\n";
+            $textPart .= "Vous pouvez vous connecter à l'adresse : " . url('/login') . "\n\n";
+            $textPart .= "Pour des raisons de sécurité, nous vous recommandons de changer votre mot de passe lors de votre première connexion.\n\n";
+            $textPart .= "Cordialement,\nL'équipe MOYOO";
+
+            // Contenu HTML
+            $htmlPart = "
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset='utf-8'>
+                <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+                <title>Vos identifiants de connexion</title>
+                <style>
+                    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
+                    .header { background-color: #007bff; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
+                    .content { background-color: #f8f9fa; padding: 30px; border-radius: 0 0 8px 8px; }
+                    .credentials { background-color: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #007bff; }
+                    .btn { display: inline-block; background-color: #007bff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 20px 0; }
+                    .btn:hover { background-color: #0056b3; }
+                    .footer { text-align: center; margin-top: 30px; color: #666; font-size: 14px; }
+                    .warning { background-color: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 6px; margin: 20px 0; }
+                </style>
+            </head>
+            <body>
+                <div class='header'>
+                    <h1>Bienvenue sur MOYOO</h1>
+                </div>
+                <div class='content'>
+                    <p>Bonjour <strong>{$toName}</strong>,</p>
+
+                    <p>Votre compte a été créé avec succès sur la plateforme MOYOO.</p>
+
+                    <div class='credentials'>
+                        <h3>Vos identifiants de connexion :</h3>
+                        <p><strong>Email :</strong> {$user->email}</p>
+                        <p><strong>Mot de passe :</strong> <code style='background-color: #e9ecef; padding: 4px 8px; border-radius: 4px;'>{$password}</code></p>
+                    </div>
+
+                    <div style='text-align: center;'>
+                        <a href='" . url('/login') . "' class='btn'>Se connecter maintenant</a>
+                    </div>
+
+                    <div class='warning'>
+                        <strong>⚠️ Recommandation de sécurité :</strong><br>
+                        Pour des raisons de sécurité, nous vous recommandons de changer votre mot de passe lors de votre première connexion.
+                    </div>
+
+                    <p>Vous pouvez maintenant accéder à votre espace personnel et commencer à utiliser nos services.</p>
+                </div>
+                <div class='footer'>
+                    <p>Cordialement,<br><strong>L'équipe MOYOO</strong></p>
+                    <p><small>Cet email a été envoyé automatiquement, merci de ne pas y répondre.</small></p>
+                </div>
+            </body>
+            </html>";
+
+            // Utiliser la fonction Mailjet existante
+            $success = $this->sendMailjetEmail($toEmail, $toName, $subject, $textPart, $htmlPart);
+
+            if ($success) {
+                Log::info('Mot de passe envoyé via email avec succès', [
+                    'user_id' => $user->id,
+                    'user_email' => $user->email,
+                    'password_generated' => true
+                ]);
+            } else {
+                Log::error('Échec de l\'envoi du mot de passe via email', [
+                    'user_id' => $user->id,
+                    'user_email' => $user->email
+                ]);
+            }
+
+        } catch (\Exception $e) {
+            Log::error('Erreur lors de l\'envoi du mot de passe via email', [
+                'user_id' => $user->id,
+                'user_email' => $user->email,
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
+     * Envoyer un email via Mailjet
+     */
+    private function sendMailjetEmail($toEmail, $toName, $subject, $textPart, $htmlPart)
+    {
+        $apiKeyPublic = config('mailjet.api_key_public');
+        $apiKeyPrivate = config('mailjet.api_key_private');
+        $senderEmail = config('mailjet.default_from.email');
+        $senderName = config('mailjet.default_from.name');
+        $apiUrl = config('mailjet.api_url');
+
+        if (!$apiKeyPublic || !$apiKeyPrivate || !$senderEmail) {
+            Log::error('Configuration Mailjet manquante');
+            return false;
+        }
+
+        $data = [
+            'Messages' => [
+                [
+                    'From' => [
+                        'Email' => $senderEmail,
+                        'Name' => $senderName
+                    ],
+                    'To' => [
+                        [
+                            'Email' => $toEmail,
+                            'Name' => $toName
+                        ]
+                    ],
+                    'Subject' => $subject,
+                    'TextPart' => $textPart,
+                    'HTMLPart' => $htmlPart
+                ]
+            ]
+        ];
+
+        $ch = curl_init();
+
+        curl_setopt_array($ch, [
+            CURLOPT_URL => $apiUrl,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_POST => true,
+            CURLOPT_POSTFIELDS => json_encode($data),
+            CURLOPT_HTTPHEADER => [
+                'Content-Type: application/json',
+                'Authorization: Basic ' . base64_encode($apiKeyPublic . ':' . $apiKeyPrivate)
+            ],
+            CURLOPT_SSL_VERIFYPEER => true,
+            CURLOPT_TIMEOUT => 30
+        ]);
+
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $error = curl_error($ch);
+
+        curl_close($ch);
+
+        if ($error) {
+            Log::error('Erreur cURL Mailjet: ' . $error);
+            return false;
+        }
+
+        if ($httpCode !== 200) {
+            Log::error('Erreur API Mailjet', [
+                'http_code' => $httpCode,
+                'response' => $response
+            ]);
+            return false;
+        }
+
+        Log::info('Email envoyé avec succès via Mailjet', [
+            'to' => $toEmail,
+            'subject' => $subject
+        ]);
+
+        return true;
+    }
+
 }

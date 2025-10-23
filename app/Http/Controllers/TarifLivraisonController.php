@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\TarifLivraison;
 use App\Models\Commune;
 use App\Models\Type_engin;
+use App\Models\Engin;
 use App\Models\Mode_livraison;
+use App\Models\Entreprise;
 use App\Models\Poid;
 use App\Models\Temp;
 use Illuminate\Http\Request;
@@ -31,7 +33,7 @@ class TarifLivraisonController extends Controller
             }
 
             // Récupérer l'entreprise de l'utilisateur connecté
-            $entreprise = \App\Models\Entreprise::getEntrepriseByUser(Auth::id());
+            $entreprise = Entreprise::getEntrepriseByUser(Auth::id());
             if (!$entreprise) {
                 return redirect()->route('entreprise.create')->with('error', 'Veuillez d\'abord créer votre entreprise pour accéder aux tarifs.');
             }
@@ -88,11 +90,18 @@ class TarifLivraisonController extends Controller
             $data['tarifs'] = $query->orderBy('commune_depart_id')->orderBy('commune_id')->orderBy('amount')->paginate(15)->appends($request->query());
 
             // Données pour les filtres
-            $data['communes'] = Commune::orderBy('libelle')->get();
-            $data['typeEngins'] = Type_engin::orderBy('libelle')->get();
-            $data['modeLivraisons'] = Mode_livraison::orderBy('libelle')->get();
-            $data['poids'] = Poid::orderBy('libelle')->get();
-            $data['temps'] = Temp::orderBy('libelle')->get();
+            $data['communes'] = Commune::where('id', $entreprise->commune_id)
+            ->orderBy('libelle')
+            ->with('entreprise')
+            ->get();
+            $data['typeEngins'] = Type_engin::where('entreprise_id', $entreprise->id)
+            ->orderBy('libelle')->get();
+            $data['modeLivraisons'] = Mode_livraison::where('entreprise_id', $entreprise->id)
+            ->orderBy('libelle')->get();
+            $data['poids'] = Poid::where('entreprise_id', $entreprise->id)
+            ->orderBy('libelle')->get();
+            $data['temps'] = Temp::where('entreprise_id', $entreprise->id)
+            ->orderBy('libelle')->get();
 
             return view('tarifs.index', $data);
         } catch (\Exception $e) {
@@ -116,16 +125,29 @@ class TarifLivraisonController extends Controller
                     ->withErrors(['error' => 'Veuillez vous connecter pour accéder à cette page.']);
             }
 
-            $data['communes'] = Commune::orderBy('libelle')->get();
-            $data['typeEngins'] = Type_engin::orderBy('libelle')->get();
-            $data['modeLivraisons'] = Mode_livraison::orderBy('libelle')->get();
-            $data['poids'] = Poid::orderBy('libelle')->get();
-            $data['temps'] = Temp::orderBy('libelle')->get();
+            // Récupérer l'entreprise de l'utilisateur connecté
+            $entreprise = Entreprise::getEntrepriseByUser(Auth::id());
+            if (!$entreprise) {
+                return redirect()->route('entreprise.create')->with('error', 'Veuillez d\'abord créer votre entreprise pour accéder aux tarifs.');
+            }
+
+            $data['communes'] = Commune::where('id', $entreprise->commune_id)
+            ->orderBy('libelle')
+            ->with('entreprise')
+            ->get();
+            $data['typeEngins'] = Type_engin::where('entreprise_id', $entreprise->id)
+            ->orderBy('libelle')->get();
+            $data['modeLivraisons'] = Mode_livraison::where('entreprise_id', $entreprise->id)
+            ->orderBy('libelle')->get();
+            $data['poids'] = Poid::where('entreprise_id', $entreprise->id)
+            ->orderBy('libelle')->get();
+            $data['temps'] = Temp::where('entreprise_id', $entreprise->id)
+            ->orderBy('libelle')->get();
 
             return view('tarifs.create', $data);
         } catch (\Exception $e) {
             Log::error('Erreur lors de l\'affichage du formulaire de création: ' . $e->getMessage());
-            return redirect()->back()->with('error', 'Erreur lors de l\'affichage du formulaire.');
+            return redirect()->back()->with('error', 'Erreur lors de l\'affichage du formulaire.' . $e->getMessage());
         }
     }
 
@@ -355,6 +377,12 @@ class TarifLivraisonController extends Controller
         ]);
 
         try {
+            // Nettoyer les valeurs vides avant validation
+            $request->merge([
+                'engin_id' => $request->engin_id ?: null,
+                'temp_id' => $request->temp_id ?: null
+            ]);
+
             $request->validate([
                 'commune_id' => 'required|exists:communes,id',
                 'engin_id' => 'nullable|exists:engins,id',
@@ -366,7 +394,7 @@ class TarifLivraisonController extends Controller
             \Log::info('✅ VALIDATION RÉUSSIE', $request->all());
 
             // Récupérer l'entreprise de l'utilisateur connecté
-            $entreprise = \App\Models\Entreprise::getEntrepriseByUser(auth()->id());
+            $entreprise = Entreprise::getEntrepriseByUser(auth()->id());
             \Log::info('🏢 ENTREPRISE RÉCUPÉRÉE', [
                 'entreprise' => $entreprise ? $entreprise->toArray() : null,
                 'user_id' => auth()->id()
@@ -385,7 +413,7 @@ class TarifLivraisonController extends Controller
             $typeEnginId = null;
 
             if ($request->engin_id) {
-                $engin = \App\Models\Engin::find($request->engin_id);
+                $engin = Engin::find($request->engin_id);
                 \Log::info('🚛 ENGIN RÉCUPÉRÉ', [
                     'engin_id' => $request->engin_id,
                     'engin' => $engin ? $engin->toArray() : null
@@ -403,7 +431,7 @@ class TarifLivraisonController extends Controller
             } else {
                 \Log::info('🚛 AUCUN ENGIN FOURNI - Utilisation du type d\'engin par défaut');
                 // Utiliser un type d'engin par défaut ou le premier disponible
-                $defaultTypeEngin = \App\Models\Type_engin::first();
+                $defaultTypeEngin = Type_engin::first();
                 $typeEnginId = $defaultTypeEngin ? $defaultTypeEngin->id : null;
             }
 
@@ -411,11 +439,11 @@ class TarifLivraisonController extends Controller
             $tempId = $request->temp_id;
             $temp = null;
             if (!$tempId) {
-                $temp = \App\Models\Temp::getCurrentTemp();
+                $temp = Temp::getCurrentTemp();
                 $tempId = $temp ? $temp->id : null;
             } else {
                 // Récupérer l'objet temp si temp_id est fourni
-                $temp = \App\Models\Temp::find($tempId);
+                $temp = Temp::find($tempId);
             }
 
             \Log::info('⏰ PÉRIODE TEMPORELLE', [

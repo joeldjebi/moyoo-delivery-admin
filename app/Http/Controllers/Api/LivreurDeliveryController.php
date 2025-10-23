@@ -12,6 +12,7 @@ use App\Models\BalanceMarchand;
 use App\Models\Marchand;
 use App\Helpers\ImageCompressor;
 use App\Traits\SendsFirebaseNotifications;
+use App\Notifications\DeliveryCompletedNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -734,6 +735,15 @@ class LivreurDeliveryController extends Controller
 
             // Envoyer une notification à l'admin
             $this->sendDeliveryCompletedNotificationToAdmin($colis, $livreur);
+
+            // Envoyer une notification en base de données
+            $admin = \App\Models\User::where('entreprise_id', $colis->entreprise_id)
+                ->where('user_type', 'admin')
+                ->first();
+
+            if ($admin) {
+                $admin->notify(new DeliveryCompletedNotification($colis, $livreur));
+            }
 
             return response()->json([
                 'success' => true,

@@ -55,4 +55,9 @@ return [
         ],
     ],
 
+    'wassenger' => [
+        'api_key' => env('WASSENGER_API_KEY'),
+        'device_id' => env('WASSENGER_DEVICE_ID'),
+    ],
+
 ];

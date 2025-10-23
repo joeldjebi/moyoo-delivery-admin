@@ -15,14 +15,133 @@
     },
     "servers": [
         {
-            "url": "http://192.168.1.5:8000",
-            "description": "Serveur de développement"
+            "url": "http://192.168.1.4:8000",
+            "description": "Serveur de production"
         },
         {
-            "url": "http://192.168.1.5:8000"
+            "url": "http://192.168.1.5:8000",
+            "description": "Serveur de développement local"
+        },
+        {
+            "url": "http://127.0.0.1:8000",
+            "description": "Serveur localhost"
+        },
+        {
+            "url": "http://192.168.1.4:8000"
         }
     ],
     "paths": {
+        "/api/fcm-token": {
+            "post": {
+                "tags": [
+                    "FCM Token"
+                ],
+                "summary": "Mettre à jour le token FCM de l'utilisateur connecté (Admin/User)",
+                "operationId": "a20d8402672f6cee10c7a58a41f69301",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "fcm_token"
+                                ],
+                                "properties": {
+                                    "fcm_token": {
+                                        "description": "Token FCM de l'utilisateur",
+                                        "type": "string"
+                                    },
+                                    "device_type": {
+                                        "description": "Type d'appareil (android/ios)",
+                                        "type": "string",
+                                        "example": "android"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Token FCM mis à jour avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Token FCM mis à jour avec succès"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "user_id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "fcm_token": {
+                                                    "type": "string",
+                                                    "example": "fcm_token_example"
+                                                },
+                                                "updated_at": {
+                                                    "type": "string",
+                                                    "format": "datetime"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "FCM Token"
+                ],
+                "summary": "Supprimer le token FCM de l'utilisateur connecté",
+                "operationId": "14e8decd4b682da3768ee559eb323e1a",
+                "responses": {
+                    "200": {
+                        "description": "Token FCM supprimé avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Token FCM supprimé avec succès"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/livreur/fcm-token": {
             "post": {
                 "tags": [

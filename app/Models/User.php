@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Notifications\DatabaseNotification;
 
 class User extends Authenticatable
 {
@@ -402,10 +403,8 @@ class User extends Authenticatable
      */
     public function hasActiveSubscription()
     {
-        return ($this->attributes['subscription_status'] ?? null) === 'active' &&
-               $this->subscription_expires_at &&
-               $this->subscription_expires_at->isFuture() &&
-               !$this->is_trial;
+        // Utiliser le nouveau système avec SubscriptionHistory
+        return $this->getCurrentSubscription() !== null;
     }
 
     /**
@@ -435,19 +434,25 @@ class User extends Authenticatable
      */
     public function hasReachedColisLimit()
     {
-        if (!$this->subscriptionPlan || !$this->subscriptionPlan->max_colis_per_month) {
-            return false;
+        $currentPlan = $this->getCurrentPricingPlan();
+
+        if (!$currentPlan) {
+            return false; // Pas de plan = pas de limite
         }
 
-        $currentMonthColis = \App\Models\Colis::whereHas('packageColis', function($query) {
-            $query->whereHas('communeZone', function($q) {
-                $q->where('entreprise_id', $this->entreprise_id);
-            });
-        })->whereMonth('created_at', now()->month)
-          ->whereYear('created_at', now()->year)
-          ->count();
+        // Pour le plan gratuit, limite de 20 colis
+        if ($currentPlan->price == 0) {
+            $currentMonthColis = \App\Models\Colis::whereHas('packageColis', function($query) {
+                $query->where('entreprise_id', $this->entreprise_id);
+            })->whereMonth('created_at', now()->month)
+              ->whereYear('created_at', now()->year)
+              ->count();
 
-        return $currentMonthColis >= $this->subscriptionPlan->max_colis_per_month;
+            return $currentMonthColis >= 20; // Limite du plan gratuit
+        }
+
+        // Pour les plans payants, pas de limite
+        return false;
     }
 
     /**
@@ -496,5 +501,103 @@ class User extends Authenticatable
         }
 
         return 'Inactif';
+    }
+
+    /**
+     * Relation avec les notifications
+     */
+    public function notifications()
+    {
+        return $this->morphMany(DatabaseNotification::class, 'notifiable')->orderBy('created_at', 'desc');
+    }
+
+    /**
+     * Relation avec l'historique des abonnements
+     */
+    public function subscriptionHistories()
+    {
+        return $this->hasMany(\App\Models\SubscriptionHistory::class);
+    }
+
+    /**
+     * Obtenir l'abonnement actuel de l'utilisateur
+     */
+    public function getCurrentSubscription()
+    {
+        return $this->subscriptionHistories()
+            ->where('status', 'active')
+            ->where('expires_at', '>', now())
+            ->with('pricingPlan')
+            ->latest()
+            ->first();
+    }
+
+
+    /**
+     * Obtenir le plan de pricing actuel
+     */
+    public function getCurrentPricingPlan()
+    {
+        $subscription = $this->getCurrentSubscription();
+        return $subscription ? $subscription->pricingPlan : null;
+    }
+
+
+    /**
+     * Vérifier si l'utilisateur peut accéder à une fonctionnalité
+     */
+    public function canAccessFeature($feature)
+    {
+        $currentPlan = $this->getCurrentPricingPlan();
+
+        if (!$currentPlan) {
+            return false;
+        }
+
+        // Vérifier selon le plan
+        switch ($feature) {
+            case 'unlimited_colis':
+                return $currentPlan->price > 0; // Plans payants seulement
+            case 'advanced_reports':
+                return $currentPlan->price > 0;
+            case 'api_access':
+                return $currentPlan->price > 0;
+            case 'priority_support':
+                return $currentPlan->price > 0;
+            default:
+                return true; // Fonctionnalités de base
+        }
+    }
+
+    /**
+     * Notifications non lues
+     */
+    public function unreadNotifications()
+    {
+        return $this->notifications()->whereNull('read_at');
+    }
+
+    /**
+     * Notifications lues
+     */
+    public function readNotifications()
+    {
+        return $this->notifications()->whereNotNull('read_at');
+    }
+
+    /**
+     * Marquer toutes les notifications comme lues
+     */
+    public function markAllNotificationsAsRead()
+    {
+        $this->unreadNotifications()->update(['read_at' => now()]);
+    }
+
+    /**
+     * Compter les notifications non lues
+     */
+    public function unreadNotificationsCount()
+    {
+        return $this->unreadNotifications()->count();
     }
 }

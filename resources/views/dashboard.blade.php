@@ -259,21 +259,6 @@ $hasSubscription = $user && $user->subscriptionPlan;
                                 </a>
                             </div>
                         </div>
-
-                        <!-- Ligne supplémentaire pour les notifications -->
-                        <div class="row g-3 mt-2">
-                            <div class="col-lg-3 col-md-6">
-                                <a href="{{ route('notifications.settings') }}" class="btn btn-outline-warning w-100 quick-action-btn d-flex flex-column align-items-center justify-content-center py-4">
-                                    <div class="avatar mb-3">
-                                        <span class="avatar-initial rounded bg-label-warning">
-                                            <i class="ti ti-bell ti-24px"></i>
-                                        </span>
-                                    </div>
-                                    <h6 class="mb-1">Notifications</h6>
-                                    <small class="text-muted text-center">Paramètres des notifications</small>
-                                </a>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -294,7 +279,13 @@ $hasSubscription = $user && $user->subscriptionPlan;
                     </div>
                         <p class="mb-1">Frais de livraison</p>
                     <p class="mb-0">
-                            <span class="text-heading fw-medium me-2">Aujourd'hui</span>
+                            <span class="text-heading fw-medium me-2">
+                                @if($fraisStats['aujourdhui'] > 0)
+                                    Aujourd'hui
+                                @else
+                                    Dernière activité
+                                @endif
+                            </span>
                     </p>
                 </div>
                 </div>

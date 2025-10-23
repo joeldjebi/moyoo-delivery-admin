@@ -64,6 +64,7 @@ class BalanceMarchand extends Model
         // Historique
         HistoriqueBalance::create([
             'balance_marchand_id' => $this->id,
+            'entreprise_id' => $this->entreprise_id,
             'type_operation' => 'encaissement',
             'montant' => $montant,
             'balance_avant' => $balanceAvant,
@@ -96,6 +97,7 @@ class BalanceMarchand extends Model
         // Historique
         HistoriqueBalance::create([
             'balance_marchand_id' => $this->id,
+            'entreprise_id' => $this->entreprise_id,
             'type_operation' => 'reversement',
             'montant' => $montant,
             'balance_avant' => $balanceAvant,

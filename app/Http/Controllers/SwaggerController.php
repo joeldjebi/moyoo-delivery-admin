@@ -20,8 +20,16 @@ use Illuminate\Http\Request;
  * )
  *
  * @OA\Server(
+ *     url="http://192.168.1.4:8000",
+ *     description="Serveur de production"
+ * )
+ * @OA\Server(
  *     url="http://192.168.1.5:8000",
- *     description="Serveur de développement"
+ *     description="Serveur de développement local"
+ * )
+ * @OA\Server(
+ *     url="http://127.0.0.1:8000",
+ *     description="Serveur localhost"
  * )
  *
  * @OA\SecurityScheme(

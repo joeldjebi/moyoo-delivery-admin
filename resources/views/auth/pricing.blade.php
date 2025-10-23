@@ -42,6 +42,13 @@
         <div class="card">
             <div class="card-header">
                 <h5 class="card-title mb-0">Nos Forfaits</h5>
+                @auth
+                    <div class="alert alert-info mt-3 mb-0">
+                        <i class="ti ti-info-circle me-2"></i>
+                        <strong>Vous avez déjà le Plan Démarrage (gratuit) !</strong>
+                        Découvrez nos plans Premium pour débloquer toutes les fonctionnalités avancées.
+                    </div>
+                @endauth
             </div>
             <div class="card-body">
                 <div class="row">
@@ -130,14 +137,48 @@
                         </thead>
                         <tbody>
                             @php
-                                $features = [
-                                    'Accès à la plateforme' => [true, true],
-                                    'Notifications WhatsApp' => [false, true],
-                                    'Notifications Push' => [false, true],
-                                    'Accès API' => [false, true],
-                                    'Rapports avancés' => [false, true],
-                                    'Support prioritaire' => [false, true]
-                                ];
+                                // Fonctionnalités selon le nombre de plans affichés
+                                if (auth()->check()) {
+                                    // Utilisateur connecté : seulement les plans payants (Premium, Premium Annuel)
+                                    $features = [
+                                        'Livraisons par mois' => ['Illimitées', 'Illimitées'],
+                                        'Accès à la plateforme' => [true, true],
+                                        'Support par email' => [true, true],
+                                        'Tableau de bord' => ['Avancé', 'Avancé'],
+                                        'Rapports' => ['Personnalisés', 'Personnalisés'],
+                                        'Suivi en temps réel' => [true, true],
+                                        'Notifications SMS' => [true, true],
+                                        'Notifications WhatsApp' => [true, true],
+                                        'Accès API' => [true, true],
+                                        'Analyses avancées' => [true, true],
+                                        'Gestion multi-entrepôts' => [true, true],
+                                        'Support 24/7' => [true, true],
+                                        'Formation en ligne' => [true, true],
+                                        'Priorité nouvelles fonctionnalités' => [false, true],
+                                        'Facturation annuelle' => [false, true],
+                                        'Remise annuelle' => [false, '16.7%']
+                                    ];
+                                } else {
+                                    // Visiteur non connecté : tous les plans (Démarrage, Premium, Premium Annuel)
+                                    $features = [
+                                        'Livraisons par mois' => ['20', 'Illimitées', 'Illimitées'],
+                                        'Accès à la plateforme' => [true, true, true],
+                                        'Support par email' => [true, true, true],
+                                        'Tableau de bord' => ['Basique', 'Avancé', 'Avancé'],
+                                        'Rapports' => ['Mensuels', 'Personnalisés', 'Personnalisés'],
+                                        'Suivi en temps réel' => [true, true, true],
+                                        'Notifications SMS' => [false, true, true],
+                                        'Notifications WhatsApp' => [false, true, true],
+                                        'Accès API' => [false, true, true],
+                                        'Analyses avancées' => [false, true, true],
+                                        'Gestion multi-entrepôts' => [false, true, true],
+                                        'Support 24/7' => [false, true, true],
+                                        'Formation en ligne' => [false, true, true],
+                                        'Priorité nouvelles fonctionnalités' => [false, false, true],
+                                        'Facturation annuelle' => [false, false, true],
+                                        'Remise annuelle' => [false, false, '16.7%']
+                                    ];
+                                }
                             @endphp
 
                             @foreach($features as $feature => $values)
@@ -152,7 +193,7 @@
                                                     <i class="ti ti-x text-danger"></i>
                                                 @endif
                                             @else
-                                                {{ $value }}
+                                                <span class="badge bg-light text-dark">{{ $value }}</span>
                                             @endif
                                         </td>
                                     @endforeach

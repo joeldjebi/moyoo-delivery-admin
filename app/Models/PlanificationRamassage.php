@@ -14,6 +14,7 @@ class PlanificationRamassage extends Model
     protected $fillable = [
         'ramassage_id',
         'livreur_id',
+        'entreprise_id',
         'date_planifiee',
         'heure_debut',
         'heure_fin',
@@ -40,6 +41,11 @@ class PlanificationRamassage extends Model
         return $this->belongsTo(Livreur::class);
     }
 
+    public function entreprise()
+    {
+        return $this->belongsTo(Entreprise::class);
+    }
+
     // Scopes
     public function scopeByStatut($query, $statut)
     {
@@ -54,6 +60,11 @@ class PlanificationRamassage extends Model
     public function scopeByDate($query, $date)
     {
         return $query->where('date_planifiee', $date);
+    }
+
+    public function scopeByEntreprise($query, $entrepriseId)
+    {
+        return $query->where('entreprise_id', $entrepriseId);
     }
 
     // Accessors

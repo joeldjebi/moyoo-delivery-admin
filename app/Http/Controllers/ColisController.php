@@ -23,6 +23,7 @@ use Illuminate\Support\Facades\Log;
 use App\Models\Ramassage;
 use App\Models\Temp;
 use App\Traits\SendsFirebaseNotifications;
+use App\Notifications\NewColisNotification;
 
 class ColisController extends Controller
 {
@@ -150,7 +151,7 @@ class ColisController extends Controller
             $data['mode_livraisons'] = Mode_livraison::where('entreprise_id', $entrepriseId)->orderBy('libelle')->get();
             $data['delais'] = Delais::where('entreprise_id', $entrepriseId)->orderBy('libelle')->get();
             $data['temps'] = Temp::where('entreprise_id', $entrepriseId)->orderBy('libelle')->get();
-            $data['communes'] = Commune::where('entreprise_id', $entrepriseId)->orderBy('libelle')->get();
+            $data['communes'] = Commune::orderBy('libelle')->get();
             // Les ramassages seront chargés dynamiquement par boutique via AJAX
             $data['ramassages'] = collect();
 
@@ -201,10 +202,10 @@ class ColisController extends Controller
                 'colis.*.numero_facture' => 'nullable|string|max:255',
                 'colis.*.note_client' => 'nullable|string|max:1000',
                 'colis.*.commune_id' => 'required|exists:communes,id',
-                'colis.*.type_colis_id' => 'nullable|exists:type_colis,id',
-                'colis.*.conditionnement_colis_id' => 'nullable|exists:conditionnement_colis,id',
+                'colis.*.type_colis_id' => 'required|exists:type_colis,id',
+                'colis.*.conditionnement_colis_id' => 'required|exists:conditionnement_colis,id',
                 'colis.*.poids_id' => 'required|exists:poids,id',
-                'colis.*.delai_id' => 'nullable|exists:delais,id',
+                'colis.*.delai_id' => 'required|exists:delais,id',
                 'colis.*.mode_livraison_id' => 'required|exists:mode_livraisons,id',
                 'colis.*.temp_id' => 'required|exists:temps,id'
             ], [
@@ -342,8 +343,8 @@ class ColisController extends Controller
                     'adresse_client' => $colisData['adresse_client'],
                     'marchand_id' => $request->marchand_id,
                     'boutique_id' => $request->boutique_id,
-                    'montant_a_encaisse' => $colisData['montant_a_encaisse'] ?? null,
-                    'prix_de_vente' => $colisData['prix_de_vente'] ?? null,
+                    'montant_a_encaisse' => $colisData['montant_a_encaisse'] ?? 0,
+                    'prix_de_vente' => $colisData['prix_de_vente'] ?? 0,
                     'numero_facture' => $colisData['numero_facture'] ?? null,
                     'type_colis_id' => $colisData['type_colis_id'] ?? null,
                     'conditionnement_colis_id' => $colisData['conditionnement_colis_id'] ?? null,
@@ -392,6 +393,15 @@ class ColisController extends Controller
 
                 $colis = Colis::create($colisCreateData);
                 Log::info("Colis créé avec succès:", ['colis_id' => $colis->id, 'colis_code' => $colis->code]);
+
+                // Envoyer une notification à l'admin
+                $admin = \App\Models\User::where('entreprise_id', $entrepriseId)
+                    ->whereIn('user_type', ['admin', 'entreprise_user'])
+                    ->first();
+
+                if ($admin) {
+                    $admin->notify(new NewColisNotification($colis));
+                }
 
                 // Envoyer une notification Firebase au livreur
                 try {

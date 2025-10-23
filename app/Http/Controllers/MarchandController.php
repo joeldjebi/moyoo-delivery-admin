@@ -134,8 +134,8 @@ class MarchandController extends Controller
                 'ip' => $request->ip()
             ]);
 
-            return redirect()->route('marchands.index')
-                ->with('success', 'Le marchand a été créé avec succès.');
+            return redirect()->route('boutiques.create', ['marchand_id' => $marchand->id])
+                ->with('success', 'Le marchand a été créé avec succès. Vous pouvez maintenant créer sa boutique.');
 
         } catch (\Exception $e) {
             DB::rollBack();

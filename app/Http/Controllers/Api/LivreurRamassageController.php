@@ -8,6 +8,7 @@ use App\Models\RamassageColis;
 use App\Models\Colis;
 use App\Models\PlanificationRamassage;
 use App\Helpers\ImageCompressor;
+use App\Notifications\PickupCompletedNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -622,6 +623,15 @@ class LivreurRamassageController extends Controller
 
             // Envoyer une notification à l'admin
             $this->sendRamassageCompletedNotificationToAdmin($ramassage, $livreur);
+
+            // Envoyer une notification en base de données
+            $admin = \App\Models\User::where('entreprise_id', $ramassage->entreprise_id)
+                ->where('user_type', 'admin')
+                ->first();
+
+            if ($admin) {
+                $admin->notify(new PickupCompletedNotification($ramassage, $livreur));
+            }
 
             // Préparer les informations de différence pour la réponse
             $differenceInfo = null;

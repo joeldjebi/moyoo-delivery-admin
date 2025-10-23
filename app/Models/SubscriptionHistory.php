@@ -7,33 +7,34 @@ use Illuminate\Database\Eloquent\Model;
 class SubscriptionHistory extends Model
 {
     protected $fillable = [
-        'entreprise_id',
+        'user_id',
         'pricing_plan_id',
-        'plan_name',
-        'price',
+        'amount',
         'currency',
-        'start_date',
-        'end_date',
+        'period',
         'status',
-        'features',
+        'starts_at',
+        'expires_at',
+        'is_trial',
         'payment_method',
         'transaction_id',
-        'notes'
+        'payment_data'
     ];
 
     protected $casts = [
-        'price' => 'decimal:2',
-        'features' => 'array',
-        'start_date' => 'date',
-        'end_date' => 'date'
+        'amount' => 'decimal:2',
+        'starts_at' => 'datetime',
+        'expires_at' => 'datetime',
+        'is_trial' => 'boolean',
+        'payment_data' => 'array'
     ];
 
     /**
-     * Relation avec l'entreprise
+     * Relation avec l'utilisateur
      */
-    public function entreprise()
+    public function user()
     {
-        return $this->belongsTo(Entreprise::class);
+        return $this->belongsTo(User::class);
     }
 
     /**
@@ -53,11 +54,11 @@ class SubscriptionHistory extends Model
     }
 
     /**
-     * Scope pour une entreprise spécifique
+     * Scope pour un utilisateur spécifique
      */
-    public function scopeForEntreprise($query, $entrepriseId)
+    public function scopeForUser($query, $userId)
     {
-        return $query->where('entreprise_id', $entrepriseId);
+        return $query->where('user_id', $userId);
     }
 
     /**
@@ -65,7 +66,7 @@ class SubscriptionHistory extends Model
      */
     public function scopeOrdered($query)
     {
-        return $query->orderBy('start_date', 'desc');
+        return $query->orderBy('starts_at', 'desc');
     }
 
     /**
@@ -73,7 +74,7 @@ class SubscriptionHistory extends Model
      */
     public function getFormattedPriceAttribute()
     {
-        return number_format($this->price, 2) . ' ' . $this->currency;
+        return number_format($this->amount, 0, ',', ' ') . ' ' . $this->currency;
     }
 
     /**
@@ -95,6 +96,14 @@ class SubscriptionHistory extends Model
      */
     public function getIsExpiredAttribute()
     {
-        return $this->end_date < now()->toDateString();
+        return $this->expires_at < now();
+    }
+
+    /**
+     * Vérifier si l'abonnement est actif
+     */
+    public function isActive()
+    {
+        return $this->status === 'active' && $this->expires_at > now();
     }
 }

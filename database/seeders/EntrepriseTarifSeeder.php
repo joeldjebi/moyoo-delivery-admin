@@ -18,7 +18,7 @@ class EntrepriseTarifSeeder extends Seeder
      */
     public function run(): void
     {
-        echo "=== GÉNÉRATION DES TARIFS BASÉS SUR L'ENTREPRISE ===\n";
+        echo "=== GÉNÉRATION DES TARIFS OPTIMISÉS BASÉS SUR L'ENTREPRISE ===\n";
 
         // Récupérer l'entreprise
         $entreprise = Entreprise::first();
@@ -35,12 +35,12 @@ class EntrepriseTarifSeeder extends Seeder
         $deleted = TarifLivraison::where('entreprise_id', $entreprise->id)->delete();
         echo "Anciens tarifs supprimés: {$deleted}\n";
 
-        // Récupérer toutes les données nécessaires
+        // Récupérer toutes les données nécessaires pour cette entreprise uniquement
         $communes = Commune::all();
-        $typeEngins = Type_engin::all();
-        $modeLivraisons = Mode_livraison::all();
-        $poids = Poid::all();
-        $temps = Temp::all();
+        $typeEngins = Type_engin::where('entreprise_id', $entreprise->id)->get();
+        $modeLivraisons = Mode_livraison::where('entreprise_id', $entreprise->id)->get();
+        $poids = Poid::where('entreprise_id', $entreprise->id)->get();
+        $temps = Temp::where('entreprise_id', $entreprise->id)->get();
 
         $count = 0;
         $total = $communes->count() * $typeEngins->count() * $modeLivraisons->count() * $poids->count() * $temps->count();

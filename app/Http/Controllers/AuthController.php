@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Config;
 use Illuminate\Validation\ValidationException;
 use App\Models\User;
 use App\Models\EmailVerification;
+use App\Models\SubscriptionPlan;
 use App\Models\Entreprise;
 use App\Models\SubscriptionHistory;
 use App\Models\PricingPlan;
@@ -67,7 +68,12 @@ class AuthController extends Controller
     {
         $data['title'] = 'Vérification du code OTP';
         $data['menu'] = 'verify-otp';
-        $data['email'] = session('email');
+        // Fallbacks: session -> query string -> old input
+        $emailFromSession = session('email');
+        $emailFromQuery = request()->query('email');
+        $emailFromOld = old('email');
+
+        $data['email'] = $emailFromSession ?: $emailFromQuery ?: $emailFromOld;
 
         if (!$data['email']) {
             return redirect()->route('auth.register')
@@ -229,6 +235,9 @@ class AuthController extends Controller
 
             $verification = EmailVerification::createVerification($userData['email'], $userData);
 
+            // Stocker l'email en session pour la page OTP
+            session()->put('email', $userData['email']);
+
             // Envoyer l'OTP par email
             Log::info('Envoi de l\'OTP par email', [
                 'email' => $userData['email'],
@@ -245,9 +254,9 @@ class AuthController extends Controller
                 'ip' => $request->ip()
             ]);
 
-            return redirect()->route('auth.verify-otp')
-                ->with('success', 'Un code de vérification a été envoyé à votre adresse email.')
-                ->with('email', $userData['email']);
+            // Rediriger en passant aussi l'email dans la query pour fallback
+            return redirect()->route('auth.verify-otp', ['email' => $userData['email']])
+                ->with('success', 'Un code de vérification a été envoyé à votre adresse email.');
 
         } catch (\Exception $e) {
             Log::error('Registration OTP failed', [
@@ -552,7 +561,8 @@ class AuthController extends Controller
                 'ip' => $request->ip()
             ]);
             return redirect()->back()
-                ->withErrors(['otp' => 'Code de vérification invalide ou expiré.']);
+                ->withErrors(['otp' => 'Code de vérification invalide ou expiré.'])
+                ->withInput(['email' => $email]);
         }
 
         if (!$verification->isValid($otp)) {
@@ -562,7 +572,8 @@ class AuthController extends Controller
                 'ip' => $request->ip()
             ]);
             return redirect()->back()
-                ->withErrors(['otp' => 'Code de vérification incorrect.']);
+                ->withErrors(['otp' => 'Code de vérification incorrect.'])
+                ->withInput(['email' => $email]);
         }
 
         try {
@@ -595,14 +606,22 @@ class AuthController extends Controller
             // Vérifier s'il y a des communes disponibles
             $commune = \DB::table('communes')->first();
             if (!$commune) {
-                // Créer une commune par défaut
-                Log::info('Création d\'une commune par défaut', [
-                    'user_id' => $user->id,
-                    'ip' => $request->ip()
-                ]);
+                // Créer la ville Abidjan si nécessaire
+                $ville = \DB::table('villes')->where('libelle', 'Abidjan')->first();
+                if (!$ville) {
+                    $villeId = \DB::table('villes')->insertGetId([
+                        'libelle' => 'Abidjan',
+                        'created_at' => now(),
+                        'updated_at' => now()
+                    ]);
+                } else {
+                    $villeId = $ville->id;
+                }
 
+                // Créer une commune par défaut (ex: Abobo) liée à Abidjan
                 $communeId = \DB::table('communes')->insertGetId([
-                    'nom' => 'Abidjan',
+                    'libelle' => 'Abobo',
+                    'ville_id' => $villeId,
                     'created_at' => now(),
                     'updated_at' => now()
                 ]);
@@ -610,9 +629,15 @@ class AuthController extends Controller
                 $communeId = $commune->id;
             }
 
+            // Assurer l'unicité du mobile pour entreprises.mobile
+            $entrepriseMobile = $user->mobile;
+            if (\DB::table('entreprises')->where('mobile', $entrepriseMobile)->exists()) {
+                $entrepriseMobile = $entrepriseMobile . '-' . substr((string) $user->id, -4);
+            }
+
             $entreprise = Entreprise::create([
                 'name' => $user->first_name . ' ' . $user->last_name . ' - Entreprise',
-                'mobile' => $user->mobile,
+                'mobile' => $entrepriseMobile,
                 'email' => $user->email,
                 'adresse' => 'Adresse à définir',
                 'commune_id' => $communeId,
@@ -629,6 +654,23 @@ class AuthController extends Controller
                 'entreprise_name' => $entreprise->name,
                 'ip' => $request->ip()
             ]);
+
+            // Appeler le bootstrap tenant
+            try {
+                Log::info('Tenant bootstrap start', [
+                    'entreprise_id' => $entreprise->id,
+                    'user_id' => $user->id
+                ]);
+                app(\App\Services\TenantBootstrapService::class)->bootstrapEntreprise($entreprise->id, $user->id);
+                Log::info('Tenant bootstrap end', [
+                    'entreprise_id' => $entreprise->id
+                ]);
+            } catch (\Throwable $tb) {
+                Log::error('Tenant bootstrap failed', [
+                    'error' => $tb->getMessage(),
+                    'entreprise_id' => $entreprise->id
+                ]);
+            }
 
             // Marquer la vérification comme validée
             $verification->markAsVerified();
@@ -668,7 +710,8 @@ class AuthController extends Controller
             ]);
 
             return redirect()->back()
-                ->withErrors(['error' => 'Une erreur est survenue lors de la création de votre compte. Veuillez réessayer.']);
+                ->withErrors(['error' => 'Une erreur est survenue lors de la création de votre compte. Veuillez réessayer.'])
+                ->withInput(['email' => $email]);
         }
     }
 
@@ -867,8 +910,8 @@ class AuthController extends Controller
                 ->with('error', 'Veuillez d\'abord configurer votre entreprise.');
         }
 
-        // Récupérer l'historique d'abonnement de l'entreprise
-        $data['subscriptions'] = SubscriptionHistory::forEntreprise($entreprise->id)
+        // Récupérer l'historique d'abonnement de l'utilisateur
+        $data['subscriptions'] = SubscriptionHistory::forUser(auth()->id())
             ->with('pricingPlan')
             ->ordered()
             ->get();
@@ -884,24 +927,28 @@ class AuthController extends Controller
         $data['title'] = 'Forfaits';
         $data['menu'] = 'pricing';
 
-        // Récupérer les plans d'abonnement depuis la base de données
-        $data['plans'] = \App\Models\SubscriptionPlan::active()
-            ->ordered()
-            ->get()
-            ->map(function ($plan) {
-                return [
-                    'id' => $plan->id,
-                    'name' => $plan->name,
-                    'price' => number_format($plan->price, 0, ',', ' '),
-                    'currency' => $plan->currency,
-                    'period' => 'mois',
-                    'description' => $plan->description,
-                    'features' => $plan->formatted_features,
-                    'popular' => $plan->slug === 'premium', // Premium est populaire
-                    'button_text' => $plan->slug === 'premium' ? 'Choisir ' . $plan->name : 'Commencer',
-                    'button_class' => $plan->slug === 'premium' ? 'btn-primary' : 'btn-outline-primary'
-                ];
-            });
+        // Récupérer les plans de tarification depuis la base de données
+        $query = PricingPlan::active()->ordered();
+
+        // Si l'utilisateur est connecté, masquer le plan gratuit (Plan Démarrage)
+        if (auth()->check()) {
+            $query->where('price', '>', 0);
+        }
+
+        $data['plans'] = $query->get()->map(function ($plan) {
+            return [
+                'id' => $plan->id,
+                'name' => $plan->name,
+                'price' => number_format($plan->price, 0, ',', ' '),
+                'currency' => $plan->currency,
+                'period' => $plan->formatted_period,
+                'description' => $plan->description,
+                'features' => $plan->features ?? [],
+                'popular' => $plan->is_popular,
+                'button_text' => $plan->is_popular ? 'Choisir ' . $plan->name : 'Commencer',
+                'button_class' => $plan->is_popular ? 'btn-primary' : 'btn-outline-primary'
+            ];
+        });
 
         return view('auth.pricing', $data);
     }

@@ -134,9 +134,9 @@ class WorkingFirebaseService
             'type' => 'new_ramassage',
             'ramassage_id' => (string) $ramassage->id,
             'ramassage_code' => $ramassage->code_ramassage,
-            'marchand_name' => $ramassage->marchand_name,
+            'marchand_name' => $ramassage->marchand->first_name ?? 'N/A',
             'marchand_address' => $ramassage->adresse_ramassage,
-            'colis_count' => (string) count($ramassage->colis_data ?? []),
+            'colis_count' => (string) $this->getColisCount($ramassage->colis_data ?? []),
             'click_action' => 'FLUTTER_NOTIFICATION_CLICK',
             'app' => 'moyoo_fleet'
         ];
@@ -338,5 +338,22 @@ class WorkingFirebaseService
         } catch (Exception $e) {
             return false;
         }
+    }
+
+    /**
+     * Obtenir le nombre de colis depuis les données
+     */
+    private function getColisCount($colisData): int
+    {
+        if (is_array($colisData)) {
+            return count($colisData);
+        }
+
+        if (is_string($colisData)) {
+            $decoded = json_decode($colisData, true);
+            return is_array($decoded) ? count($decoded) : 0;
+        }
+
+        return 0;
     }
 }

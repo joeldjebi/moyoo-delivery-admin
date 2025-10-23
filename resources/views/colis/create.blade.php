@@ -237,8 +237,8 @@
                         </div>
 
                         <div class="col-md-6">
-                            <label for="livreur_id" class="form-label">Livreur</label>
-                            <select class="form-select @error('livreur_id') is-invalid @enderror" id="livreur_id" name="livreur_id">
+                            <label for="livreur_id" class="form-label">Livreur <span class="text-danger">*</span></label>
+                            <select required class="form-select @error('livreur_id') is-invalid @enderror" id="livreur_id" name="livreur_id">
                                 <option value="">Sélectionner un livreur (Obligatoire)</option>
                                 @foreach($livreurs ?? [] as $livreur)
                                     <option value="{{ $livreur->id }}" {{ old('livreur_id') == $livreur->id ? 'selected' : '' }}>
@@ -252,8 +252,8 @@
                         </div>
 
                         <div class="col-md-6">
-                            <label for="engin_id" class="form-label">Engin du livreur</label>
-                            <select class="form-select @error('engin_id') is-invalid @enderror" id="engin_id" name="engin_id" disabled onchange="recalculateAllCosts()">
+                            <label for="engin_id" class="form-label">Engin du livreur <span class="text-danger">*</span></label>
+                            <select required class="form-select @error('engin_id') is-invalid @enderror" id="engin_id" name="engin_id" disabled onchange="recalculateAllCosts()">
                                 <option value="">Sélectionnez d'abord un livreur</option>
                             </select>
                             @error('engin_id')
@@ -770,8 +770,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
                     <div class="row">
                         <div class="col-md-2 mb-3">
-                            <label class="form-label">Type de colis</label>
-                            <select class="form-select" name="colis[${index}][type_colis_id]">
+                            <label class="form-label">Type de colis <span class="text-danger">*</span></label>
+                            <select required class="form-select" name="colis[${index}][type_colis_id]">
                                 <option value="">Sélectionner</option>
                                 @foreach($type_colis ?? [] as $type)
                                     <option value="{{ $type->id }}">{{ $type->libelle }}</option>
@@ -779,8 +779,8 @@ document.addEventListener('DOMContentLoaded', function() {
                             </select>
                         </div>
                         <div class="col-md-2 mb-3">
-                            <label class="form-label">Conditionnement</label>
-                            <select class="form-select" name="colis[${index}][conditionnement_colis_id]">
+                            <label class="form-label">Conditionnement <span class="text-danger">*</span></label>
+                            <select required class="form-select" name="colis[${index}][conditionnement_colis_id]">
                                 <option value="">Sélectionner</option>
                                 @foreach($conditionnement_colis ?? [] as $conditionnement)
                                     <option value="{{ $conditionnement->id }}">{{ $conditionnement->libelle }}</option>
@@ -788,7 +788,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             </select>
                         </div>
                         <div class="col-md-2 mb-3">
-                            <label class="form-label">Poids</label>
+                            <label class="form-label">Poids <span class="text-danger">*</span></label>
                             <select class="form-select" name="colis[${index}][poids_id]" required>
                                 <option value="">Sélectionner</option>
                                 @foreach($poids ?? [] as $poidsItem)
@@ -797,8 +797,8 @@ document.addEventListener('DOMContentLoaded', function() {
                             </select>
                         </div>
                         <div class="col-md-2 mb-3">
-                            <label class="form-label">Délai</label>
-                            <select class="form-select" name="colis[${index}][delai_id]">
+                            <label class="form-label">Délai <span class="text-danger">*</span></label>
+                            <select required class="form-select" name="colis[${index}][delai_id]">
                                 <option value="">Sélectionner</option>
                                 @foreach($delais ?? [] as $delai)
                                     <option value="{{ $delai->id }}">{{ $delai->libelle }}</option>
@@ -806,7 +806,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             </select>
                         </div>
                         <div class="col-md-2 mb-3">
-                            <label class="form-label">Mode de livraison</label>
+                            <label class="form-label">Mode de livraison <span class="text-danger">*</span></label>
                             <select class="form-select" name="colis[${index}][mode_livraison_id]" required>
                                 <option value="">Sélectionner</option>
                                 @foreach($mode_livraisons ?? [] as $mode)
@@ -815,7 +815,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             </select>
                         </div>
                         <div class="col-md-2 mb-3">
-                            <label class="form-label">Période</label>
+                            <label class="form-label">Période <span class="text-danger">*</span></label>
                             <select class="form-select" name="colis[${index}][temp_id]" required>
                                 <option value="">Sélectionner</option>
                                 @foreach($temps ?? [] as $temp)
@@ -1019,8 +1019,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
                 <div class="row mt-3">
                     <div class="col-md-2">
-                        <label class="form-label">Type de colis</label>
-                        <select class="form-select" name="colis[${index}][type_colis_id]">
+                        <label class="form-label">Type de colis <span class="text-danger">*</span></label>
+                        <select required class="form-select" name="colis[${index}][type_colis_id]">
                             <option value="">Sélectionner</option>
                             @foreach($type_colis ?? [] as $type)
                                 <option value="{{ $type->id }}">{{ $type->libelle }}</option>
@@ -1028,8 +1028,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         </select>
                     </div>
                     <div class="col-md-2">
-                        <label class="form-label">Conditionnement</label>
-                        <select class="form-select" name="colis[${index}][conditionnement_colis_id]">
+                        <label class="form-label">Conditionnement <span class="text-danger">*</span></label>
+                        <select required class="form-select" name="colis[${index}][conditionnement_colis_id]">
                             <option value="">Sélectionner</option>
                             @foreach($conditionnement_colis ?? [] as $conditionnement)
                                 <option value="{{ $conditionnement->id }}">{{ $conditionnement->libelle }}</option>
@@ -1037,8 +1037,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         </select>
                     </div>
                     <div class="col-md-2">
-                        <label class="form-label">Poids</label>
-                        <select class="form-select" name="colis[${index}][poids_id]" onchange="calculateDeliveryCost(${index})" required>
+                        <label class="form-label">Poids <span class="text-danger">*</span></label>
+                        <select required class="form-select" name="colis[${index}][poids_id]" onchange="calculateDeliveryCost(${index})" required>
                             <option value="">Sélectionner</option>
                             @foreach($poids ?? [] as $poidsItem)
                                 <option value="{{ $poidsItem->id }}">{{ $poidsItem->libelle }}</option>
@@ -1046,8 +1046,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         </select>
                     </div>
                     <div class="col-md-2">
-                        <label class="form-label">Délai</label>
-                        <select class="form-select" name="colis[${index}][delai_id]">
+                        <label class="form-label">Délai <span class="text-danger">*</span></label>
+                        <select required class="form-select" name="colis[${index}][delai_id]">
                             <option value="">Sélectionner</option>
                             @foreach($delais ?? [] as $delai)
                                 <option value="{{ $delai->id }}">{{ $delai->libelle }}</option>
@@ -1055,8 +1055,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         </select>
                     </div>
                     <div class="col-md-2">
-                        <label class="form-label">Mode de livraison</label>
-                        <select class="form-select" name="colis[${index}][mode_livraison_id]" onchange="calculateDeliveryCost(${index})" required>
+                        <label class="form-label">Mode de livraison <span class="text-danger">*</span></label>
+                        <select required class="form-select" name="colis[${index}][mode_livraison_id]" onchange="calculateDeliveryCost(${index})" required>
                             <option value="">Sélectionner</option>
                             @foreach($mode_livraisons ?? [] as $mode)
                                 <option value="{{ $mode->id }}">{{ $mode->libelle }}</option>
@@ -1064,8 +1064,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         </select>
                     </div>
                     <div class="col-md-2">
-                        <label class="form-label">Période</label>
-                        <select class="form-select" name="colis[${index}][temp_id]" onchange="calculateDeliveryCost(${index})" required>
+                        <label class="form-label">Période <span class="text-danger">*</span></label>
+                        <select required class="form-select" name="colis[${index}][temp_id]" onchange="calculateDeliveryCost(${index})" required>
                             <option value="">Sélectionner</option>
                             @foreach($temps ?? [] as $temp)
                                 <option value="{{ $temp->id }}">{{ $temp->libelle }}</option>
@@ -1877,8 +1877,8 @@ function generateColisFormsForBoutique(boutiqueId, boutiqueIndex, nombreColis) {
                             </select>
                         </div>
                         <div class="col-md-3">
-                            <label class="form-label">Mode livraison</label>
-                            <select class="form-select" name="boutiques[${boutiqueIndex}][colis][${i}][mode_livraison_id]" onchange="calculateDeliveryCostMulti(${boutiqueIndex}, ${i})" required>
+                            <label class="form-label">Mode livraison <span class="text-danger">*</span></label>
+                            <select required class="form-select" name="boutiques[${boutiqueIndex}][colis][${i}][mode_livraison_id]" onchange="calculateDeliveryCostMulti(${boutiqueIndex}, ${i})" required>
                                 <option value="">Sélectionner</option>
                                 @foreach($mode_livraisons as $mode)
                                     <option value="{{ $mode->id }}">{{ $mode->libelle }}</option>
@@ -1886,7 +1886,7 @@ function generateColisFormsForBoutique(boutiqueId, boutiqueIndex, nombreColis) {
                             </select>
                         </div>
                         <div class="col-md-3">
-                            <label class="form-label">Période</label>
+                            <label class="form-label">Période <span class="text-danger">*</span></label>
                             <select class="form-select" name="boutiques[${boutiqueIndex}][colis][${i}][temp_id]" onchange="calculateDeliveryCostMulti(${boutiqueIndex}, ${i})" required>
                                 <option value="">Sélectionner</option>
                                 @foreach($temps ?? [] as $temp)
@@ -1895,8 +1895,8 @@ function generateColisFormsForBoutique(boutiqueId, boutiqueIndex, nombreColis) {
                             </select>
                         </div>
                         <div class="col-md-3">
-                            <label class="form-label">Type de colis</label>
-                            <select class="form-select" name="boutiques[${boutiqueIndex}][colis][${i}][type_colis_id]">
+                            <label class="form-label">Type de colis <span class="text-danger">*</span></label>
+                            <select required class="form-select" name="boutiques[${boutiqueIndex}][colis][${i}][type_colis_id]">
                                 <option value="">Sélectionner</option>
                                 @foreach($type_colis as $type)
                                     <option value="{{ $type->id }}">{{ $type->libelle }}</option>
@@ -2432,8 +2432,8 @@ function handleLivreurChangeMulti(index, livreurId) {
                     </div>
                     <div class="row">
                         <div class="col-md-2 mb-3">
-                            <label class="form-label">Type de colis</label>
-                            <select class="form-select" name="colis[${index}][type_colis_id]">
+                            <label class="form-label">Type de <span class="text-danger">*</span></label></label>
+                            <select required class="form-select" name="colis[${index}][type_colis_id]">
                                 <option value="">Sélectionner</option>
                                 @foreach($type_colis ?? [] as $type)
                                     <option value="{{ $type->id }}">{{ $type->libelle }}</option>
@@ -2441,8 +2441,8 @@ function handleLivreurChangeMulti(index, livreurId) {
                             </select>
                         </div>
                         <div class="col-md-2 mb-3">
-                            <label class="form-label">Conditionnement</label>
-                            <select class="form-select" name="colis[${index}][conditionnement_colis_id]">
+                            <label class="form-label">Conditionnement <span class="text-danger">*</span></label>
+                            <select required class="form-select" name="colis[${index}][conditionnement_colis_id]">
                                 <option value="">Sélectionner</option>
                                 @foreach($conditionnement_colis ?? [] as $conditionnement)
                                     <option value="{{ $conditionnement->id }}">{{ $conditionnement->libelle }}</option>
@@ -2450,7 +2450,7 @@ function handleLivreurChangeMulti(index, livreurId) {
                             </select>
                         </div>
                         <div class="col-md-2 mb-3">
-                            <label class="form-label">Poids</label>
+                            <label class="form-label">Poids <span class="text-danger">*</span></label>
                             <select class="form-select" name="colis[${index}][poids_id]" required>
                                 <option value="">Sélectionner</option>
                                 @foreach($poids ?? [] as $poidsItem)
@@ -2459,8 +2459,8 @@ function handleLivreurChangeMulti(index, livreurId) {
                             </select>
                         </div>
                         <div class="col-md-2 mb-3">
-                            <label class="form-label">Délai</label>
-                            <select class="form-select" name="colis[${index}][delai_id]">
+                            <label class="form-label">Délai <span class="text-danger">*</span></label>
+                            <select required class="form-select" name="colis[${index}][delai_id]">
                                 <option value="">Sélectionner</option>
                                 @foreach($delais ?? [] as $delai)
                                     <option value="{{ $delai->id }}">{{ $delai->libelle }}</option>
@@ -2468,7 +2468,7 @@ function handleLivreurChangeMulti(index, livreurId) {
                             </select>
                         </div>
                         <div class="col-md-2 mb-3">
-                            <label class="form-label">Mode de livraison</label>
+                            <label class="form-label">Mode de livraison <span class="text-danger">*</span></label>
                             <select class="form-select" name="colis[${index}][mode_livraison_id]" required>
                                 <option value="">Sélectionner</option>
                                 @foreach($mode_livraisons ?? [] as $mode)
@@ -2477,7 +2477,7 @@ function handleLivreurChangeMulti(index, livreurId) {
                             </select>
                         </div>
                         <div class="col-md-2 mb-3">
-                            <label class="form-label">Période</label>
+                            <label class="form-label">Période <span class="text-danger">*</span></label>
                             <select class="form-select" name="colis[${index}][temp_id]" required>
                                 <option value="">Sélectionner</option>
                                 @foreach($temps ?? [] as $temp)

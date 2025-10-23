@@ -24,7 +24,8 @@ class SubscriptionPlan extends Model
         'advanced_reports',
         'priority_support',
         'is_active',
-        'sort_order'
+        'sort_order',
+        'entreprise_id'
     ];
 
     protected $casts = [
@@ -63,6 +64,14 @@ class SubscriptionPlan extends Model
     }
 
     /**
+     * Scope pour filtrer par entreprise
+     */
+    public function scopeByEntreprise($query, $entrepriseId)
+    {
+        return $query->where('entreprise_id', $entrepriseId);
+    }
+
+    /**
      * Accessor pour le prix formaté
      */
     public function getFormattedPriceAttribute()
@@ -76,39 +85,39 @@ class SubscriptionPlan extends Model
     public function getFormattedFeaturesAttribute()
     {
         $features = [];
-        
+
         if ($this->max_colis_per_month) {
             $features[] = "Jusqu'à {$this->max_colis_per_month} colis/mois";
         }
-        
+
         if ($this->max_livreurs) {
             $features[] = "Jusqu'à {$this->max_livreurs} livreurs";
         }
-        
+
         if ($this->max_marchands) {
             $features[] = "Jusqu'à {$this->max_marchands} marchands";
         }
-        
+
         if ($this->whatsapp_notifications) {
             $features[] = "Notifications WhatsApp";
         }
-        
+
         if ($this->firebase_notifications) {
             $features[] = "Notifications Push";
         }
-        
+
         if ($this->api_access) {
             $features[] = "Accès API";
         }
-        
+
         if ($this->advanced_reports) {
             $features[] = "Rapports avancés";
         }
-        
+
         if ($this->priority_support) {
             $features[] = "Support prioritaire";
         }
-        
+
         return $features;
     }
 

@@ -91,20 +91,18 @@
                         </div>
                     </div>
 
+                    <!-- Information sur le mot de passe généré automatiquement -->
                     <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label for="password" class="form-label">Mot de Passe <span class="text-danger">*</span></label>
-                            <input type="password" class="form-control @error('password') is-invalid @enderror"
-                                   id="password" name="password" required>
-                            @error('password')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                            <div class="form-text">Le mot de passe doit contenir au moins 8 caractères.</div>
-                        </div>
-                        <div class="col-md-6">
-                            <label for="password_confirmation" class="form-label">Confirmer le Mot de Passe <span class="text-danger">*</span></label>
-                            <input type="password" class="form-control"
-                                   id="password_confirmation" name="password_confirmation" required>
+                        <div class="col-12">
+                            <div class="alert alert-info">
+                                <h6 class="alert-heading">
+                                    <i class="ti ti-key me-2"></i>
+                                    Mot de Passe Automatique
+                                </h6>
+                                <p class="mb-0">
+                                    Un mot de passe numérique à 8 chiffres sera généré automatiquement et envoyé par email à l'utilisateur.
+                                </p>
+                            </div>
                         </div>
                     </div>
 

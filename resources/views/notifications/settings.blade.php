@@ -67,13 +67,6 @@
                                                     <h6 class="mb-1">
                                                         {{ $hasFcmToken ? 'Notifications Activées' : 'Notifications Non Activées' }}
                                                     </h6>
-                                                    <small class="text-muted">
-                                                        @if($hasFcmToken)
-                                                            Token FCM enregistré le {{ $user->updated_at->format('d/m/Y à H:i') }}
-                                                        @else
-                                                            Aucun token FCM enregistré
-                                                        @endif
-                                                    </small>
                                                 </div>
                                             </div>
                                             <div>
@@ -346,31 +339,31 @@ async function getRealFCMToken() {
         if (typeof firebase === 'undefined') {
             throw new Error('Firebase non disponible');
         }
-        
+
         // Vérifier si messaging est disponible
         if (!firebase.messaging) {
             throw new Error('Firebase Messaging non disponible');
         }
-        
+
         // Utiliser l'instance messaging globale
         if (!messaging) {
             messaging = firebase.messaging();
         }
-        
+
         // Essayer d'obtenir le token avec la clé VAPID
         const token = await messaging.getToken({
             vapidKey: 'BEl62iUYgUivxIkv69yViEuiBIaIC2l0t-rmCFTfJ8s'
         });
-        
+
         if (!token) {
             throw new Error('Token FCM non généré');
         }
-        
+
         console.log('Token FCM réel obtenu:', token);
         return token;
     } catch (error) {
         console.error('Erreur obtention token FCM réel:', error);
-        
+
         // En cas d'erreur, essayer sans clé VAPID
         try {
             console.log('Tentative sans clé VAPID...');
@@ -378,7 +371,7 @@ async function getRealFCMToken() {
                 messaging = firebase.messaging();
             }
             const token = await messaging.getToken();
-            
+
             if (token) {
                 console.log('Token FCM obtenu sans VAPID:', token);
                 return token;
@@ -386,7 +379,7 @@ async function getRealFCMToken() {
         } catch (fallbackError) {
             console.error('Erreur fallback:', fallbackError);
         }
-        
+
         throw error;
     }
 }
@@ -395,12 +388,12 @@ async function getFCMToken() {
     // Générer un token FCM réaliste (format Firebase)
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
     let token = '';
-    
+
     // Format FCM réel : environ 163 caractères
     for (let i = 0; i < 163; i++) {
         token += chars.charAt(Math.floor(Math.random() * chars.length));
     }
-    
+
     console.log('Token FCM généré (format réaliste):', token);
     return token;
 }

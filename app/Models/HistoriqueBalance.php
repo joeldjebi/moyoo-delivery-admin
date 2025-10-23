@@ -11,6 +11,7 @@ class HistoriqueBalance extends Model
 
     protected $fillable = [
         'balance_marchand_id',
+        'entreprise_id',
         'type_operation',
         'montant',
         'balance_avant',
@@ -39,6 +40,11 @@ class HistoriqueBalance extends Model
         return $this->belongsTo(User::class, 'created_by');
     }
 
+    public function entreprise(): BelongsTo
+    {
+        return $this->belongsTo(Entreprise::class);
+    }
+
     /**
      * Scopes
      */
@@ -60,6 +66,11 @@ class HistoriqueBalance extends Model
     public function scopeAjustements($query)
     {
         return $query->where('type_operation', 'ajustement');
+    }
+
+    public function scopeByEntreprise($query, $entrepriseId)
+    {
+        return $query->where('entreprise_id', $entrepriseId);
     }
 
     /**

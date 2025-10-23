@@ -13,7 +13,8 @@ class Type_engin extends Model
 
     protected $fillable = [
         'libelle',
-        'created_by'
+        'created_by',
+        'entreprise_id'
     ];
 
     protected $casts = [
@@ -35,11 +36,21 @@ class Type_engin extends Model
         return $this->belongsTo(User::class, 'created_by');
     }
 
+    public function entreprise()
+    {
+        return $this->belongsTo(Entreprise::class);
+    }
+
     /**
      * Scopes
      */
     public function scopeActive($query)
     {
         return $query->whereNull('deleted_at');
+    }
+
+    public function scopeByEntreprise($query, $entrepriseId)
+    {
+        return $query->where('entreprise_id', $entrepriseId);
     }
 }
