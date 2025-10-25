@@ -8,8 +8,9 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Notifications\DatabaseNotification;
+use Tymon\JWTAuth\Contracts\JWTSubject;
 
-class User extends Authenticatable
+class User extends Authenticatable implements JWTSubject
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable, SoftDeletes;
@@ -516,7 +517,7 @@ class User extends Authenticatable
      */
     public function subscriptionHistories()
     {
-        return $this->hasMany(\App\Models\SubscriptionHistory::class);
+        return $this->hasMany(\App\Models\SubscriptionHistory::class, 'entreprise_id', 'entreprise_id');
     }
 
     /**
@@ -524,12 +525,15 @@ class User extends Authenticatable
      */
     public function getCurrentSubscription()
     {
-        return $this->subscriptionHistories()
-            ->where('status', 'active')
-            ->where('expires_at', '>', now())
-            ->with('pricingPlan')
-            ->latest()
-            ->first();
+        try {
+            return $this->subscriptionHistories()
+                ->where('status', 'active')
+                ->latest()
+                ->first();
+        } catch (Exception $e) {
+            // Retourner null en cas d'erreur de base de données
+            return null;
+        }
     }
 
 
@@ -599,5 +603,53 @@ class User extends Authenticatable
     public function unreadNotificationsCount()
     {
         return $this->unreadNotifications()->count();
+    }
+
+    /**
+     * Relation avec les positions de localisation
+     */
+    public function locations()
+    {
+        return $this->hasMany(LivreurLocation::class, 'livreur_id');
+    }
+
+    /**
+     * Dernière position du livreur
+     */
+    public function lastLocation()
+    {
+        return $this->hasOne(LivreurLocation::class, 'livreur_id')->latest('timestamp');
+    }
+
+    /**
+     * Statut de localisation du livreur
+     */
+    public function locationStatus()
+    {
+        return $this->hasOne(LivreurLocationStatus::class, 'livreur_id');
+    }
+
+    /**
+     * Get the identifier that will be stored in the subject claim of the JWT.
+     *
+     * @return mixed
+     */
+    public function getJWTIdentifier()
+    {
+        return $this->getKey();
+    }
+
+    /**
+     * Return a key value array, containing any custom claims to be added to the JWT.
+     *
+     * @return array
+     */
+    public function getJWTCustomClaims()
+    {
+        return [
+            'type' => $this->user_type ?? 'livreur',
+            'entreprise_id' => $this->entreprise_id,
+            'status' => $this->status
+        ];
     }
 }

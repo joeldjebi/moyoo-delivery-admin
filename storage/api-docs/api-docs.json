@@ -1,33 +1,17 @@
 {
     "openapi": "3.0.0",
     "info": {
-        "title": "API MOYOO Fleet - Delivery & Notifications",
-        "description": "API complète pour l'application MOYOO Fleet incluant la gestion des livraisons, ramassages et notifications push Firebase",
-        "contact": {
-            "name": "Support MOYOO",
-            "email": "support@moyoo.com"
-        },
-        "license": {
-            "name": "MIT",
-            "url": "https://opensource.org/licenses/MIT"
-        },
-        "version": "2.0.0"
+        "title": "MOYOO Delivery API",
+        "description": "API pour le système de livraison MOYOO avec géolocalisation en temps réel",
+        "version": "1.0.0"
     },
     "servers": [
         {
-            "url": "http://192.168.1.4:8000",
-            "description": "Serveur de production"
+            "url": "http://192.168.1.6:8000",
+            "description": "Serveur de développement MOYOO"
         },
         {
-            "url": "http://192.168.1.5:8000",
-            "description": "Serveur de développement local"
-        },
-        {
-            "url": "http://127.0.0.1:8000",
-            "description": "Serveur localhost"
-        },
-        {
-            "url": "http://192.168.1.4:8000"
+            "url": "http://192.168.1.6:8000"
         }
     ],
     "paths": {
@@ -2693,6 +2677,1253 @@
                 ]
             }
         },
+        "/api/livreur/location/update": {
+            "post": {
+                "tags": [
+                    "Géolocalisation"
+                ],
+                "summary": "Mettre à jour la position du livreur avec contexte de mission",
+                "description": "Met à jour la position géographique du livreur avec les données GPS et le contexte de mission (ramassage/livraison)",
+                "operationId": "56eb1fbfbd83ce1d35a064ba92cc1c2b",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "latitude",
+                                    "longitude"
+                                ],
+                                "properties": {
+                                    "livreur_id": {
+                                        "description": "ID du livreur",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "entreprise_id": {
+                                        "description": "ID de l'entreprise (automatique)",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "latitude": {
+                                        "description": "Latitude",
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 5.316667
+                                    },
+                                    "longitude": {
+                                        "description": "Longitude",
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": -4.033333
+                                    },
+                                    "accuracy": {
+                                        "description": "Précision en mètres",
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 10.5
+                                    },
+                                    "altitude": {
+                                        "description": "Altitude en mètres",
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 50
+                                    },
+                                    "speed": {
+                                        "description": "Vitesse en m/s",
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 15.5
+                                    },
+                                    "heading": {
+                                        "description": "Direction en degrés",
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 180
+                                    },
+                                    "timestamp": {
+                                        "description": "Timestamp de la position",
+                                        "type": "string",
+                                        "format": "date-time",
+                                        "example": "2025-10-23T12:00:00Z"
+                                    },
+                                    "status": {
+                                        "description": "Statut de livraison",
+                                        "type": "string",
+                                        "enum": [
+                                            "en_cours",
+                                            "en_pause",
+                                            "termine"
+                                        ],
+                                        "example": "en_cours"
+                                    },
+                                    "context_type": {
+                                        "description": "Type de mission en cours",
+                                        "type": "string",
+                                        "enum": [
+                                            "ramassage",
+                                            "livraison",
+                                            "libre"
+                                        ],
+                                        "example": "ramassage"
+                                    },
+                                    "context_id": {
+                                        "description": "ID de la mission en cours (ramassage_id ou historique_livraison_id)",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "ramassage_id": {
+                                        "description": "ID du ramassage en cours (optionnel, déprécié)",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "historique_livraison_id": {
+                                        "description": "ID de l'historique de livraison (optionnel, déprécié)",
+                                        "type": "integer",
+                                        "example": 1
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Position mise à jour avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Position mise à jour avec succès"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "location_id": {
+                                                    "type": "integer",
+                                                    "example": 123
+                                                },
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-10-23T12:00:00Z"
+                                                },
+                                                "server_timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-10-23T12:00:00Z"
+                                                },
+                                                "context": {
+                                                    "properties": {
+                                                        "type": {
+                                                            "type": "string",
+                                                            "example": "ramassage"
+                                                        },
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "code": {
+                                                            "type": "string",
+                                                            "example": "RAMS-IY4LXYU0"
+                                                        },
+                                                        "adresse": {
+                                                            "type": "string",
+                                                            "example": "Cocody, palmeraie"
+                                                        },
+                                                        "client": {
+                                                            "type": "string",
+                                                            "example": "Joel Dje-Bi"
+                                                        },
+                                                        "telephone": {
+                                                            "type": "string",
+                                                            "example": "0758754662"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Données invalides",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Données invalides"
+                                        },
+                                        "errors": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non authentifié",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/livreur/location/history": {
+            "get": {
+                "tags": [
+                    "Géolocalisation"
+                ],
+                "summary": "Récupérer l'historique des positions du livreur",
+                "description": "Récupère l'historique des positions GPS du livreur avec filtres optionnels",
+                "operationId": "d8e826403437a56a7387f3efccee76d4",
+                "parameters": [
+                    {
+                        "name": "livreur_id",
+                        "in": "query",
+                        "description": "ID du livreur (optionnel, par défaut: livreur authentifié)",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    },
+                    {
+                        "name": "start_date",
+                        "in": "query",
+                        "description": "Date de début (format: YYYY-MM-DD)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date",
+                            "example": "2025-10-23"
+                        }
+                    },
+                    {
+                        "name": "end_date",
+                        "in": "query",
+                        "description": "Date de fin (format: YYYY-MM-DD)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date",
+                            "example": "2025-10-24"
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "description": "Nombre maximum de résultats (1-1000)",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 1000,
+                            "minimum": 1,
+                            "example": 100
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "description": "Filtrer par statut",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "en_cours",
+                                "en_pause",
+                                "termine"
+                            ],
+                            "example": "en_cours"
+                        }
+                    },
+                    {
+                        "name": "context_type",
+                        "in": "query",
+                        "description": "Filtrer par type de mission",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "ramassage",
+                                "livraison",
+                                "libre"
+                            ],
+                            "example": "ramassage"
+                        }
+                    },
+                    {
+                        "name": "context_id",
+                        "in": "query",
+                        "description": "Filtrer par ID de mission spécifique",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    },
+                    {
+                        "name": "mission_type",
+                        "in": "query",
+                        "description": "Alias pour context_type - Filtrer par type de mission",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "ramassage",
+                                "livraison",
+                                "libre"
+                            ],
+                            "example": "livraison"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Historique récupéré avec succès (données optimisées)",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 123
+                                                    },
+                                                    "livreur_id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "latitude": {
+                                                        "type": "string",
+                                                        "example": "5.31666700"
+                                                    },
+                                                    "longitude": {
+                                                        "type": "string",
+                                                        "example": "-4.03333300"
+                                                    },
+                                                    "accuracy": {
+                                                        "type": "string",
+                                                        "example": "10.50"
+                                                    },
+                                                    "speed": {
+                                                        "type": "string",
+                                                        "example": "15.50"
+                                                    },
+                                                    "heading": {
+                                                        "type": "string",
+                                                        "example": "180.00"
+                                                    },
+                                                    "timestamp": {
+                                                        "type": "string",
+                                                        "format": "date-time",
+                                                        "example": "2025-10-23T12:00:00Z"
+                                                    },
+                                                    "status": {
+                                                        "type": "string",
+                                                        "example": "en_cours"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "count": {
+                                            "type": "integer",
+                                            "example": 50
+                                        },
+                                        "filters": {
+                                            "properties": {
+                                                "livreur_id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "start_date": {
+                                                    "type": "string",
+                                                    "example": "2025-10-23"
+                                                },
+                                                "end_date": {
+                                                    "type": "string",
+                                                    "example": "2025-10-23"
+                                                },
+                                                "status": {
+                                                    "type": "string",
+                                                    "example": "en_cours"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Paramètres invalides",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Paramètres invalides"
+                                        },
+                                        "errors": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non authentifié",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Non authentifié"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/livreur/location/status": {
+            "get": {
+                "tags": [
+                    "Géolocalisation"
+                ],
+                "summary": "Récupérer le statut de localisation du livreur",
+                "description": "Récupère le statut actuel de localisation du livreur",
+                "operationId": "15f608ffad2b7c1c88ce042738d28ec5",
+                "responses": {
+                    "200": {
+                        "description": "Statut récupéré avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Statut récupéré avec succès"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "livreur_id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "status": {
+                                                    "type": "string",
+                                                    "example": "active"
+                                                },
+                                                "socket_id": {
+                                                    "type": "string",
+                                                    "example": "socket_123"
+                                                },
+                                                "last_updated": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-10-23T12:00:00Z"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Statut non trouvé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Statut non trouvé"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non authentifié",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Non authentifié"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Géolocalisation"
+                ],
+                "summary": "Mettre à jour le statut de localisation du livreur",
+                "description": "Met à jour le statut de localisation du livreur (actif, inactif, en pause)",
+                "operationId": "e14681660304c085d17e83434194efdf",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "status"
+                                ],
+                                "properties": {
+                                    "status": {
+                                        "description": "Statut de localisation",
+                                        "type": "string",
+                                        "enum": [
+                                            "active",
+                                            "inactive",
+                                            "paused"
+                                        ],
+                                        "example": "active"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Statut mis à jour avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Statut mis à jour avec succès"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "livreur_id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "status": {
+                                                    "type": "string",
+                                                    "example": "active"
+                                                },
+                                                "last_updated": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-10-23T12:00:00Z"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Statut invalide",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Statut invalide"
+                                        },
+                                        "errors": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non authentifié",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Non authentifié"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/location/livreurs": {
+            "get": {
+                "tags": [
+                    "Géolocalisation",
+                    "Admin"
+                ],
+                "summary": "Récupérer les positions de tous les livreurs (Admin)",
+                "description": "Récupère les positions récentes de tous les livreurs pour le monitoring admin",
+                "operationId": "b2dc060cda321cd8ac3909deecaf27bf",
+                "parameters": [
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "description": "Filtrer par statut des livreurs",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "active",
+                                "inactive",
+                                "paused"
+                            ],
+                            "example": "active"
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "description": "Nombre maximum de livreurs à retourner",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 100,
+                            "minimum": 1,
+                            "example": 50
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Positions des livreurs récupérées avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Positions des livreurs récupérées avec succès"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "livreur_id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "livreur_name": {
+                                                        "type": "string",
+                                                        "example": "Jean Dupont"
+                                                    },
+                                                    "latitude": {
+                                                        "type": "number",
+                                                        "format": "float",
+                                                        "example": 5.316667
+                                                    },
+                                                    "longitude": {
+                                                        "type": "number",
+                                                        "format": "float",
+                                                        "example": -4.033333
+                                                    },
+                                                    "accuracy": {
+                                                        "type": "number",
+                                                        "format": "float",
+                                                        "example": 10.5
+                                                    },
+                                                    "speed": {
+                                                        "type": "number",
+                                                        "format": "float",
+                                                        "example": 15.5
+                                                    },
+                                                    "heading": {
+                                                        "type": "number",
+                                                        "format": "float",
+                                                        "example": 180
+                                                    },
+                                                    "timestamp": {
+                                                        "type": "string",
+                                                        "format": "date-time",
+                                                        "example": "2025-10-23T12:00:00Z"
+                                                    },
+                                                    "status": {
+                                                        "type": "string",
+                                                        "example": "active"
+                                                    },
+                                                    "socket_id": {
+                                                        "type": "string",
+                                                        "example": "socket_123"
+                                                    },
+                                                    "last_updated": {
+                                                        "type": "string",
+                                                        "format": "date-time",
+                                                        "example": "2025-10-23T12:00:00Z"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "total_livreurs": {
+                                            "type": "integer",
+                                            "example": 25
+                                        },
+                                        "active_livreurs": {
+                                            "type": "integer",
+                                            "example": 20
+                                        },
+                                        "inactive_livreurs": {
+                                            "type": "integer",
+                                            "example": 3
+                                        },
+                                        "paused_livreurs": {
+                                            "type": "integer",
+                                            "example": 2
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non authentifié",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Non authentifié"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Accès refusé - Admin requis",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Accès refusé - Admin requis"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/livreur/location/current-mission": {
+            "get": {
+                "tags": [
+                    "Géolocalisation"
+                ],
+                "summary": "Récupérer la mission actuelle du livreur",
+                "description": "Récupère la mission actuelle du livreur (ramassage ou livraison) avec les détails et la dernière position",
+                "operationId": "0cabff19125e97cea2e6fb61ce6c2a64",
+                "responses": {
+                    "200": {
+                        "description": "Mission actuelle récupérée avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "livreur_id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "mission": {
+                                                    "properties": {
+                                                        "type": {
+                                                            "type": "string",
+                                                            "example": "ramassage"
+                                                        },
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "code": {
+                                                            "type": "string",
+                                                            "example": "RAMS-IY4LXYU0"
+                                                        },
+                                                        "adresse": {
+                                                            "type": "string",
+                                                            "example": "Cocody, palmeraie"
+                                                        },
+                                                        "client": {
+                                                            "type": "string",
+                                                            "example": "Joel Dje-Bi"
+                                                        },
+                                                        "telephone": {
+                                                            "type": "string",
+                                                            "example": "0758754662"
+                                                        },
+                                                        "status": {
+                                                            "type": "string",
+                                                            "example": "en_cours"
+                                                        },
+                                                        "date_debut": {
+                                                            "type": "string",
+                                                            "format": "date-time",
+                                                            "example": "2025-10-23T10:00:00Z"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "last_position": {
+                                                    "properties": {
+                                                        "latitude": {
+                                                            "type": "string",
+                                                            "example": "5.31666700"
+                                                        },
+                                                        "longitude": {
+                                                            "type": "string",
+                                                            "example": "-4.03333300"
+                                                        },
+                                                        "accuracy": {
+                                                            "type": "string",
+                                                            "example": "10.50"
+                                                        },
+                                                        "speed": {
+                                                            "type": "string",
+                                                            "example": "15.50"
+                                                        },
+                                                        "heading": {
+                                                            "type": "string",
+                                                            "example": "180.00"
+                                                        },
+                                                        "timestamp": {
+                                                            "type": "string",
+                                                            "format": "date-time",
+                                                            "example": "2025-10-23T12:00:00Z"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Aucune mission en cours",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Aucune mission en cours"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "livreur_id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "mission": {
+                                                    "type": "null"
+                                                },
+                                                "last_position": {
+                                                    "properties": {
+                                                        "latitude": {
+                                                            "type": "string",
+                                                            "example": "5.31666700"
+                                                        },
+                                                        "longitude": {
+                                                            "type": "string",
+                                                            "example": "-4.03333300"
+                                                        },
+                                                        "timestamp": {
+                                                            "type": "string",
+                                                            "format": "date-time",
+                                                            "example": "2025-10-23T12:00:00Z"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non authentifié",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/livreur/location/mission-history/{mission_type}/{mission_id}": {
+            "get": {
+                "tags": [
+                    "Géolocalisation"
+                ],
+                "summary": "Récupérer l'historique d'une mission spécifique",
+                "description": "Récupère l'historique des positions pour une mission spécifique (ramassage ou livraison)",
+                "operationId": "2c725943d61df4172cc674bb67ddc85d",
+                "parameters": [
+                    {
+                        "name": "mission_type",
+                        "in": "path",
+                        "description": "Type de mission",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "ramassage",
+                                "livraison"
+                            ],
+                            "example": "ramassage"
+                        }
+                    },
+                    {
+                        "name": "mission_id",
+                        "in": "path",
+                        "description": "ID de la mission",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "description": "Nombre maximum de positions à retourner",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 1000,
+                            "minimum": 1,
+                            "example": 100
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Historique de mission récupéré avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "mission": {
+                                                    "properties": {
+                                                        "type": {
+                                                            "type": "string",
+                                                            "example": "ramassage"
+                                                        },
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "code": {
+                                                            "type": "string",
+                                                            "example": "RAMS-IY4LXYU0"
+                                                        },
+                                                        "adresse": {
+                                                            "type": "string",
+                                                            "example": "Cocody, palmeraie"
+                                                        },
+                                                        "client": {
+                                                            "type": "string",
+                                                            "example": "Joel Dje-Bi"
+                                                        },
+                                                        "telephone": {
+                                                            "type": "string",
+                                                            "example": "0758754662"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "positions": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 123
+                                                            },
+                                                            "latitude": {
+                                                                "type": "string",
+                                                                "example": "5.31666700"
+                                                            },
+                                                            "longitude": {
+                                                                "type": "string",
+                                                                "example": "-4.03333300"
+                                                            },
+                                                            "accuracy": {
+                                                                "type": "string",
+                                                                "example": "10.50"
+                                                            },
+                                                            "speed": {
+                                                                "type": "string",
+                                                                "example": "15.50"
+                                                            },
+                                                            "heading": {
+                                                                "type": "string",
+                                                                "example": "180.00"
+                                                            },
+                                                            "timestamp": {
+                                                                "type": "string",
+                                                                "format": "date-time",
+                                                                "example": "2025-10-23T12:00:00Z"
+                                                            },
+                                                            "status": {
+                                                                "type": "string",
+                                                                "example": "en_cours"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "count": {
+                                                    "type": "integer",
+                                                    "example": 25
+                                                },
+                                                "distance_total": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 5.2
+                                                },
+                                                "duree_total": {
+                                                    "type": "string",
+                                                    "example": "00:45:30"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Mission non trouvée",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Mission non trouvée"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non authentifié",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/livreur/check-phone": {
             "post": {
                 "tags": [
@@ -4061,51 +5292,15 @@
                     }
                 ]
             }
-        },
-        "/api/test": {
-            "get": {
-                "tags": [
-                    "Test"
-                ],
-                "summary": "Test de l'API",
-                "description": "Endpoint de test pour vérifier que l'API fonctionne",
-                "operationId": "fcf2e96a68d62874a47abb5f7fb1cdd5",
-                "responses": {
-                    "200": {
-                        "description": "API fonctionnelle",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "API fonctionnelle"
-                                        },
-                                        "timestamp": {
-                                            "type": "string",
-                                            "format": "date-time"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
         }
     },
     "components": {
         "securitySchemes": {
             "bearerAuth": {
                 "type": "http",
-                "description": "Authentification JWT pour les livreurs",
+                "scheme": "bearer",
                 "bearerFormat": "JWT",
-                "scheme": "bearer"
+                "description": "Token JWT pour l'authentification des livreurs"
             }
         }
     },
@@ -4131,8 +5326,12 @@
             "description": "Endpoints de gestion des ramassages pour les livreurs"
         },
         {
-            "name": "Test",
-            "description": "Endpoints de test et vérification"
+            "name": "Géolocalisation",
+            "description": "Endpoints de géolocalisation en temps réel"
+        },
+        {
+            "name": "Admin",
+            "description": "Endpoints d'administration"
         },
         {
             "name": "Profil Livreur",

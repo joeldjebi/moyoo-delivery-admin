@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\LivreurOtpController;
 use App\Http\Controllers\Api\FcmTokenController;
 use App\Http\Controllers\Api\FirebaseNotificationController;
 use App\Http\Controllers\Api\NotificationController;
+use App\Http\Controllers\Api\LivreurLocationController;
 use App\Http\Controllers\SwaggerController;
 
 /*
@@ -58,6 +59,7 @@ Route::prefix('livreur')->group(function () {
 Route::prefix('livreur')->middleware('auth:livreur')->group(function () {
     // Authentification
     Route::post('logout', [LivreurAuthController::class, 'logout']);
+    Route::get('me', [LivreurAuthController::class, 'me']);
     Route::get('profile', [LivreurAuthController::class, 'profile']);
     Route::post('profile', [LivreurAuthController::class, 'updateProfile']);
     Route::post('change-password', [LivreurAuthController::class, 'changePassword']);
@@ -81,6 +83,14 @@ Route::prefix('livreur')->middleware('auth:livreur')->group(function () {
             // Gestion des tokens FCM
             Route::post('fcm-token', [FcmTokenController::class, 'updateLivreurToken']);
             Route::delete('fcm-token', [FcmTokenController::class, 'deleteLivreurToken']);
+
+            // Gestion de la géolocalisation
+            Route::post('location/update', [LivreurLocationController::class, 'updateLocation']);
+            Route::get('location/history', [LivreurLocationController::class, 'getLocationHistory']);
+            Route::post('location/status', [LivreurLocationController::class, 'updateStatus']);
+            Route::get('location/status', [LivreurLocationController::class, 'getStatus']);
+            Route::get('location/current-mission', [LivreurLocationController::class, 'getCurrentMission']);
+            Route::get('location/mission-history/{mission_type}/{mission_id}', [LivreurLocationController::class, 'getMissionHistory']);
 });
 
 // Routes pour les notifications Firebase (admin)
@@ -90,6 +100,9 @@ Route::prefix('admin')->middleware('auth:livreur')->group(function () {
     Route::get('firebase/status', [FirebaseNotificationController::class, 'getStatus']);
     Route::post('firebase/send-to-livreur', [FirebaseNotificationController::class, 'sendToLivreur']);
     Route::post('firebase/send-to-marchand', [FirebaseNotificationController::class, 'sendToMarchand']);
+
+    // Gestion de la géolocalisation (admin)
+    Route::get('location/livreurs', [LivreurLocationController::class, 'getAllLivreursLocations']);
 });
 
 // Route de test pour vérifier que l'API fonctionne

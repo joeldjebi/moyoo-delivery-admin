@@ -227,6 +227,20 @@
                   <div data-i18n="Abonnements">Abonnements</div>
                 </a>
               </li>
+
+              <!-- Section Géolocalisation -->
+              <li class="menu-header small text-uppercase">
+                <span class="menu-header-text">Géolocalisation</span>
+              </li>
+
+
+              <li class="menu-item {{ $menu == 'location-admin' ? 'active' : '' }}">
+                <a href="{{ route('location.admin-monitor') }}" class="menu-link">
+                  <i class="menu-icon tf-icons ti ti-map"></i>
+                  <div data-i18n="Moniteur Admin">Moniteur Admin</div>
+                </a>
+              </li>
+
               @if(auth()->user()->hasPermission('settings.update'))
               <li class="menu-item {{ $menu == 'role-permissions' ? 'active' : '' }}">
                 <a href="{{ route('role-permissions.index') }}" class="menu-link">

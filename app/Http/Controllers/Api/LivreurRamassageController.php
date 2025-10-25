@@ -394,6 +394,9 @@ class LivreurRamassageController extends Controller
                 $planification->update(['statut_planification' => 'en_cours']);
             }
 
+            // Activer le suivi GPS pour ce ramassage
+            $this->activateLocationTracking($livreur, 'pickup', $ramassage->id);
+
             DB::commit();
 
             return response()->json([
@@ -981,6 +984,39 @@ class LivreurRamassageController extends Controller
             \Log::error('Erreur lors de l\'envoi de notification à l\'admin', [
                 'ramassage_id' => $ramassage->id,
                 'livreur_id' => $livreur->id,
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
+     * Activer le suivi GPS pour une mission
+     */
+    private function activateLocationTracking($livreur, $missionType, $missionId)
+    {
+        try {
+            // Mettre à jour le statut de localisation
+            \App\Models\LivreurLocationStatus::updateStatus(
+                $livreur->id,
+                'active',
+                null,
+                $livreur->entreprise_id
+            );
+
+            \Log::info('Suivi GPS activé pour livreur', [
+                'livreur_id' => $livreur->id,
+                'mission_type' => $missionType,
+                'mission_id' => $missionId
+            ]);
+
+            // Notifier le serveur Socket.IO (optionnel)
+            // Ici on pourrait envoyer une notification au serveur Socket.IO
+            // pour informer que le livreur est maintenant en mission
+
+        } catch (\Exception $e) {
+            \Log::error('Erreur activation suivi GPS', [
+                'livreur_id' => $livreur->id,
+                'mission_type' => $missionType,
                 'error' => $e->getMessage()
             ]);
         }

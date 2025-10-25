@@ -104,6 +104,11 @@ class Livreur extends Authenticatable implements JWTSubject
         return $this->hasManyThrough(Livraison::class, Colis::class, 'livreur_id', 'colis_id');
     }
 
+    public function ramassages()
+    {
+        return $this->hasMany(Ramassage::class, 'livreur_id');
+    }
+
     /**
      * Scopes
      */
@@ -233,5 +238,29 @@ class Livreur extends Authenticatable implements JWTSubject
     public function canStartPickup()
     {
         return !$this->hasActivePickups();
+    }
+
+    /**
+     * Relation avec les positions de localisation
+     */
+    public function locations()
+    {
+        return $this->hasMany(LivreurLocation::class, 'livreur_id');
+    }
+
+    /**
+     * Dernière position du livreur
+     */
+    public function lastLocation()
+    {
+        return $this->hasOne(LivreurLocation::class, 'livreur_id')->latest('timestamp');
+    }
+
+    /**
+     * Statut de localisation du livreur
+     */
+    public function locationStatus()
+    {
+        return $this->hasOne(LivreurLocationStatus::class, 'livreur_id');
     }
 }

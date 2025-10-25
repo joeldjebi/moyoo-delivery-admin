@@ -1,63 +1,234 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# MOYOO Delivery - Système de Géolocalisation
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+## 🚀 Description
 
-## About Laravel
+Système de géolocalisation en temps réel pour la gestion des livreurs avec suivi conditionnel automatique.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## ✨ Fonctionnalités
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+### 📱 Suivi Conditionnel Automatique
+- **Activation automatique** du GPS lors du démarrage d'une mission
+- **Désactivation automatique** à la fin de la mission
+- **Respect de la vie privée** des livreurs
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+### 🖥️ Interface Admin Complète
+- **Vue d'ensemble** de tous les livreurs en mission
+- **Sélection individuelle** de livreurs
+- **Filtrage par type** de mission (livraison/ramassage)
+- **Centrage sur livreur** spécifique
+- **Supervision en temps réel**
 
-## Learning Laravel
+### 🔧 Technologies Utilisées
+- **Laravel 12** - Framework PHP
+- **Socket.IO** - Communication temps réel
+- **Leaflet + OpenStreetMap** - Cartes interactives
+- **MySQL** - Base de données
+- **JWT Authentication** - Authentification sécurisée
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+## 🛠️ Installation
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+### Prérequis
+- PHP 8.2+
+- Composer
+- Node.js 18+
+- MySQL 8.0+
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+### Configuration
 
-## Laravel Sponsors
+1. **Cloner le repository**
+```bash
+git clone https://github.com/votre-username/moyoo-delivery.git
+cd moyoo-delivery
+```
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+2. **Installer les dépendances**
+```bash
+composer install
+npm install
+```
 
-### Premium Partners
+3. **Configuration de l'environnement**
+```bash
+cp .env.example .env
+php artisan key:generate
+```
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+4. **Configuration de la base de données**
+```env
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=moyoo_delivery
+DB_USERNAME=root
+DB_PASSWORD=
+```
 
-## Contributing
+5. **Migration et seeders**
+```bash
+php artisan migrate
+php artisan db:seed
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## 🚀 Démarrage
 
-## Code of Conduct
+### Démarrage automatique
+```bash
+./start-moyoo-system.sh
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+### Démarrage manuel
 
-## Security Vulnerabilities
+1. **Serveur Laravel**
+```bash
+php artisan serve --host=192.168.1.6 --port=8000
+```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+2. **Serveur Socket.IO**
+```bash
+node socket-server.js
+```
 
-## License
+3. **Assets frontend**
+```bash
+npm run dev
+```
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
-# moyoo-delivery-admin
-# moyoo-delivery-admin
+## 📱 Interfaces
+
+### Interface Admin
+- **URL** : `http://192.168.1.6:8000/location/admin-monitor`
+- **Fonction** : Supervision de tous les livreurs en mission
+- **Fonctionnalités** :
+  - Sélection de livreurs individuels
+  - Filtrage par type de mission
+  - Centrage sur livreur spécifique
+  - Statistiques en temps réel
+
+### Dashboard Principal
+- **URL** : `http://192.168.1.6:8000/dashboard`
+- **Fonction** : Tableau de bord principal
+
+## 🔌 API Endpoints
+
+### Authentification
+- `POST /api/livreur/login` - Connexion livreur
+- `POST /api/livreur/logout` - Déconnexion livreur
+
+### Géolocalisation
+- `POST /api/livreur/location/update` - Mise à jour position
+- `GET /api/livreur/location/status` - Statut de localisation
+
+### Missions
+- `POST /api/livreur/colis/{id}/start-delivery` - Démarrer livraison
+- `POST /api/livreur/colis/{id}/complete-delivery` - Terminer livraison
+- `POST /api/livreur/ramassages/{id}/start` - Démarrer ramassage
+- `POST /api/livreur/ramassages/{id}/complete` - Terminer ramassage
+
+## 🗺️ Configuration Socket.IO
+
+### Serveur Socket.IO
+- **Port** : 3000
+- **URL** : `http://192.168.1.6:3000`
+- **Fonction** : Communication temps réel
+
+### Configuration CORS
+```javascript
+cors: {
+    origin: "http://192.168.1.6:8000",
+    methods: ["GET", "POST"]
+}
+```
+
+## 📊 Base de Données
+
+### Tables Principales
+- `livreurs` - Informations des livreurs
+- `livreur_locations` - Positions GPS
+- `livreur_location_status` - Statuts de localisation
+- `colis` - Livraisons
+- `ramassages` - Ramassages
+
+### Migrations
+```bash
+php artisan migrate
+```
+
+## 🔒 Sécurité
+
+### Authentification
+- **JWT Tokens** pour l'authentification API
+- **CSRF Protection** pour les formulaires web
+- **Middleware d'authentification** sur toutes les routes
+
+### Suivi Conditionnel
+- **Activation automatique** uniquement pendant les missions
+- **Désactivation automatique** à la fin des missions
+- **Respect de la vie privée** des livreurs
+
+## 📱 Application Mobile
+
+### Configuration Socket.IO
+```javascript
+const socket = io('http://192.168.1.6:3000', {
+    auth: {
+        token: 'JWT_TOKEN'
+    }
+});
+```
+
+### Envoi de Position
+```javascript
+socket.emit('location:update', {
+    latitude: position.latitude,
+    longitude: position.longitude,
+    accuracy: position.accuracy,
+    speed: position.speed
+});
+```
+
+## 🚀 Déploiement
+
+### Production
+1. **Variables d'environnement**
+```env
+APP_ENV=production
+APP_DEBUG=false
+```
+
+2. **Optimisation**
+```bash
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+```
+
+3. **Assets**
+```bash
+npm run build
+```
+
+## 📝 Documentation API
+
+### Swagger
+- **URL** : `http://192.168.1.6:8000/api/documentation`
+- **Génération** : `php artisan l5-swagger:generate`
+
+## 🤝 Contribution
+
+1. Fork le projet
+2. Créer une branche feature (`git checkout -b feature/AmazingFeature`)
+3. Commit les changements (`git commit -m 'Add some AmazingFeature'`)
+4. Push vers la branche (`git push origin feature/AmazingFeature`)
+5. Ouvrir une Pull Request
+
+## 📄 Licence
+
+Ce projet est sous licence MIT. Voir le fichier `LICENSE` pour plus de détails.
+
+## 📞 Support
+
+Pour toute question ou problème, ouvrez une issue sur GitHub.
+
+---
+
+**MOYOO Delivery** - Système de géolocalisation intelligent pour la logistique moderne.

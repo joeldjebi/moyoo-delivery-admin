@@ -25,6 +25,7 @@ use App\Http\Controllers\PoidController;
 use App\Http\Controllers\LivraisonController;
 use App\Http\Controllers\HistoriqueLivraisonController;
 use App\Http\Controllers\RamassageController;
+use App\Http\Controllers\LocationController;
 
 // Routes d'authentification
 Route::group(['middleware' => ['auth', 'tenant']], function (){
@@ -582,4 +583,9 @@ Route::middleware(['auth', 'tenant'])->group(function () {
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/api/subscriptions/plans', [App\Http\Controllers\SubscriptionController::class, 'getPlans']);
     Route::get('/api/subscriptions/user', [App\Http\Controllers\SubscriptionController::class, 'getUserSubscription']);
+});
+
+// Routes de géolocalisation
+Route::middleware(['auth', 'tenant'])->group(function () {
+    Route::get('/location/admin-monitor', [App\Http\Controllers\LocationController::class, 'adminMonitor'])->name('location.admin-monitor');
 });

@@ -91,18 +91,18 @@ return [
             /*
              * Edit to set the api's base path
              */
-            'base' => env('L5_SWAGGER_BASE_PATH', 'http://192.168.1.4:8000'),
+            'base' => env('L5_SWAGGER_BASE_PATH', 'http://192.168.1.6:8000'),
 
             /*
              * Servers configuration
              */
             'servers' => [
                 [
-                    'url' => env('L5_SWAGGER_BASE_PATH', 'http://192.168.1.4:8000'),
+                    'url' => env('L5_SWAGGER_BASE_PATH', 'http://192.168.1.6:8000'),
                     'description' => 'Serveur de production'
                 ],
                 [
-                    'url' => 'http://192.168.1.4:8000',
+                    'url' => 'http://192.168.1.6:8000',
                     'description' => 'Serveur de développement local'
                 ],
                 [
@@ -233,6 +233,13 @@ return [
                     'in' => 'header', // The location of the API key. Valid values are "query" or "header".
                 ],
                 */
+
+                'bearerAuth' => [
+                    'type' => 'http',
+                    'scheme' => 'bearer',
+                    'bearerFormat' => 'JWT',
+                    'description' => 'Token JWT pour l\'authentification des livreurs'
+                ],
             ],
             'security' => [
                 /*
@@ -330,7 +337,7 @@ return [
          * Constants which can be used in annotations
          */
         'constants' => [
-            'L5_SWAGGER_CONST_HOST' => env('L5_SWAGGER_CONST_HOST', 'http://192.168.1.4:8000'),
+            'L5_SWAGGER_CONST_HOST' => env('L5_SWAGGER_CONST_HOST', 'http://192.168.1.6:8000'),
         ],
     ],
 ];
