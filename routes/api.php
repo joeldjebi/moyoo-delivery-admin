@@ -107,3 +107,21 @@ Route::prefix('admin')->middleware('auth:livreur')->group(function () {
 
 // Route de test pour vérifier que l'API fonctionne
 Route::get('/test', [SwaggerController::class, 'test']);
+
+// API Routes pour les abonnements
+Route::middleware(['auth:sanctum'])->group(function () {
+    Route::get('/user/subscription', function () {
+        $user = auth()->user();
+        $subscription = $user->getActiveSubscription();
+
+        return response()->json([
+            'has_premium_subscription' => $user->hasActiveSubscription('Premium'),
+            'subscription' => $subscription,
+            'features' => [
+                'admin_monitor' => $user->hasActiveSubscription('Premium'),
+                'real_time_tracking' => $user->hasActiveSubscription('Premium'),
+                'advanced_statistics' => $user->hasActiveSubscription('Premium')
+            ]
+        ]);
+    });
+});

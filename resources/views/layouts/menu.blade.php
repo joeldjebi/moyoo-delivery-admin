@@ -234,12 +234,15 @@
               </li>
 
 
+              @if(auth()->user()->hasActiveSubscription('Premium'))
               <li class="menu-item {{ $menu == 'location-admin' ? 'active' : '' }}">
                 <a href="{{ route('location.admin-monitor') }}" class="menu-link">
                   <i class="menu-icon tf-icons ti ti-map"></i>
                   <div data-i18n="Moniteur Admin">Moniteur Admin</div>
+                  <i class="ti ti-crown text-warning ms-auto"></i>
                 </a>
               </li>
+              @endif
 
               @if(auth()->user()->hasPermission('settings.update'))
               <li class="menu-item {{ $menu == 'role-permissions' ? 'active' : '' }}">

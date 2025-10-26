@@ -16,14 +16,10 @@
                         <div class="d-flex gap-2 justify-content-end">
                             @auth
                                 <a href="{{ route('subscriptions.index') }}" class="btn btn-outline-primary">
-                                    <i class="ti ti-crown me-1"></i>
-                                    Mes Abonnements
+                                    <i class="ti ti-history me-1"></i>
+                                    Mon Historique
                                 </a>
                             @endauth
-                            <a href="{{ route('auth.subscription-history') }}" class="btn btn-outline-info">
-                                <i class="ti ti-history me-1"></i>
-                                Mon Historique
-                            </a>
                             <a href="{{ route('entreprise.index') }}" class="btn btn-outline-secondary">
                                 <i class="ti ti-arrow-left me-1"></i>
                                 Retour
@@ -43,11 +39,19 @@
             <div class="card-header">
                 <h5 class="card-title mb-0">Nos Forfaits</h5>
                 @auth
-                    <div class="alert alert-info mt-3 mb-0">
-                        <i class="ti ti-info-circle me-2"></i>
-                        <strong>Vous avez déjà le Plan Démarrage (gratuit) !</strong>
-                        Découvrez nos plans Premium pour débloquer toutes les fonctionnalités avancées.
-                    </div>
+                    @if(auth()->user()->hasActiveSubscription())
+                        <div class="alert alert-success mt-3 mb-0">
+                            <i class="ti ti-check-circle me-2"></i>
+                            <strong>Vous avez un abonnement actif !</strong>
+                            Vous pouvez changer de plan à tout moment pour accéder à plus de fonctionnalités.
+                        </div>
+                    @else
+                        <div class="alert alert-warning mt-3 mb-0">
+                            <i class="ti ti-info-circle me-2"></i>
+                            <strong>Aucun abonnement actif</strong>
+                            Choisissez un plan pour accéder à toutes les fonctionnalités de la plateforme.
+                        </div>
+                    @endif
                 @endauth
             </div>
             <div class="card-body">
@@ -82,23 +86,23 @@
 
                                 <div class="card-footer text-center">
                                     @auth
-                                        @if(auth()->user()->subscription_plan_id == $plan['id'])
+                                        @if(auth()->user()->hasActiveSubscription() && auth()->user()->subscription_plan_id == $plan['id'])
                                             <button class="btn btn-outline-success w-100" disabled>
                                                 <i class="ti ti-check me-1"></i>
                                                 Plan actuel
+                                            </button>
+                                        @elseif($plan['name'] === 'Free')
+                                            <button class="btn btn-outline-secondary w-100" disabled>
+                                                <i class="ti ti-x me-1"></i>
+                                                Non disponible
                                             </button>
                                         @else
                                             <form method="POST" action="{{ route('subscriptions.change-plan') }}" class="d-inline w-100">
                                                 @csrf
                                                 <input type="hidden" name="plan_id" value="{{ $plan['id'] }}">
                                                 <button type="submit" class="btn {{ $plan['button_class'] }} w-100">
-                                                    @if($plan['name'] === 'Free')
-                                                        <i class="ti ti-arrow-right me-1"></i>
-                                                        Passer au Free
-                                                    @else
-                                                        <i class="ti ti-credit-card me-1"></i>
-                                                        S'abonner - {{ $plan['price'] }} {{ $plan['currency'] }}
-                                                    @endif
+                                                    <i class="ti ti-credit-card me-1"></i>
+                                                    S'abonner - {{ $plan['price'] }} {{ $plan['currency'] }}
                                                 </button>
                                             </form>
                                         @endif

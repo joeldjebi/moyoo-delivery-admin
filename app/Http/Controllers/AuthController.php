@@ -910,11 +910,55 @@ class AuthController extends Controller
                 ->with('error', 'Veuillez d\'abord configurer votre entreprise.');
         }
 
-        // Récupérer l'historique d'abonnement de l'utilisateur
-        $data['subscriptions'] = SubscriptionHistory::forUser(auth()->id())
+        // Récupérer l'utilisateur connecté
+        $user = auth()->user();
+
+        // Récupérer l'historique des abonnements de l'entreprise (depuis subscription_plans)
+        $data['subscriptions'] = \App\Models\SubscriptionPlan::where('entreprise_id', $user->entreprise_id)
             ->with('pricingPlan')
             ->ordered()
             ->get();
+
+        // Récupérer l'historique des paiements (depuis subscription_histories)
+        $data['payment_history'] = SubscriptionHistory::where('entreprise_id', $user->entreprise_id)
+            ->with('pricingPlan')
+            ->ordered()
+            ->get();
+
+        // Informations sur l'abonnement actuel (depuis la table users)
+        $data['current_subscription'] = [
+            'subscription' => [
+                'plan_id' => $user->subscription_plan_id,
+                'status' => $user->subscription_status,
+                'expires_at' => $user->subscription_expires_at,
+                'is_trial' => $user->is_trial,
+                'trial_expires_at' => $user->trial_expires_at,
+                'has_active_subscription' => $user->hasActiveSubscription(),
+                'can_access_premium' => $user->hasActiveSubscription('Premium')
+            ]
+        ];
+
+        // Plan d'abonnement actuel (depuis subscription_plans via l'abonnement actif)
+        $activeSubscription = $user->getActiveSubscription();
+        if ($activeSubscription && $activeSubscription->pricingPlan) {
+            $plan = $activeSubscription->pricingPlan;
+            $data['current_subscription']['plan'] = [
+                'id' => $plan->id,
+                'name' => $plan->name,
+                'description' => $plan->description,
+                'price' => number_format($plan->price, 0, ',', ' '),
+                'currency' => $plan->currency,
+                'duration_days' => $plan->period === 'year' ? 365 : 30,
+                'features' => $plan->features,
+                'is_premium' => in_array($plan->name, ['Premium', 'Premium Annuel']),
+                'is_free' => $plan->price == 0
+            ];
+
+            // Mettre à jour les données de l'abonnement existant avec les durées réelles
+            $data['current_subscription']['subscription']['real_duration_days'] = $activeSubscription->getRealDurationDays();
+            $data['current_subscription']['subscription']['remaining_days'] = $activeSubscription->getRemainingDays();
+            $data['current_subscription']['subscription']['expires_at'] = $activeSubscription->expires_at;
+        }
 
         return view('auth.subscription-history', $data);
     }
@@ -927,13 +971,8 @@ class AuthController extends Controller
         $data['title'] = 'Forfaits';
         $data['menu'] = 'pricing';
 
-        // Récupérer les plans de tarification depuis la base de données
-        $query = PricingPlan::active()->ordered();
-
-        // Si l'utilisateur est connecté, masquer le plan gratuit (Plan Démarrage)
-        if (auth()->check()) {
-            $query->where('price', '>', 0);
-        }
+        // Récupérer tous les forfaits proposés (depuis pricing_plans)
+        $query = \App\Models\PricingPlan::active()->ordered();
 
         $data['plans'] = $query->get()->map(function ($plan) {
             return [
@@ -941,11 +980,11 @@ class AuthController extends Controller
                 'name' => $plan->name,
                 'price' => number_format($plan->price, 0, ',', ' '),
                 'currency' => $plan->currency,
-                'period' => $plan->formatted_period,
+                'period' => $plan->period === 'year' ? 'an' : 'mois',
                 'description' => $plan->description,
                 'features' => $plan->features ?? [],
                 'popular' => $plan->is_popular,
-                'button_text' => $plan->is_popular ? 'Choisir ' . $plan->name : 'Commencer',
+                'button_text' => $plan->price == 0 ? 'Passer au ' . $plan->name : 'Choisir ' . $plan->name,
                 'button_class' => $plan->is_popular ? 'btn-primary' : 'btn-outline-primary'
             ];
         });

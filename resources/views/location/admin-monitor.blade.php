@@ -6,9 +6,19 @@
     <div class="row">
         <div class="col-md-4">
             <div class="page-title-box">
-                <h5 class="page-title">
-                    <i class="ti ti-map me-2"></i>Moniteur de Géolocalisation - Admin
-                </h5>
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="page-title">
+                        <i class="ti ti-map me-2"></i>Moniteur de Géolocalisation - Admin
+                    </h5>
+                    <div class="d-flex align-items-center">
+                        <span class="badge bg-warning me-2">
+                            <i class="fas fa-crown"></i> Premium
+                        </span>
+                        <small class="text-muted">
+                            Fonctionnalité réservée aux abonnés Premium
+                        </small>
+                    </div>
+                </div>
             </div>
         </div>
         <div class="col-md-8">
@@ -286,7 +296,7 @@ let selectedLivreurId = null;
 let currentFilter = 'all';
 
 // Configuration Socket.IO
-const SOCKET_URL = 'http://192.168.1.6:3000';
+const SOCKET_URL = 'http://192.168.1.4:3000';
 
 // Initialisation de la carte et Socket.IO
 window.addEventListener('load', function() {

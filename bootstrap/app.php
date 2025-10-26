@@ -16,6 +16,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'tenant' => \App\Http\Middleware\TenantMiddleware::class,
             'permission' => \App\Http\Middleware\PermissionMiddleware::class,
             'jwt.livreur' => \App\Http\Middleware\JwtLivreurMiddleware::class,
+            'subscription' => \App\Http\Middleware\CheckSubscription::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

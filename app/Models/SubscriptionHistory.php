@@ -7,34 +7,26 @@ use Illuminate\Database\Eloquent\Model;
 class SubscriptionHistory extends Model
 {
     protected $fillable = [
-        'user_id',
+        'entreprise_id',
         'pricing_plan_id',
-        'amount',
+        'plan_name',
+        'price',
         'currency',
-        'period',
         'status',
-        'starts_at',
-        'expires_at',
-        'is_trial',
         'payment_method',
-        'transaction_id',
-        'payment_data'
+        'transaction_id'
     ];
 
     protected $casts = [
-        'amount' => 'decimal:2',
-        'starts_at' => 'datetime',
-        'expires_at' => 'datetime',
-        'is_trial' => 'boolean',
-        'payment_data' => 'array'
+        'price' => 'decimal:2'
     ];
 
     /**
-     * Relation avec l'utilisateur
+     * Relation avec l'entreprise
      */
-    public function user()
+    public function entreprise()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(Entreprise::class);
     }
 
     /**
@@ -42,7 +34,7 @@ class SubscriptionHistory extends Model
      */
     public function pricingPlan()
     {
-        return $this->belongsTo(PricingPlan::class);
+        return $this->belongsTo(\App\Models\PricingPlan::class, 'pricing_plan_id');
     }
 
     /**
@@ -54,19 +46,19 @@ class SubscriptionHistory extends Model
     }
 
     /**
-     * Scope pour un utilisateur spécifique
+     * Scope pour une entreprise spécifique
      */
-    public function scopeForUser($query, $userId)
+    public function scopeForEntreprise($query, $entrepriseId)
     {
-        return $query->where('user_id', $userId);
+        return $query->where('entreprise_id', $entrepriseId);
     }
 
     /**
-     * Scope pour trier par date de début
+     * Scope pour trier par date de création
      */
     public function scopeOrdered($query)
     {
-        return $query->orderBy('starts_at', 'desc');
+        return $query->orderBy('created_at', 'desc');
     }
 
     /**
@@ -74,7 +66,7 @@ class SubscriptionHistory extends Model
      */
     public function getFormattedPriceAttribute()
     {
-        return number_format($this->amount, 0, ',', ' ') . ' ' . $this->currency;
+        return number_format($this->price, 0, ',', ' ') . ' ' . $this->currency;
     }
 
     /**

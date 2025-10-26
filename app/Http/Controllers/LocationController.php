@@ -23,6 +23,20 @@ class LocationController extends Controller
         $user = Auth::user();
         $entrepriseId = $user->entreprise_id;
 
+        // Vérification supplémentaire de l'abonnement Premium
+        if (!$user->subscription_plan_id ||
+            $user->subscription_status !== 'active' ||
+            ($user->subscription_expires_at && $user->subscription_expires_at->isPast())) {
+            return redirect()->route('subscription.required')
+                ->with('error', 'Un abonnement actif est requis pour accéder au moniteur admin.');
+        }
+
+        $subscriptionPlan = \App\Models\SubscriptionPlan::find($user->subscription_plan_id);
+        if (!$subscriptionPlan || $subscriptionPlan->name !== 'Premium') {
+            return redirect()->route('subscription.upgrade')
+                ->with('error', 'Le plan Premium est requis pour accéder au moniteur admin.');
+        }
+
         // SEULEMENT les livreurs avec des missions actives (livraisons ou ramassages)
         $livreursWithActiveMissions = Livreur::where('entreprise_id', $entrepriseId)
             ->where(function($query) {

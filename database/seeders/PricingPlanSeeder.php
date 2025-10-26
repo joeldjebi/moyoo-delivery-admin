@@ -15,15 +15,17 @@ class PricingPlanSeeder extends Seeder
     {
         $plans = [
             [
-                'name' => 'Plan Starter',
-                'description' => 'Parfait pour les petites entreprises qui commencent',
-                'price' => 29.99,
-                'currency' => 'EUR',
+                'name' => 'Free',
+                'description' => 'Plan gratuit pour commencer',
+                'price' => 0,
+                'currency' => 'XOF',
                 'period' => 'month',
                 'features' => [
-                    'Jusqu\'à 100 livraisons/mois',
-                    'Support email',
-                    'Dashboard basique',
+                    'Jusqu\'à 20 colis par mois',
+                    'Jusqu\'à 2 livreurs',
+                    'Jusqu\'à 5 marchands',
+                    'Support par email',
+                    'Tableau de bord basique',
                     'Rapports mensuels',
                     'Suivi en temps réel'
                 ],
@@ -32,82 +34,59 @@ class PricingPlanSeeder extends Seeder
                 'sort_order' => 1
             ],
             [
-                'name' => 'Plan Premium',
-                'description' => 'Idéal pour les entreprises en croissance',
-                'price' => 99.99,
-                'currency' => 'EUR',
+                'name' => 'Premium',
+                'description' => 'Plan premium pour les entreprises en croissance',
+                'price' => 25000,
+                'currency' => 'XOF',
                 'period' => 'month',
                 'features' => [
-                    'Livraisons illimitées',
+                    'Colis illimités',
+                    'Livreurs illimités',
+                    'Marchands illimités',
                     'Support 24/7',
-                    'Analytics avancées',
-                    'Intégrations API',
+                    'Tableau de bord avancé',
                     'Rapports personnalisés',
+                    'Suivi en temps réel',
                     'Notifications SMS',
-                    'Gestion multi-entrepôts'
+                    'Notifications WhatsApp',
+                    'Accès API',
+                    'Analyses avancées',
+                    'Gestion multi-entrepôts',
+                    'Formation en ligne',
+                    'Moniteur Admin'
                 ],
                 'is_popular' => true,
                 'is_active' => true,
                 'sort_order' => 2
             ],
             [
-                'name' => 'Plan Enterprise',
-                'description' => 'Solution complète pour les grandes entreprises',
-                'price' => 299.99,
-                'currency' => 'EUR',
-                'period' => 'month',
+                'name' => 'Premium Annuel',
+                'description' => 'Plan premium annuel avec remise',
+                'price' => 250000,
+                'currency' => 'XOF',
+                'period' => 'year',
                 'features' => [
-                    'Livraisons illimitées',
-                    'Support dédié',
-                    'Analytics avancées',
-                    'API complète',
-                    'White-label',
-                    'Formation personnalisée',
+                    'Colis illimités',
+                    'Livreurs illimités',
+                    'Marchands illimités',
+                    'Support 24/7',
+                    'Tableau de bord avancé',
+                    'Rapports personnalisés',
+                    'Suivi en temps réel',
+                    'Notifications SMS',
+                    '500 SMS WhatsApp',
+                    'Accès API',
+                    'Analyses avancées',
                     'Gestion multi-entrepôts',
-                    'Intégrations personnalisées',
-                    'SLA garanti'
+                    'Formation en ligne',
+                    'Moniteur Admin',
+                    'Priorité nouvelles fonctionnalités',
+                    'Facturation annuelle',
+                    'Remise 16.7%'
                 ],
                 'is_popular' => false,
                 'is_active' => true,
                 'sort_order' => 3
-            ],
-            [
-                'name' => 'Plan Annuel Starter',
-                'description' => 'Plan Starter avec remise annuelle',
-                'price' => 299.99,
-                'currency' => 'EUR',
-                'period' => 'year',
-                'features' => [
-                    'Jusqu\'à 100 livraisons/mois',
-                    'Support email',
-                    'Dashboard basique',
-                    'Rapports mensuels',
-                    'Suivi en temps réel',
-                    'Économisez 2 mois'
-                ],
-                'is_popular' => false,
-                'is_active' => true,
-                'sort_order' => 4
-            ],
-            [
-                'name' => 'Plan Annuel Premium',
-                'description' => 'Plan Premium avec remise annuelle',
-                'price' => 999.99,
-                'currency' => 'EUR',
-                'period' => 'year',
-                'features' => [
-                    'Livraisons illimitées',
-                    'Support 24/7',
-                    'Analytics avancées',
-                    'Intégrations API',
-                    'Rapports personnalisés',
-                    'Notifications SMS',
-                    'Gestion multi-entrepôts',
-                    'Économisez 2 mois'
-                ],
-                'is_popular' => false,
-                'is_active' => true,
-                'sort_order' => 5
             ]
         ];
 

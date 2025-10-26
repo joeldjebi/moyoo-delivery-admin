@@ -89,6 +89,18 @@ class User extends Authenticatable implements JWTSubject
     }
 
     /**
+     * Obtenir le plan d'abonnement actif (seulement si l'utilisateur a un abonnement actif)
+     */
+    public function getActiveSubscriptionPlanAttribute()
+    {
+        if (!$this->hasActiveSubscription() || !$this->subscription_plan_id) {
+            return null;
+        }
+
+        return $this->subscriptionPlan;
+    }
+
+    /**
      * Scopes pour l'isolation multi-tenant
      */
     public function scopeForEntreprise($query, $entrepriseId)
@@ -402,10 +414,33 @@ class User extends Authenticatable implements JWTSubject
     /**
      * Vérifier si l'utilisateur a un abonnement actif
      */
-    public function hasActiveSubscription()
+    public function hasActiveSubscription($planName = null)
     {
-        // Utiliser le nouveau système avec SubscriptionHistory
-        return $this->getCurrentSubscription() !== null;
+        // Vérifier s'il y a un abonnement actif dans subscription_plans pour cette entreprise
+        $activeSubscription = \App\Models\SubscriptionPlan::getActiveSubscription($this->entreprise_id);
+
+        if (!$activeSubscription) {
+            return false;
+        }
+
+        if ($planName) {
+            // Vérifier si c'est un plan Premium (Premium ou Premium Annuel)
+            if ($planName === 'Premium') {
+                return in_array($activeSubscription->name, ['Premium', 'Premium Annuel']);
+            }
+
+            return $activeSubscription->name === $planName;
+        }
+
+        return true;
+    }
+
+    /**
+     * Obtenir l'abonnement actif de l'utilisateur
+     */
+    public function getActiveSubscription()
+    {
+        return \App\Models\SubscriptionPlan::getActiveSubscription($this->entreprise_id);
     }
 
     /**
@@ -543,7 +578,7 @@ class User extends Authenticatable implements JWTSubject
     public function getCurrentPricingPlan()
     {
         $subscription = $this->getCurrentSubscription();
-        return $subscription ? $subscription->pricingPlan : null;
+        return $subscription ? $subscription->subscriptionPlan : null;
     }
 
 

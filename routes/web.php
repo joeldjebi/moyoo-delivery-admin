@@ -571,7 +571,9 @@ Route::middleware(['auth', 'tenant'])->group(function () {
     Route::post('/subscriptions/change-plan', [App\Http\Controllers\SubscriptionController::class, 'changePlan'])->name('subscriptions.change-plan');
     Route::get('/subscriptions/payment/{plan_id}', [App\Http\Controllers\SubscriptionController::class, 'payment'])->name('subscriptions.payment');
     Route::post('/subscriptions/process-payment', [App\Http\Controllers\SubscriptionController::class, 'processPayment'])->name('subscriptions.process-payment');
+    Route::get('/subscriptions/success', [App\Http\Controllers\SubscriptionController::class, 'success'])->name('subscriptions.success');
     Route::post('/subscriptions/cancel', [App\Http\Controllers\SubscriptionController::class, 'cancel'])->name('subscriptions.cancel');
+    Route::post('/subscriptions/{id}/activate', [App\Http\Controllers\SubscriptionController::class, 'activate'])->name('subscriptions.activate');
 });
 
 // Routes des notifications
@@ -586,6 +588,17 @@ Route::middleware(['auth:sanctum'])->group(function () {
 });
 
 // Routes de géolocalisation
-Route::middleware(['auth', 'tenant'])->group(function () {
+Route::middleware(['auth', 'tenant', 'subscription:Premium'])->group(function () {
     Route::get('/location/admin-monitor', [App\Http\Controllers\LocationController::class, 'adminMonitor'])->name('location.admin-monitor');
+});
+
+// Routes pour les abonnements et mises à niveau
+Route::middleware(['auth', 'tenant'])->group(function () {
+    Route::get('/subscription/required', function () {
+        return view('subscription.required', ['menu' => 'subscriptions']);
+    })->name('subscription.required');
+
+    Route::get('/subscription/upgrade', function () {
+        return view('subscription.upgrade', ['menu' => 'subscriptions']);
+    })->name('subscription.upgrade');
 });
