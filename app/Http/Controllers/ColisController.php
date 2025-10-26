@@ -52,6 +52,7 @@ class ColisController extends Controller
     public function index(Request $request)
     {
         try {
+            $entrepriseId = $this->getEntrepriseId();
             $data['menu'] = 'colis';
             $data['title'] = 'Liste des Colis';
 
@@ -104,7 +105,8 @@ class ColisController extends Controller
                 $query->where('livreur_id', $request->get('livreur_id'));
             }
 
-            $data['colis'] = $query->orderBy('created_at', 'desc')->paginate(15)->appends($request->query());
+            $data['colis'] = $query->where('entreprise_id', $entrepriseId)
+            ->orderBy('created_at', 'desc')->paginate(15)->appends($request->query());
 
             // Ajouter les données nécessaires pour les filtres
             $data['zones'] = Commune::orderBy('libelle')->get();
@@ -670,16 +672,13 @@ class ColisController extends Controller
                     ->withErrors(['error' => 'Veuillez vous connecter pour accéder à cette page.']);
             }
 
-            // $data['colisEngin'] = Colis::find($colis->id)->livreur->engin;
-            // dd($data['colisEngin']);
-
             $data['colis'] = $colis->load(['zone', 'commune', 'livreur', 'engin', 'marchand', 'boutique', 'poids', 'modeLivraison', 'temp', 'entreprise']);
 
             // Récupérer l'ID de l'entreprise de l'utilisateur connecté
             $entrepriseId = $this->getEntrepriseId();
 
             $data['marchands'] = Marchand::where('entreprise_id', $entrepriseId)->orderBy('first_name')->get();
-            $data['communes'] = Commune::where('entreprise_id', $entrepriseId)->orderBy('libelle')->get();
+            $data['communes'] = Commune::orderBy('libelle')->get();
             $data['livreurs'] = Livreur::where('status', 'actif')
                 ->where('entreprise_id', $entrepriseId)
                 ->with('engin.typeEngin')
@@ -698,7 +697,7 @@ class ColisController extends Controller
             return view('colis.edit', $data);
         } catch (\Exception $e) {
             Log::error('Erreur lors du chargement du formulaire d\'édition: ' . $e->getMessage());
-            return redirect()->back()->with('error', 'Erreur lors du chargement du formulaire.');
+            return redirect()->back()->with('error', 'Erreur lors du chargement du formulaire.' . $e->getMessage());
         }
     }
 
