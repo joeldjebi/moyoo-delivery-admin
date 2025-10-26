@@ -83,7 +83,7 @@
                                         @foreach($ramassages as $ramassage)
                                             @if($ramassage->statut === 'termine')
                                                 <option value="{{ $ramassage->id }}">
-                                                    {{ $ramassage->code_ramassage }} - {{ $ramassage->marchand->first_name ?? '' }} {{ $ramassage->marchand->last_name ?? '' }}
+                                                    {{ $ramassage->code_ramassage }}
                                                 </option>
                                             @endif
                                         @endforeach
@@ -204,7 +204,7 @@
                                     @foreach($ramassages as $ramassage)
                                         @if($ramassage->statut === 'termine')
                                             <option value="{{ $ramassage->id }}" {{ old('ramassage_id') == $ramassage->id ? 'selected' : '' }}>
-                                                {{ $ramassage->code_ramassage }} - {{ $ramassage->marchand->first_name ?? '' }} {{ $ramassage->marchand->last_name ?? '' }}
+                                                {{ $ramassage->code_ramassage }}
                                             </option>
                                         @endif
                                     @endforeach
@@ -608,6 +608,57 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // Fonction pour charger les boutiques d'un marchand et sélectionner une boutique spécifique
+    function loadBoutiquesForMarchand(marchandId, boutiqueId) {
+        const boutiqueSelect = document.getElementById('boutique_id');
+        if (!boutiqueSelect) return;
+
+        boutiqueSelect.innerHTML = '<option value="">Chargement...</option>';
+
+        fetch(`/colis/boutiques-by-marchand/${marchandId}`, {
+            method: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            credentials: 'same-origin'
+        })
+        .then(response => response.json())
+        .then(data => {
+            boutiqueSelect.innerHTML = '<option value="">Sélectionner une boutique</option>';
+            if (data.success && data.boutiques) {
+                data.boutiques.forEach(boutique => {
+                    const option = document.createElement('option');
+                    option.value = boutique.id;
+                    option.textContent = boutique.libelle;
+                    if (boutique.id == boutiqueId) {
+                        option.selected = true;
+                    }
+                    boutiqueSelect.appendChild(option);
+                });
+
+                console.log('🏪 Boutiques chargées et boutique sélectionnée:', boutiqueId);
+                console.log('🏪 Vérification de la sélection boutique dans le DOM:', boutiqueSelect.value);
+
+                // Réattacher l'event listener après le rechargement (avec délai pour éviter les conflits)
+                setTimeout(() => {
+                    attachBoutiqueEventListener();
+                }, 100);
+
+                // Vérifier la complétude du formulaire après un délai
+                setTimeout(() => {
+                    checkFormCompleteness();
+                }, 300);
+            }
+        })
+        .catch(error => {
+            console.error('Erreur lors du chargement des boutiques:', error);
+            boutiqueSelect.innerHTML = '<option value="">Erreur de chargement</option>';
+        });
+    }
+
     // Fonction pour charger les données d'un ramassage
     function loadRamassageData(ramassageId) {
         fetch(`/api/ramassages/${ramassageId}/colis-data`, {
@@ -622,52 +673,8 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
             console.log('📦 Données reçues du ramassage:', data);
             if (data.success && data.colisData) {
-                // Pré-remplir les champs marchand et boutique
-                if (data.ramassage) {
-                    // Pré-remplir le marchand
-                    const marchandSelect = document.getElementById('marchand_id');
-                    if (marchandSelect && data.ramassage.marchand_id) {
-                        marchandSelect.value = data.ramassage.marchand_id;
-                        // Déclencher l'événement change pour charger les boutiques
-                        marchandSelect.dispatchEvent(new Event('change'));
-                    }
-
-                    // Pré-remplir la boutique (après un délai pour laisser le temps aux boutiques de se charger)
-                    setTimeout(() => {
-                        const boutiqueSelect = document.getElementById('boutique_id');
-                        if (boutiqueSelect && data.ramassage.boutique_id) {
-                            // Vérifier si les options de boutique sont chargées
-                            if (boutiqueSelect.options.length > 1) {
-                                boutiqueSelect.value = data.ramassage.boutique_id;
-                                console.log('🏪 Boutique pré-remplie:', data.ramassage.boutique_id);
-
-                                // Déclencher l'événement change pour mettre à jour les autres champs
-                                boutiqueSelect.dispatchEvent(new Event('change'));
-
-                                // Vérifier la complétude du formulaire après le pré-remplissage
-                                setTimeout(checkFormCompleteness, 100);
-                            } else {
-                                console.log('⏳ Options de boutique pas encore chargées, nouvelle tentative...');
-                                // Réessayer après un délai plus long
-                                setTimeout(() => {
-                                    if (boutiqueSelect.options.length > 1) {
-                                        boutiqueSelect.value = data.ramassage.boutique_id;
-                                        console.log('🏪 Boutique pré-remplie (2ème tentative):', data.ramassage.boutique_id);
-                                        boutiqueSelect.dispatchEvent(new Event('change'));
-                                        setTimeout(checkFormCompleteness, 100);
-                                    } else {
-                                        console.log('❌ Impossible de charger les boutiques');
-                                    }
-                                }, 1000);
-                            }
-                        } else {
-                            console.log('❌ Impossible de pré-remplir la boutique:', {
-                                boutiqueSelect: !!boutiqueSelect,
-                                boutiqueId: data.ramassage.boutique_id
-                            });
-                        }
-                    }, 800);
-                }
+                // Note: Le ramassage ne pré-remplit que les données des colis
+                // Les champs marchand et boutique restent indépendants
 
                 // Mettre à jour le nombre de colis
                 const nombreColisInput = document.getElementById('nombre_colis');
@@ -1652,10 +1659,7 @@ function loadRamassagesByBoutique(boutiqueId) {
         if (data.success && data.ramassages.length > 0) {
             ramassageSelect.innerHTML = '<option value="">Sélectionner un ramassage</option>';
             data.ramassages.forEach(ramassage => {
-                const marchandName = ramassage.marchand ?
-                    `${ramassage.marchand.first_name || ''} ${ramassage.marchand.last_name || ''}`.trim() :
-                    'Marchand inconnu';
-                const optionText = `${ramassage.code_ramassage} - ${marchandName}`;
+                const optionText = `${ramassage.code_ramassage}`;
                 ramassageSelect.innerHTML += `<option value="${ramassage.id}">${optionText}</option>`;
             });
             // Mettre à jour le texte informatif
@@ -2284,52 +2288,8 @@ function handleLivreurChangeMulti(index, livreurId) {
         .then(data => {
             console.log('📦 Données reçues du ramassage:', data);
             if (data.success && data.colisData) {
-                // Pré-remplir les champs marchand et boutique
-                if (data.ramassage) {
-                    // Pré-remplir le marchand
-                    const marchandSelect = document.getElementById('marchand_id');
-                    if (marchandSelect && data.ramassage.marchand_id) {
-                        marchandSelect.value = data.ramassage.marchand_id;
-                        // Déclencher l'événement change pour charger les boutiques
-                        marchandSelect.dispatchEvent(new Event('change'));
-                    }
-
-                    // Pré-remplir la boutique (après un délai pour laisser le temps aux boutiques de se charger)
-                    setTimeout(() => {
-                        const boutiqueSelect = document.getElementById('boutique_id');
-                        if (boutiqueSelect && data.ramassage.boutique_id) {
-                            // Vérifier si les options de boutique sont chargées
-                            if (boutiqueSelect.options.length > 1) {
-                                boutiqueSelect.value = data.ramassage.boutique_id;
-                                console.log('🏪 Boutique pré-remplie:', data.ramassage.boutique_id);
-
-                                // Déclencher l'événement change pour mettre à jour les autres champs
-                                boutiqueSelect.dispatchEvent(new Event('change'));
-
-                                // Vérifier la complétude du formulaire après le pré-remplissage
-                                setTimeout(checkFormCompleteness, 100);
-                            } else {
-                                console.log('⏳ Options de boutique pas encore chargées, nouvelle tentative...');
-                                // Réessayer après un délai plus long
-                                setTimeout(() => {
-                                    if (boutiqueSelect.options.length > 1) {
-                                        boutiqueSelect.value = data.ramassage.boutique_id;
-                                        console.log('🏪 Boutique pré-remplie (2ème tentative):', data.ramassage.boutique_id);
-                                        boutiqueSelect.dispatchEvent(new Event('change'));
-                                        setTimeout(checkFormCompleteness, 100);
-                                    } else {
-                                        console.log('❌ Impossible de charger les boutiques');
-                                    }
-                                }, 1000);
-                            }
-                        } else {
-                            console.log('❌ Impossible de pré-remplir la boutique:', {
-                                boutiqueSelect: !!boutiqueSelect,
-                                boutiqueId: data.ramassage.boutique_id
-                            });
-                        }
-                    }, 800);
-                }
+                // Note: Le ramassage ne pré-remplit que les données des colis
+                // Les champs marchand et boutique restent indépendants
 
                 // Mettre à jour le nombre de colis
                 const nombreColisInput = document.getElementById('nombre_colis');
@@ -2381,7 +2341,7 @@ function handleLivreurChangeMulti(index, livreurId) {
                             <label class="form-label">Nom du client <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" name="colis[${index}][nom_client]" value="${colisData.nom_client || ''}" required>
                         </div>
-                        <div class="col-md-6 mb-3"></div>
+                        <div class="col-md-6 mb-3">
                             <label class="form-label">Téléphone du client <span class="text-danger">*</span></label>
                             <div class="input-group">
                                 <span class="input-group-text">+225</span>
@@ -2432,7 +2392,7 @@ function handleLivreurChangeMulti(index, livreurId) {
                     </div>
                     <div class="row">
                         <div class="col-md-2 mb-3">
-                            <label class="form-label">Type de <span class="text-danger">*</span></label></label>
+                            <label class="form-label">Type de colis <span class="text-danger">*</span></label>
                             <select required class="form-select" name="colis[${index}][type_colis_id]">
                                 <option value="">Sélectionner</option>
                                 @foreach($type_colis ?? [] as $type)
@@ -2608,8 +2568,8 @@ function handleLivreurChangeMulti(index, livreurId) {
                     const marchandSelect = document.getElementById('multiBoutiquesMarchandId');
                     if (marchandSelect && data.ramassage.marchand_id) {
                         marchandSelect.value = data.ramassage.marchand_id;
-                        // Déclencher l'événement change pour charger les boutiques
-                        marchandSelect.dispatchEvent(new Event('change'));
+                        // Charger les boutiques sans déclencher l'événement change
+                        loadBoutiquesForMarchand(data.ramassage.marchand_id, data.ramassage.boutique_id);
                     }
                 }
 
@@ -2686,5 +2646,6 @@ function handleLivreurChangeMulti(index, livreurId) {
             });
         }
     });
+
 }
 </script>
