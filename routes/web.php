@@ -601,9 +601,4 @@ Route::middleware(['auth', 'tenant'])->group(function () {
     Route::get('/subscription/upgrade', function () {
         return view('subscription.upgrade', ['menu' => 'subscriptions']);
     })->name('subscription.upgrade');
-
-    // Documentation
-    Route::get('/documentation', function () {
-        return view('documentation.index', ['menu' => 'documentation']);
-    })->name('documentation.index');
 });

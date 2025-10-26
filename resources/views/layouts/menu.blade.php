@@ -312,7 +312,8 @@
               </li>
               <li class="menu-item">
                 <a
-                  href="{{ route('documentation.index') }}"
+                  href="https://demos.pixinvent.com/vuexy-html-admin-template/documentation/"
+                  target="_blank"
                   class="menu-link">
                   <i class="menu-icon tf-icons ti ti-file-description"></i>
                   <div data-i18n="Documentation">Documentation</div>
