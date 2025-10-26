@@ -214,8 +214,11 @@ Route::get('/api/ramassages/{id}/colis-data', [RamassageController::class, 'getC
 });
 
 // Routes d'authentification (sans middleware auth)
-Route::get('/', [AuthController::class, 'showLogin'])->name('auth.login');
-Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
+// Landing page publique
+Route::get('/', [App\Http\Controllers\LandingController::class, 'index'])->name('landing.index');
+
+// Route de connexion
+Route::get('/login', [AuthController::class, 'showLogin'])->name('auth.login');
 Route::post('/login', [AuthController::class, 'loginUser'])->name('auth.login.post');
 Route::get('/register', [AuthController::class, 'showRegister'])->name('auth.register');
 Route::post('/register', [AuthController::class, 'registerUser'])->name('auth.register.post');

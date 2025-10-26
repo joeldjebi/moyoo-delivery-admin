@@ -183,7 +183,7 @@ class SupportController extends Controller
                 ->firstOrFail();
 
             $updateData = [];
-            
+
             if ($request->has('status')) {
                 $updateData['status'] = $request->status;
                 if ($request->status === 'resolved') {

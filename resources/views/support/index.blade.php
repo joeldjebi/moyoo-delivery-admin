@@ -1,10 +1,7 @@
 @include('layouts.header')
 @include('layouts.menu')
 
-<div class="layout-wrapper layout-content-navbar">
-    <div class="layout-container">
-        <div class="layout-page">
-            <div class="content-wrapper">
+
                 <div class="container-xxl flex-grow-1 container-p-y">
                     <!-- Header -->
                     <div class="row mb-4">
@@ -262,9 +259,6 @@
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
-    </div>
-</div>
+
 
 @include('layouts.footer')

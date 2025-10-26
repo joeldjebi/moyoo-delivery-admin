@@ -1,12 +1,7 @@
 @include('layouts.header')
 @include('layouts.menu')
 
-<div class="layout-wrapper layout-content-navbar">
-    <div class="layout-container">
-        <div class="layout-page">
-            <div class="content-wrapper">
-                <div class="container-xxl flex-grow-1 container-p-y">
-                    <!-- Header -->
+
                     <div class="row mb-4">
                         <div class="col-12">
                             <div class="card">
@@ -41,11 +36,11 @@
                                             <label for="subject" class="form-label">
                                                 Sujet <span class="text-danger">*</span>
                                             </label>
-                                            <input type="text" 
-                                                   class="form-control @error('subject') is-invalid @enderror" 
-                                                   id="subject" 
-                                                   name="subject" 
-                                                   value="{{ old('subject') }}" 
+                                            <input type="text"
+                                                   class="form-control @error('subject') is-invalid @enderror"
+                                                   id="subject"
+                                                   name="subject"
+                                                   value="{{ old('subject') }}"
                                                    placeholder="Résumez votre problème en quelques mots"
                                                    required>
                                             @error('subject')
@@ -59,9 +54,9 @@
                                                 <label for="category" class="form-label">
                                                     Catégorie <span class="text-danger">*</span>
                                                 </label>
-                                                <select class="form-select @error('category') is-invalid @enderror" 
-                                                        id="category" 
-                                                        name="category" 
+                                                <select class="form-select @error('category') is-invalid @enderror"
+                                                        id="category"
+                                                        name="category"
                                                         required>
                                                     <option value="">Sélectionnez une catégorie</option>
                                                     <option value="technical" {{ old('category') == 'technical' ? 'selected' : '' }}>Technique</option>
@@ -78,9 +73,9 @@
                                                 <label for="priority" class="form-label">
                                                     Priorité <span class="text-danger">*</span>
                                                 </label>
-                                                <select class="form-select @error('priority') is-invalid @enderror" 
-                                                        id="priority" 
-                                                        name="priority" 
+                                                <select class="form-select @error('priority') is-invalid @enderror"
+                                                        id="priority"
+                                                        name="priority"
                                                         required>
                                                     <option value="">Sélectionnez une priorité</option>
                                                     <option value="low" {{ old('priority') == 'low' ? 'selected' : '' }}>Faible</option>
@@ -99,10 +94,10 @@
                                             <label for="description" class="form-label">
                                                 Description détaillée <span class="text-danger">*</span>
                                             </label>
-                                            <textarea class="form-control @error('description') is-invalid @enderror" 
-                                                      id="description" 
-                                                      name="description" 
-                                                      rows="6" 
+                                            <textarea class="form-control @error('description') is-invalid @enderror"
+                                                      id="description"
+                                                      name="description"
+                                                      rows="6"
                                                       placeholder="Décrivez votre problème en détail. Plus vous fournirez d'informations, plus nous pourrons vous aider rapidement."
                                                       required>{{ old('description') }}</textarea>
                                             @error('description')
@@ -120,11 +115,11 @@
                                                 <label for="contact_email" class="form-label">
                                                     Email de contact
                                                 </label>
-                                                <input type="email" 
-                                                       class="form-control @error('contact_email') is-invalid @enderror" 
-                                                       id="contact_email" 
-                                                       name="contact_email" 
-                                                       value="{{ old('contact_email', Auth::user()->email) }}" 
+                                                <input type="email"
+                                                       class="form-control @error('contact_email') is-invalid @enderror"
+                                                       id="contact_email"
+                                                       name="contact_email"
+                                                       value="{{ old('contact_email', Auth::user()->email) }}"
                                                        placeholder="votre@email.com">
                                                 @error('contact_email')
                                                     <div class="invalid-feedback">{{ $message }}</div>
@@ -135,11 +130,11 @@
                                                 <label for="contact_phone" class="form-label">
                                                     Téléphone de contact
                                                 </label>
-                                                <input type="tel" 
-                                                       class="form-control @error('contact_phone') is-invalid @enderror" 
-                                                       id="contact_phone" 
-                                                       name="contact_phone" 
-                                                       value="{{ old('contact_phone') }}" 
+                                                <input type="tel"
+                                                       class="form-control @error('contact_phone') is-invalid @enderror"
+                                                       id="contact_phone"
+                                                       name="contact_phone"
+                                                       value="{{ old('contact_phone') }}"
                                                        placeholder="+225 XX XX XX XX">
                                                 @error('contact_phone')
                                                     <div class="invalid-feedback">{{ $message }}</div>
@@ -209,10 +204,7 @@
                             </div>
                         </div>
                     </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+
+
 
 @include('layouts.footer')
