@@ -606,4 +606,11 @@ Route::middleware(['auth', 'tenant'])->group(function () {
     Route::get('/documentation', function () {
         return view('documentation.index', ['menu' => 'documentation']);
     })->name('documentation.index');
+
+    // Support
+    Route::get('/support', [App\Http\Controllers\SupportController::class, 'index'])->name('support.index');
+    Route::get('/support/create', [App\Http\Controllers\SupportController::class, 'create'])->name('support.create');
+    Route::post('/support', [App\Http\Controllers\SupportController::class, 'store'])->name('support.store');
+    Route::get('/support/{id}', [App\Http\Controllers\SupportController::class, 'show'])->name('support.show');
+    Route::patch('/support/{id}', [App\Http\Controllers\SupportController::class, 'update'])->name('support.update');
 });

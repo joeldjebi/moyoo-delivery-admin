@@ -305,7 +305,7 @@
                 <span class="menu-header-text" data-i18n="Support & Documentation">Support & Documentation</span>
               </li>
               <li class="menu-item">
-                <a href="https://pixinvent.ticksy.com/" target="_blank" class="menu-link">
+                <a href="{{ route('support.index') }}" class="menu-link">
                   <i class="menu-icon tf-icons ti ti-lifebuoy"></i>
                   <div data-i18n="Support">Support</div>
                 </a>
