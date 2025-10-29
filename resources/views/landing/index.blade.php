@@ -1,52 +1,34 @@
 <!DOCTYPE html>
-<html lang="fr" class="light-style" dir="ltr" data-theme="theme-default">
+<html lang="fr">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0" />
-    <title>MOYOO Delivery - Révolutionnez votre logistique</title>
-    <meta name="description" content="MOYOO Delivery est une plateforme complète de gestion de livraisons pour optimiser vos opérations logistiques." />
-    <meta name="keywords" content="livraison, logistique, gestion, colis, livreurs, suivi GPS, Côte d'Ivoire, Abidjan" />
+    <title>MOYOO Delivery - Logiciel de livraison à la demande</title>
+    <meta name="description" content="MOYOO Delivery - Logiciel de livraison à la demande tout-en-un personnalisable" />
     <link rel="icon" type="image/x-icon" href="{{ asset('assets/img/favicon/favicon.ico') }}" />
+
+    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="{{ asset('assets/vendor/fonts/tabler-icons.css') }}" />
-    <link rel="stylesheet" href="{{ asset('assets/vendor/css/rtl/core.css') }}" />
-    <link rel="stylesheet" href="{{ asset('assets/vendor/css/rtl/theme-default.css') }}" />
-    <link rel="stylesheet" href="{{ asset('assets/css/demo.css') }}" />
-    <link rel="stylesheet" href="{{ asset('assets/vendor/libs/node-waves/node-waves.css') }}" />
-    <link rel="stylesheet" href="{{ asset('assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.css') }}" />
-    <link rel="stylesheet" href="{{ asset('assets/vendor/libs/typeahead-js/typeahead.css') }}" />
-    <link rel="stylesheet" href="{{ asset('assets/vendor/libs/apex-charts/apex-charts.css') }}" />
-    <link rel="stylesheet" href="{{ asset('assets/vendor/libs/datatables-bs5/datatables.bootstrap5.css') }}" />
-    <link rel="stylesheet" href="{{ asset('assets/vendor/libs/datatables-responsive-bs5/responsive.bootstrap5.css') }}" />
+    <link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+
     <style>
-        :root {
-            --moyoo-primary: #ff6b35;
-            --moyoo-secondary: #1e3a8a;
-            --moyoo-accent: #f59e0b;
-            --moyoo-success: #10b981;
-            --moyoo-dark: #1f2937;
-            --moyoo-light: #f8fafc;
-            --moyoo-gray: #6b7280;
-        }
-        
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-        
+
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-family: 'Jost', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             line-height: 1.6;
-            color: var(--moyoo-dark);
+            color: #1f2937;
             background-color: #ffffff;
             overflow-x: hidden;
         }
-        
-        /* Navigation */
-        .navbar {
+
+        /* En-tête */
+        .header {
             position: fixed;
             top: 0;
             left: 0;
@@ -55,1499 +37,1836 @@
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
             border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-            transition: all 0.3s ease;
+            padding: 20px 0;
         }
-        
-        .navbar.scrolled {
-            background: rgba(255, 255, 255, 0.98);
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-        }
-        
-        .nav-container {
-            max-width: 1200px;
+
+        .header-container {
+            max-width: 1400px;
             margin: 0 auto;
-            padding: 0 20px;
+            padding: 0 40px;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            height: 70px;
         }
-        
+
         .logo {
-            font-size: 24px;
+            font-size: 28px;
             font-weight: 800;
-            color: var(--moyoo-primary);
+            color: #2563eb;
             text-decoration: none;
+            letter-spacing: -0.5px;
         }
-        
+
         .nav-menu {
             display: flex;
             list-style: none;
-            gap: 40px;
+            gap: 35px;
             align-items: center;
         }
-        
+
+        .nav-item {
+            position: relative;
+        }
+
         .nav-link {
             text-decoration: none;
-            color: var(--moyoo-dark);
+            color: #1f2937;
             font-weight: 500;
+            font-size: 15px;
             transition: color 0.3s ease;
-        }
-        
-        .nav-link:hover {
-            color: var(--moyoo-primary);
-        }
-        
-        .nav-buttons {
             display: flex;
-            gap: 15px;
             align-items: center;
+            gap: 5px;
+            position: relative;
         }
-        
-        .btn {
+
+        .nav-link:hover {
+            color: #2563eb;
+        }
+
+        .nav-link.active {
+            color: #10b981;
+            font-weight: 600;
+        }
+
+        .nav-link.active::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #10b981;
+            border-radius: 2px;
+        }
+
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: transparent;
+            border-radius: 2px;
+            transition: background 0.3s ease;
+        }
+
+        .demo-button {
+            background: #2563eb;
+            color: white;
             padding: 12px 24px;
             border-radius: 8px;
             text-decoration: none;
             font-weight: 600;
+            font-size: 15px;
+            transition: background 0.3s ease;
+            border: none;
+            cursor: pointer;
+        }
+
+        .demo-button:hover {
+            background: #1d4ed8;
+        }
+
+        /* Section principale */
+        .hero-section {
+            margin-top: 100px;
+            padding: 80px 40px;
+            max-width: 1400px;
+            margin-left: auto;
+            margin-right: auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 60px;
+            align-items: center;
+        }
+
+        /* Section gauche - Contenu marketing */
+        .hero-content {
+            padding-right: 40px;
+        }
+
+        .hero-title {
+            font-size: 56px;
+            font-weight: 800;
+            line-height: 1.1;
+            color: #111827;
+            margin-bottom: 24px;
+            letter-spacing: -1px;
+            text-transform: uppercase;
+        }
+
+        .hero-description {
+            font-size: 18px;
+            color: #6b7280;
+            line-height: 1.7;
+            margin-bottom: 40px;
+            max-width: 540px;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+        }
+
+        .btn-primary {
+            background: #2563eb;
+            color: white;
+            padding: 16px 32px;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 16px;
             transition: all 0.3s ease;
             border: none;
             cursor: pointer;
-            display: inline-flex;
+            box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3);
+        }
+
+        .btn-primary:hover {
+            background: #1d4ed8;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #2563eb;
+            padding: 16px 32px;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            border: 2px solid #2563eb;
+            cursor: pointer;
+            display: flex;
             align-items: center;
             gap: 8px;
         }
-        
-        .btn-outline {
-            background: transparent;
-            color: var(--moyoo-dark);
-            border: 2px solid var(--moyoo-dark);
+
+        .btn-secondary:hover {
+            background: #f0f5ff;
         }
-        
-        .btn-outline:hover {
-            background: var(--moyoo-dark);
-            color: white;
+
+        .play-icon {
+            width: 0;
+            height: 0;
+            border-left: 8px solid #2563eb;
+            border-top: 6px solid transparent;
+            border-bottom: 6px solid transparent;
+            margin-left: 2px;
         }
-        
-        .btn-primary {
-            background: var(--moyoo-primary);
-            color: white;
-        }
-        
-        .btn-primary:hover {
-            background: #e55a2b;
-            transform: translateY(-2px);
-        }
-        
-        .btn-success {
-            background: var(--moyoo-success);
-            color: white;
-        }
-        
-        .btn-success:hover {
-            background: #059669;
-            transform: translateY(-2px);
-        }
-        
-        /* Hero Section */
-        .hero {
-            background: linear-gradient(135deg, var(--moyoo-primary) 0%, var(--moyoo-accent) 100%);
-            color: white;
-            padding: 120px 0 80px;
-            text-align: center;
+
+        /* Section droite - Démonstration */
+        .demo-panel {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            padding: 24px;
             position: relative;
+        }
+
+        /* Barre d'état */
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            color: #6b7280;
+            font-weight: 500;
+        }
+
+        .status-icon {
+            width: 16px;
+            height: 16px;
+        }
+
+        .order-number {
+            color: #1f2937;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+                align-items: center;
+            gap: 6px;
+        }
+
+        .order-number::after {
+            content: '▼';
+            font-size: 10px;
+            color: #6b7280;
+        }
+
+        /* Bulle de dialogue */
+        .message-bubble {
+            background: #f3f4f6;
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-size: 14px;
+            color: #374151;
+            margin-bottom: 24px;
+            max-width: 220px;
+        }
+
+        /* Carte géographique */
+        .map-container {
+            background: linear-gradient(135deg, #f9fafb 0%, #e5e7eb 100%);
+            border-radius: 16px;
+            height: 280px;
+            position: relative;
+            margin-bottom: 24px;
             overflow: hidden;
         }
-        
-        .hero::before {
+
+        .map-routes {
+            position: absolute;
+            inset: 0;
+            background-image:
+                repeating-linear-gradient(90deg, transparent, transparent 40px, rgba(0,0,0,0.05) 40px, rgba(0,0,0,0.05) 41px),
+                repeating-linear-gradient(0deg, transparent, transparent 40px, rgba(0,0,0,0.05) 40px, rgba(0,0,0,0.05) 41px);
+        }
+
+        .route-line {
+            position: absolute;
+            top: 50%;
+            left: 20%;
+            width: 60%;
+            height: 3px;
+            background: #2563eb;
+            transform: translateY(-50%) rotate(-15deg);
+            border-radius: 2px;
+        }
+
+        .route-line::before {
             content: '';
             position: absolute;
-            top: 0;
             left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 12px;
+            height: 12px;
+            background: #2563eb;
+            border-radius: 50%;
+            border: 3px solid white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        .route-line::after {
+            content: '';
+            position: absolute;
             right: 0;
-            bottom: 0;
-            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="0.5" fill="white" opacity="0.1"/><circle cx="10" cy="60" r="0.5" fill="white" opacity="0.1"/><circle cx="90" cy="40" r="0.5" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
-            opacity: 0.3;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 16px;
+            height: 16px;
+            background: #2563eb;
+            border-radius: 4px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
         }
-        
-        .hero-content {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 0 20px;
-            position: relative;
-            z-index: 2;
-        }
-        
-        .hero h1 {
-            font-size: 3.5rem;
-            font-weight: 800;
-            margin-bottom: 20px;
-            line-height: 1.2;
-        }
-        
-        .hero .subtitle {
-            font-size: 1.25rem;
-            margin-bottom: 40px;
-            opacity: 0.9;
-            font-weight: 400;
-        }
-        
-        .hero-buttons {
-            display: flex;
-            gap: 20px;
-            justify-content: center;
-            flex-wrap: wrap;
-        }
-        
-        .hero-buttons .btn {
-            padding: 16px 32px;
-            font-size: 1.1rem;
-        }
-        
-        .hero-buttons .btn-outline {
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
-            border-color: white;
-        }
-        
-        .hero-buttons .btn-outline:hover {
-            background: white;
-            color: var(--moyoo-primary);
-        }
-        
-        /* Features Section */
-        .features {
-            padding: 100px 0;
-            background: var(--moyoo-light);
-        }
-        
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 20px;
-        }
-        
-        .section-title {
-            text-align: center;
-            margin-bottom: 60px;
-        }
-        
-        .section-title h2 {
-            font-size: 2.5rem;
-            font-weight: 700;
-            margin-bottom: 20px;
-            color: var(--moyoo-dark);
-        }
-        
-        .section-title p {
-            font-size: 1.2rem;
-            color: var(--moyoo-gray);
-            max-width: 600px;
-            margin: 0 auto;
-        }
-        
-        .features-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 40px;
-            margin-top: 60px;
-        }
-        
-        .feature-card {
-            background: white;
-            padding: 40px 30px;
-            border-radius: 16px;
-            text-align: center;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-            transition: all 0.3s ease;
-            border: 1px solid rgba(0, 0, 0, 0.05);
-        }
-        
-        .feature-card:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
-        }
-        
-        .feature-icon {
-            width: 80px;
-            height: 80px;
-            background: linear-gradient(135deg, var(--moyoo-primary), var(--moyoo-accent));
-            border-radius: 20px;
+
+        .driver-marker {
+            position: absolute;
+            left: 20%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: 32px;
+            height: 32px;
+            background: #2563eb;
+            border-radius: 50%;
+            border: 3px solid white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
             display: flex;
             align-items: center;
             justify-content: center;
-            margin: 0 auto 30px;
-            font-size: 2rem;
             color: white;
+            font-size: 16px;
         }
-        
-        .feature-card h3 {
-            font-size: 1.5rem;
-            font-weight: 600;
-            margin-bottom: 15px;
-            color: var(--moyoo-dark);
+
+        /* Cartes d'information */
+        .info-cards {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
         }
-        
-        .feature-card p {
-            color: var(--moyoo-gray);
-            line-height: 1.6;
-        }
-        
-        /* How it works */
-        .how-it-works {
-            padding: 100px 0;
+
+        .info-card {
             background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
         }
-        
-        .steps {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 40px;
-            margin-top: 60px;
-        }
-        
-        .step {
-            text-align: center;
-            position: relative;
-        }
-        
-        .step-number {
-            width: 60px;
-            height: 60px;
-            background: var(--moyoo-primary);
-            color: white;
+
+        .info-card-icon {
+            width: 40px;
+            height: 40px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.5rem;
-            font-weight: 700;
-            margin: 0 auto 20px;
+            font-size: 20px;
         }
-        
-        .step h3 {
-            font-size: 1.3rem;
+
+        .driver-icon {
+            background: #dbeafe;
+            color: #2563eb;
+        }
+
+        .vehicle-icon {
+            background: #e0e7ff;
+            color: #6366f1;
+        }
+
+        .info-card-content {
+            flex: 1;
+        }
+
+        .info-card-name {
             font-weight: 600;
-            margin-bottom: 15px;
-            color: var(--moyoo-dark);
+            color: #1f2937;
+            margin-bottom: 4px;
+            font-size: 15px;
         }
-        
-        .step p {
-            color: var(--moyoo-gray);
+
+        .info-card-details {
+            font-size: 13px;
+            color: #6b7280;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .rating {
+            display: flex;
+                align-items: center;
+            gap: 4px;
+        }
+
+        .star {
+            color: #fbbf24;
+            font-size: 12px;
+        }
+
+        .action-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 14px;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .action-icon:hover {
+            transform: scale(1.1);
+        }
+
+        .phone-icon {
+            background: #10b981;
+        }
+
+        /* Section solutions */
+        .solutions-section {
+            padding: 60px 40px;
+            max-width: 1400px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .solutions-title {
+            font-size: 48px;
+            font-weight: 800;
+            color: #111827;
+            margin-bottom: 40px;
+            letter-spacing: -0.5px;
+            text-transform: uppercase;
+            line-height: 1.2;
+        }
+
+        .solutions-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 30px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .solution-card {
+            background: #f8fafc;
+            border-radius: 16px;
+            padding: 40px 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+
+        .solution-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            border-color: #2563eb;
+        }
+
+        .solution-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 20px;
+            font-size: 40px;
+        }
+
+        .solution-card:nth-child(1) .solution-icon {
+            background: linear-gradient(135deg, #ff6b35, #f7931e);
+        }
+
+        .solution-card:nth-child(2) .solution-icon {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+        }
+
+        .solution-card:nth-child(3) .solution-icon {
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+        }
+
+        .solution-card:nth-child(4) .solution-icon {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+        }
+
+        .solution-card:nth-child(5) .solution-icon {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+        }
+
+        .solution-card:nth-child(6) .solution-icon {
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+        }
+
+        .solution-card:nth-child(7) .solution-icon {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+        }
+
+        .solution-card:nth-child(8) .solution-icon {
+            background: linear-gradient(135deg, #10b981, #059669);
+        }
+
+        .solution-text {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1f2937;
+            margin: 0;
+        }
+
+        /* Section fonctionnalités */
+        .features-section {
+            padding: 80px 40px;
+            max-width: 1400px;
+            margin: 0 auto;
+            text-align: center;
+            background: #ffffff;
+        }
+
+        .features-title {
+            font-size: 48px;
+            font-weight: 800;
+            color: #111827;
+            margin-bottom: 16px;
+            letter-spacing: -0.5px;
+            text-transform: uppercase;
+        }
+
+        .features-subtitle {
+            font-size: 18px;
+            color: #374151;
+            margin-bottom: 60px;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
             line-height: 1.6;
         }
-        
-        /* Pricing */
-        .pricing {
-            padding: 100px 0;
-            background: var(--moyoo-light);
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 40px;
+            max-width: 1200px;
+            margin: 0 auto;
         }
-        
+
+        .feature-card {
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+
+        .feature-icon {
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .feature-icon {
+            width: 70px;
+            height: 70px;
+            background: #dbeafe;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 24px;
+            font-size: 32px;
+        }
+
+        .feature-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: #111827;
+            margin-bottom: 12px;
+        }
+
+        .feature-description {
+            font-size: 16px;
+            color: #6b7280;
+            line-height: 1.6;
+            margin: 0;
+        }
+
+        /* Section Comment ça marche */
+        .how-it-works-section {
+            padding: 80px 40px;
+            max-width: 1200px;
+            margin: 0 auto;
+            background: #f9fafb;
+            margin-bottom: 60px;
+        }
+
+        .how-it-works-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .how-it-works-title {
+            font-size: 48px;
+            font-weight: 800;
+            color: #111827;
+            margin-bottom: 16px;
+            line-height: 1.2;
+            letter-spacing: -0.5px;
+        }
+
+        .how-it-works-container {
+            position: relative;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 15px 0;
+        }
+
+        .how-it-works-line {
+            position: absolute;
+            left: 50%;
+            top: 20px;
+            bottom: 20px;
+            width: 4px;
+            background: linear-gradient(180deg, #a855f7 0%, #8b5cf6 50%, #7c3aed 100%);
+            transform: translateX(-50%);
+            z-index: 1;
+            border-radius: 2px;
+            box-shadow: 0 2px 8px rgba(139, 92, 246, 0.2);
+        }
+
+        .how-it-works-step {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 45px;
+            z-index: 2;
+            transition: transform 0.3s ease;
+        }
+
+        .how-it-works-step:hover {
+            transform: translateY(-4px);
+        }
+
+        .how-it-works-step:last-child {
+            margin-bottom: 0;
+        }
+
+        .step-number-circle {
+            width: 70px;
+            height: 70px;
+            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 28px;
+            font-weight: 800;
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 4;
+            border: 5px solid #f9fafb;
+            box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4), 0 0 0 0 rgba(139, 92, 246, 0.2);
+            flex-shrink: 0;
+            transition: all 0.3s ease;
+        }
+
+        .how-it-works-step:hover .step-number-circle {
+            transform: translateX(-50%) scale(1.1);
+            box-shadow: 0 8px 25px rgba(139, 92, 246, 0.5), 0 0 0 8px rgba(139, 92, 246, 0.1);
+        }
+
+        .step-card {
+            background: white;
+            border-radius: 20px;
+            padding: 35px;
+            box-shadow: 0 6px 30px rgba(0, 0, 0, 0.1);
+            max-width: 380px;
+            flex-shrink: 0;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(139, 92, 246, 0.1);
+        }
+
+        .how-it-works-step:hover .step-card {
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .step-card.left {
+            margin-right: 70px;
+        }
+
+        .step-card.right {
+            margin-left: 70px;
+        }
+
+        .step-card-title {
+            font-size: 26px;
+            font-weight: 700;
+            color: #111827;
+            margin-bottom: 10px;
+            letter-spacing: -0.3px;
+        }
+
+        .step-card-description {
+            font-size: 16px;
+            color: #6b7280;
+            line-height: 1.6;
+        }
+
+        .step-icon {
+            width: 90px;
+            height: 90px;
+            background: linear-gradient(135deg, #e9d5ff 0%, #ddd6fe 100%);
+            border-radius: 20px;
+            display: flex;
+                align-items: center;
+            justify-content: center;
+            font-size: 42px;
+            position: relative;
+            z-index: 3;
+            flex-shrink: 0;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(139, 92, 246, 0.2);
+        }
+
+        .how-it-works-step:hover .step-icon {
+            transform: scale(1.1) rotate(5deg);
+            box-shadow: 0 6px 20px rgba(139, 92, 246, 0.3);
+        }
+
+        .step-icon.left {
+            margin-right: 70px;
+        }
+
+        .step-icon.right {
+            margin-left: 70px;
+        }
+
+        /* Responsive */
+        .pricing-section {
+            padding: 100px 40px;
+            max-width: 1400px;
+            margin: 0 auto;
+            background: #f9fafb;
+        }
+
+        .pricing-header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .pricing-label {
+            font-size: 14px;
+            font-weight: 600;
+            color: #10b981;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 16px;
+        }
+
+        .pricing-title {
+            font-size: 48px;
+            font-weight: 800;
+            color: #111827;
+            margin-bottom: 20px;
+            line-height: 1.2;
+        }
+
+        .pricing-subtitle {
+            font-size: 20px;
+            color: #6b7280;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
         .pricing-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            grid-template-columns: repeat(3, 1fr);
             gap: 30px;
             margin-top: 60px;
         }
-        
+
         .pricing-card {
             background: white;
             border-radius: 20px;
             padding: 40px 30px;
-            text-align: center;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
             transition: all 0.3s ease;
             position: relative;
             border: 2px solid transparent;
         }
-        
+
+        .pricing-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+        }
+
         .pricing-card.featured {
-            border-color: var(--moyoo-primary);
+            border-color: #10b981;
             transform: scale(1.05);
         }
-        
-        .pricing-card:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
-        }
-        
+
         .pricing-card.featured:hover {
-            transform: scale(1.05) translateY(-10px);
+            transform: scale(1.05) translateY(-8px);
         }
-        
+
         .pricing-badge {
             position: absolute;
-            top: -15px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: var(--moyoo-primary);
+            top: 20px;
+            right: 20px;
+            background: #10b981;
             color: white;
-            padding: 8px 20px;
+            font-size: 12px;
+            font-weight: 600;
+            padding: 6px 12px;
             border-radius: 20px;
-            font-size: 0.9rem;
-            font-weight: 600;
         }
-        
-        .pricing-card h3 {
-            font-size: 1.5rem;
-            font-weight: 600;
-            margin-bottom: 10px;
-            color: var(--moyoo-dark);
+
+        .pricing-plan-name {
+            font-size: 24px;
+            font-weight: 700;
+            color: #111827;
+            margin-bottom: 12px;
         }
-        
-        .pricing-card .price {
-            font-size: 3rem;
-            font-weight: 800;
-            color: var(--moyoo-primary);
-            margin-bottom: 10px;
-        }
-        
-        .pricing-card .period {
-            color: var(--moyoo-gray);
+
+        .pricing-plan-description {
+            font-size: 14px;
+            color: #6b7280;
             margin-bottom: 30px;
+            line-height: 1.6;
         }
-        
+
+        .pricing-price {
+            margin-bottom: 40px;
+        }
+
+        .pricing-amount {
+            font-size: 48px;
+            font-weight: 800;
+            color: #111827;
+            line-height: 1;
+            margin-bottom: 8px;
+        }
+
+        .pricing-period {
+            font-size: 16px;
+            color: #6b7280;
+        }
+
         .pricing-features {
             list-style: none;
-            margin-bottom: 30px;
+            padding: 0;
+            margin: 0 0 30px 0;
         }
-        
-        .pricing-features li {
-            padding: 8px 0;
-            color: var(--moyoo-gray);
+
+        .pricing-feature {
             display: flex;
-            align-items: center;
-            gap: 10px;
+            align-items: flex-start;
+            gap: 12px;
+            margin-bottom: 16px;
+            font-size: 15px;
+            color: #374151;
+            line-height: 1.6;
         }
-        
-        .pricing-features li::before {
-            content: '✓';
-            color: var(--moyoo-success);
-            font-weight: bold;
-        }
-        
-        /* Testimonials */
-        .testimonials {
-            padding: 100px 0;
-            background: white;
-        }
-        
-        .testimonials-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 30px;
-            margin-top: 60px;
-        }
-        
-        .testimonial-card {
-            background: var(--moyoo-light);
-            padding: 30px;
-            border-radius: 16px;
-            text-align: center;
-            transition: all 0.3s ease;
-        }
-        
-        .testimonial-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-        }
-        
-        .testimonial-avatar {
-            width: 60px;
-            height: 60px;
-            background: var(--moyoo-primary);
+
+        .pricing-feature-icon {
+            width: 20px;
+            height: 20px;
+            background: #10b981;
             border-radius: 50%;
-            margin: 0 auto 20px;
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
-            font-size: 1.5rem;
+            font-size: 12px;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .pricing-button {
+            width: 100%;
+            padding: 16px 32px;
+            font-size: 16px;
             font-weight: 600;
-        }
-        
-        .testimonial-text {
-            font-style: italic;
-            margin-bottom: 20px;
-            color: var(--moyoo-gray);
-            line-height: 1.6;
-        }
-        
-        .testimonial-author {
-            font-weight: 600;
-            color: var(--moyoo-dark);
-        }
-        
-        .testimonial-role {
-            color: var(--moyoo-gray);
-            font-size: 0.9rem;
-        }
-        
-        /* CTA Section */
-        .cta {
-            padding: 100px 0;
-            background: linear-gradient(135deg, var(--moyoo-secondary) 0%, var(--moyoo-primary) 100%);
-            color: white;
+            border-radius: 12px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: block;
             text-align: center;
         }
-        
-        .cta h2 {
-            font-size: 2.5rem;
-            font-weight: 700;
-            margin-bottom: 20px;
+
+        .pricing-button.primary {
+            background: #10b981;
+            color: white;
         }
-        
-        .cta p {
-            font-size: 1.2rem;
-            margin-bottom: 40px;
-            opacity: 0.9;
+
+        .pricing-button.primary:hover {
+            background: #059669;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
         }
-        
+
+        .pricing-button.secondary {
+            background: white;
+            color: #111827;
+            border: 2px solid #e5e7eb;
+        }
+
+        .pricing-button.secondary:hover {
+            border-color: #10b981;
+            color: #10b981;
+        }
+
         /* Footer */
         .footer {
-            background: var(--moyoo-dark);
-            color: white;
-            padding: 60px 0 30px;
+            background: #111827;
+            color: #ffffff;
+            padding: 60px 40px 30px;
         }
-        
+
+        .footer-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
         .footer-content {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 40px;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 50px;
             margin-bottom: 40px;
         }
-        
-        .footer-section h3 {
-            font-size: 1.2rem;
-            font-weight: 600;
+
+        .footer-column h3 {
+            font-size: 18px;
+            font-weight: 700;
+            color: #ffffff;
             margin-bottom: 20px;
+            letter-spacing: 0.5px;
         }
-        
-        .footer-section ul {
+
+        .footer-column ul {
             list-style: none;
+            padding: 0;
+            margin: 0;
         }
-        
-        .footer-section ul li {
-            margin-bottom: 10px;
+
+        .footer-column ul li {
+            margin-bottom: 12px;
         }
-        
-        .footer-section a {
+
+        .footer-column a {
             color: #9ca3af;
             text-decoration: none;
+            font-size: 15px;
             transition: color 0.3s ease;
         }
-        
-        .footer-section a:hover {
-            color: var(--moyoo-primary);
+
+        .footer-column a:hover {
+            color: #10b981;
         }
-        
+
+        .footer-about p {
+            color: #9ca3af;
+            font-size: 15px;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .footer-social {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .footer-social a {
+            width: 40px;
+            height: 40px;
+            background: #1f2937;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ffffff;
+            font-size: 18px;
+            transition: all 0.3s ease;
+        }
+
+        .footer-social a:hover {
+            background: #10b981;
+            transform: translateY(-2px);
+        }
+
         .footer-bottom {
             border-top: 1px solid #374151;
             padding-top: 30px;
-            text-align: center;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .footer-bottom p {
             color: #9ca3af;
+            font-size: 14px;
+            margin: 0;
         }
-        
-        /* Mobile Menu */
-        .mobile-menu-toggle {
-            display: none;
-            background: none;
-            border: none;
-            font-size: 1.5rem;
-            color: var(--moyoo-dark);
-            cursor: pointer;
+
+        .footer-bottom-links {
+            display: flex;
+            gap: 25px;
+            flex-wrap: wrap;
         }
-        
+
+        .footer-bottom-links a {
+            color: #9ca3af;
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.3s ease;
+        }
+
+        .footer-bottom-links a:hover {
+            color: #10b981;
+        }
+
         /* Responsive */
+        @media (max-width: 1024px) {
+            .hero-section {
+                grid-template-columns: 1fr;
+                gap: 40px;
+            }
+
+            .hero-content {
+                padding-right: 0;
+            }
+
+            .nav-menu {
+                gap: 20px;
+            }
+
+            .solutions-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 20px;
+            }
+
+            .features-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 30px;
+            }
+
+            .how-it-works-section {
+                padding: 60px 30px;
+                margin-bottom: 40px;
+            }
+
+            .how-it-works-header {
+                margin-bottom: 35px;
+            }
+
+            .how-it-works-title {
+                font-size: 36px;
+            }
+
+            .how-it-works-container {
+                max-width: 600px;
+                padding: 10px 0;
+            }
+
+            .how-it-works-line {
+                display: none;
+            }
+
+            .how-it-works-step {
+                flex-direction: column;
+                align-items: center;
+                margin-bottom: 40px;
+            }
+
+            .how-it-works-step:hover {
+                transform: none;
+            }
+
+            .step-number-circle {
+                position: relative;
+                left: auto;
+                transform: none;
+            margin-bottom: 20px;
+                width: 65px;
+                height: 65px;
+                font-size: 26px;
+            }
+
+            .how-it-works-step:hover .step-number-circle {
+                transform: scale(1.05);
+            }
+
+            .step-card {
+            margin: 0;
+                max-width: 100%;
+                padding: 28px;
+            }
+
+            .step-card.left,
+            .step-card.right {
+                margin: 0 0 20px 0;
+            }
+
+            .step-icon {
+                position: relative;
+                margin: 0;
+                width: 80px;
+                height: 80px;
+                font-size: 38px;
+            }
+
+            .how-it-works-step:hover .step-icon {
+                transform: scale(1.05) rotate(3deg);
+            }
+
+            .step-icon.left,
+            .step-icon.right {
+                margin: 0;
+            }
+
+            .pricing-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 30px;
+            }
+
+            .pricing-card.featured {
+                transform: scale(1);
+            }
+
+            .pricing-card.featured:hover {
+                transform: translateY(-8px);
+            }
+        }
+
         @media (max-width: 768px) {
+            .header-container {
+                padding: 0 20px;
+            }
+
             .nav-menu {
                 display: none;
             }
-            
-            .mobile-menu-toggle {
-                display: block;
+
+            .hero-section {
+                padding: 40px 20px;
+                margin-top: 80px;
             }
-            
-            .hero h1 {
-                font-size: 2.5rem;
+
+            .hero-title {
+                font-size: 40px;
             }
-            
-            .hero-buttons {
-                flex-direction: column;
-                align-items: center;
+
+            .cta-buttons {
+            flex-direction: column;
+                align-items: stretch;
             }
-            
-            .section-title h2 {
-                font-size: 2rem;
+
+            .solutions-section {
+                padding: 60px 20px;
             }
-            
+
+            .solutions-title {
+                font-size: 36px;
+            margin-bottom: 40px;
+            }
+
+            .solutions-grid {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+
+            .solution-card {
+                padding: 30px 20px;
+            }
+
+            .features-section {
+                padding: 60px 20px;
+            }
+
+            .features-title {
+                font-size: 36px;
+            }
+
             .features-grid {
                 grid-template-columns: 1fr;
+                gap: 30px;
             }
-            
-            .steps {
-                grid-template-columns: 1fr;
+
+            .how-it-works-section {
+                padding: 60px 20px;
+                margin-bottom: 30px;
             }
-            
+
+            .how-it-works-title {
+                font-size: 32px;
+            }
+
+            .how-it-works-header {
+                margin-bottom: 50px;
+            }
+
+            .how-it-works-step {
+                margin-bottom: 45px;
+            }
+
+            .step-number-circle {
+                width: 60px;
+                height: 60px;
+                font-size: 24px;
+            }
+
+            .step-card {
+                padding: 24px;
+            }
+
+            .step-card-title {
+                font-size: 22px;
+            }
+
+            .step-card-description {
+                font-size: 15px;
+            }
+
+            .step-icon {
+                width: 70px;
+                height: 70px;
+                font-size: 32px;
+            }
+
+            .pricing-section {
+                padding: 60px 20px;
+            }
+
+            .pricing-title {
+                font-size: 36px;
+            }
+
+            .pricing-subtitle {
+                font-size: 18px;
+            }
+
             .pricing-grid {
                 grid-template-columns: 1fr;
+                gap: 30px;
+                margin-top: 40px;
             }
-            
-            .testimonials-grid {
-                grid-template-columns: 1fr;
+
+            .pricing-card {
+                padding: 30px 20px;
             }
-        }
-        
-        /* Animations */
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        
-        .animate-fade-in-up {
-            animation: fadeInUp 0.6s ease-out;
-        }
-        
-        /* Scroll to top */
-        .scroll-to-top {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            background: var(--moyoo-primary);
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.2rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            opacity: 0;
-            visibility: hidden;
-            z-index: 1000;
-        }
-        
-        .scroll-to-top.show {
-            opacity: 1;
-            visibility: visible;
-        }
-        
-        .scroll-to-top:hover {
-            background: #e55a2b;
-            transform: translateY(-2px);
-        }
-        
-        /* Mobile App Section */
-        .mobile-app {
-            padding: 100px 0;
-            background: white;
-        }
-        
-        .mobile-app-content {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 80px;
-            align-items: center;
-        }
-        
-        .mobile-app-text h2 {
-            font-size: 2.5rem;
-            font-weight: 700;
-            margin-bottom: 20px;
-            color: var(--moyoo-dark);
-        }
-        
-        .mobile-subtitle {
-            font-size: 1.2rem;
-            color: var(--moyoo-gray);
-            margin-bottom: 40px;
-            line-height: 1.6;
-        }
-        
-        .app-features {
-            margin-bottom: 40px;
-        }
-        
-        .app-feature {
-            display: flex;
-            align-items: flex-start;
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-        
-        .app-feature-icon {
-            width: 50px;
-            height: 50px;
-            background: linear-gradient(135deg, var(--moyoo-primary), var(--moyoo-accent));
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 1.2rem;
-            flex-shrink: 0;
-        }
-        
-        .app-feature-text h4 {
-            font-size: 1.1rem;
-            font-weight: 600;
-            margin-bottom: 8px;
-            color: var(--moyoo-dark);
-        }
-        
-        .app-feature-text p {
-            color: var(--moyoo-gray);
-            line-height: 1.5;
-            font-size: 0.95rem;
-        }
-        
-        .download-buttons {
-            display: flex;
-            gap: 15px;
-            flex-wrap: wrap;
-        }
-        
-        .download-btn {
-            transition: transform 0.3s ease;
-        }
-        
-        .download-btn:hover {
-            transform: translateY(-2px);
-        }
-        
-        .download-btn img {
-            height: 50px;
-            border-radius: 8px;
-        }
-        
-        /* Phone Mockup */
-        .phone-mockup {
-            position: relative;
-            width: 280px;
-            height: 560px;
-            background: #1a1a1a;
-            border-radius: 30px;
-            padding: 20px;
-            margin: 0 auto;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-        }
-        
-        .phone-screen {
-            width: 100%;
-            height: 100%;
-            background: white;
-            border-radius: 20px;
-            overflow: hidden;
-            position: relative;
-        }
-        
-        .app-interface {
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-        }
-        
-        .app-header {
-            background: var(--moyoo-primary);
-            color: white;
-            padding: 15px 20px 10px;
-        }
-        
-        .status-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 0.8rem;
-            margin-bottom: 10px;
-        }
-        
-        .app-title {
-            font-size: 1.1rem;
-            font-weight: 600;
-            text-align: center;
-        }
-        
-        .app-content {
-            flex: 1;
-            padding: 20px;
-            background: #f8f9fa;
-        }
-        
-        .mission-card {
-            background: white;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        }
-        
-        .mission-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-        }
-        
-        .mission-header h5 {
-            font-size: 1rem;
-            font-weight: 600;
-            color: var(--moyoo-dark);
-            margin: 0;
-        }
-        
-        .mission-id {
-            font-size: 0.8rem;
-            color: var(--moyoo-primary);
-            font-weight: 500;
-        }
-        
-        .mission-details {
-            margin-bottom: 15px;
-        }
-        
-        .detail-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 8px;
-            font-size: 0.9rem;
-            color: var(--moyoo-gray);
-        }
-        
-        .detail-item i {
-            color: var(--moyoo-primary);
-            width: 16px;
-        }
-        
-        .mission-actions {
-            display: flex;
-            gap: 10px;
-        }
-        
-        .btn-accept, .btn-navigate {
-            flex: 1;
-            padding: 8px 12px;
-            border: none;
-            border-radius: 6px;
-            font-size: 0.8rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        
-        .btn-accept {
-            background: var(--moyoo-success);
-            color: white;
-        }
-        
-        .btn-navigate {
-            background: var(--moyoo-primary);
-            color: white;
-        }
-        
-        .btn-accept:hover, .btn-navigate:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-        }
-        
-        .stats-row {
-            display: flex;
-            justify-content: space-between;
-            background: white;
-            border-radius: 12px;
-            padding: 15px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        }
-        
-        .stat-item {
-            text-align: center;
-        }
-        
-        .stat-number {
-            display: block;
-            font-size: 1.2rem;
-            font-weight: 700;
-            color: var(--moyoo-primary);
-        }
-        
-        .stat-label {
-            font-size: 0.7rem;
-            color: var(--moyoo-gray);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        
-        /* Responsive Mobile App */
-        @media (max-width: 768px) {
-            .mobile-app-content {
-                grid-template-columns: 1fr;
-                gap: 40px;
-                text-align: center;
-            }
-            
-            .mobile-app-text h2 {
-                font-size: 2rem;
-            }
-            
-            .phone-mockup {
-                width: 240px;
-                height: 480px;
-            }
-            
-            .download-buttons {
-                justify-content: center;
-            }
-        }
-        
-        /* Zero Fees Section */
-        .zero-fees {
-            padding: 100px 0;
-            background: var(--moyoo-light);
-        }
-        
-        .zero-fees-content {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 80px;
-            align-items: center;
-        }
-        
-        .zero-fees-text h2 {
-            font-size: 2.5rem;
-            font-weight: 700;
-            margin-bottom: 20px;
-            color: var(--moyoo-dark);
-        }
-        
-        .zero-fees-text p {
-            font-size: 1.2rem;
-            color: var(--moyoo-gray);
-            margin-bottom: 40px;
-            line-height: 1.6;
-        }
-        
-        .fees-list {
-            margin-bottom: 40px;
-        }
-        
-        .fee-item {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            margin-bottom: 15px;
-            font-size: 1.1rem;
-            font-weight: 500;
-            color: var(--moyoo-dark);
-        }
-        
-        .fee-item i {
-            color: var(--moyoo-success);
-            font-size: 1.2rem;
-            font-weight: bold;
-        }
-        
-        .zero-fees-cta {
-            margin-top: 30px;
-        }
-        
-        .zero-fees-visual {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-        
-        .fees-badge {
-            width: 200px;
-            height: 200px;
-            background: linear-gradient(135deg, var(--moyoo-primary), var(--moyoo-accent));
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            text-align: center;
-            box-shadow: 0 20px 40px rgba(255, 107, 53, 0.3);
-            animation: pulse 2s infinite;
-        }
-        
-        .badge-content {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        
-        .badge-text {
-            font-size: 1.2rem;
-            font-weight: 700;
-            margin-bottom: 5px;
-        }
-        
-        .badge-subtitle {
-            font-size: 0.9rem;
-            opacity: 0.8;
-            font-weight: 500;
-        }
-        
-        @keyframes pulse {
-            0% {
+
+            .pricing-card.featured {
                 transform: scale(1);
-                box-shadow: 0 20px 40px rgba(255, 107, 53, 0.3);
             }
-            50% {
-                transform: scale(1.05);
-                box-shadow: 0 25px 50px rgba(255, 107, 53, 0.4);
+
+            .pricing-card.featured:hover {
+                transform: translateY(-8px);
             }
-            100% {
-                transform: scale(1);
-                box-shadow: 0 20px 40px rgba(255, 107, 53, 0.3);
+
+            .pricing-amount {
+                font-size: 40px;
             }
-        }
-        
-        /* Responsive Zero Fees */
-        @media (max-width: 768px) {
-            .zero-fees-content {
-                grid-template-columns: 1fr;
+
+            .footer {
+                padding: 40px 20px 20px;
+            }
+
+            .footer-content {
+                grid-template-columns: repeat(2, 1fr);
                 gap: 40px;
+            }
+
+            .footer-bottom {
+                flex-direction: column;
                 text-align: center;
-            }
-            
-            .zero-fees-text h2 {
-                font-size: 2rem;
-            }
-            
-            .fees-badge {
-                width: 150px;
-                height: 150px;
-            }
-            
-            .badge-text {
-                font-size: 1rem;
             }
         }
     </style>
 </head>
 <body>
-    <!-- Navigation -->
-    <nav class="navbar" id="navbar">
-        <div class="nav-container">
-            <a href="{{ route('landing.index') }}" class="logo">MOYOO</a>
+    <!-- En-tête -->
+    <header class="header">
+        <div class="header-container">
+            <a href="#accueil" class="logo">MOYOO</a>
+
+            <nav>
             <ul class="nav-menu">
-                <li><a href="#features" class="nav-link">Fonctionnalités</a></li>
-                <li><a href="#pricing" class="nav-link">Tarifs</a></li>
-                <li><a href="#testimonials" class="nav-link">Témoignages</a></li>
-                <li><a href="#contact" class="nav-link">Contact</a></li>
+                    <li class="nav-item">
+                        <a href="#accueil" class="nav-link">Accueil</a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#solutions" class="nav-link">Solutions</a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#fonctionnalites" class="nav-link">Fonctionnalités</a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#comment-ca-marche" class="nav-link">Comment ça marche</a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#tarification" class="nav-link">Tarifs</a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#contact" class="nav-link">Contact</a>
+                    </li>
             </ul>
-            <div class="nav-buttons">
-                <a href="{{ route('auth.login') }}" class="btn btn-outline">Se connecter</a>
-                <a href="{{ route('auth.register') }}" class="btn btn-primary">S'inscrire</a>
-            </div>
-            <button class="mobile-menu-toggle">
-                <i class="ti ti-menu-2"></i>
-            </button>
-        </div>
     </nav>
 
-    <!-- Hero Section -->
-    <section class="hero">
+            <a href="#tarification" class="demo-button">Essayer une démo</a>
+            </div>
+    </header>
+
+    <!-- Section principale -->
+    <section id="accueil" class="hero-section">
+        <!-- Section gauche - Contenu marketing -->
         <div class="hero-content">
-            <h1>#hellomoyoo</h1>
-            <p class="subtitle">La plateforme pour mieux gérer vos livraisons.</p>
-            <p class="subtitle">Optimisez vos opérations logistiques dès maintenant.</p>
-            <div class="hero-buttons">
-                <a href="{{ route('auth.register') }}" class="btn btn-success">
-                    <i class="ti ti-rocket"></i>
-                    Commencer Gratuitement
-                </a>
-                <a href="#features" class="btn btn-outline">
-                    <i class="ti ti-info-circle"></i>
-                    Découvrir les Fonctionnalités
+            <h1 class="hero-title">
+                LOGICIEL DE LIVRAISON<br>
+                À LA DEMANDE
+            </h1>
+
+            <p class="hero-description">
+                Développez votre base de clients en utilisant un logiciel de livraison à la demande tout-en-un personnalisable. Connectez votre entreprise aux restaurants, commerces alimentaires et autres entreprises locales.
+            </p>
+
+            <div class="cta-buttons">
+                <a href="#" class="btn-primary">Essayer une démo - C'est gratuit</a>
+                <a href="#" class="btn-secondary">
+                    <span class="play-icon"></span>
+                    Regarder la vidéo
                 </a>
             </div>
         </div>
-    </section>
 
-    <!-- Mobile App Section -->
-    <section class="mobile-app">
-        <div class="container">
-            <div class="mobile-app-content">
-                <div class="mobile-app-text">
-                    <h2>L'app mobile qu'il vous faut</h2>
-                    <p class="mobile-subtitle">Vos livreurs ont accès à une application mobile dédiée pour gérer leurs missions en toute simplicité.</p>
-                    
-                    <div class="app-features">
-                        <div class="app-feature">
-                            <div class="app-feature-icon">
-                                <i class="ti ti-map-pin"></i>
-                            </div>
-                            <div class="app-feature-text">
-                                <h4>Navigation GPS intégrée</h4>
-                                <p>Guidage vocal et navigation optimisée vers les adresses de livraison</p>
-                            </div>
-                        </div>
-                        
-                        <div class="app-feature">
-                            <div class="app-feature-icon">
-                                <i class="ti ti-bell-ringing"></i>
-                            </div>
-                            <div class="app-feature-text">
-                                <h4>Notifications en temps réel</h4>
-                                <p>Recevez instantanément les nouvelles missions et mises à jour</p>
-                            </div>
-                        </div>
-                        
-                        <div class="app-feature">
-                            <div class="app-feature-icon">
-                                <i class="ti ti-camera"></i>
-                            </div>
-                            <div class="app-feature-text">
-                                <h4>Preuve de livraison</h4>
-                                <p>Photo automatique et signature électronique pour chaque livraison</p>
-                            </div>
-                        </div>
-                        
-                        <div class="app-feature">
-                            <div class="app-feature-icon">
-                                <i class="ti ti-chart-line"></i>
-                            </div>
-                            <div class="app-feature-text">
-                                <h4>Suivi des performances</h4>
-                                <p>Consultez vos statistiques et revenus en temps réel</p>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="download-buttons">
-                        <a href="#" class="download-btn">
-                            <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTM1IiBoZWlnaHQ9IjQwIiB2aWV3Qm94PSIwIDAgMTM1IDQwIiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgo8cmVjdCB3aWR0aD0iMTM1IiBoZWlnaHQ9IjQwIiByeD0iNSIgZmlsbD0iIzAwMDAwMCIvPgo8dGV4dCB4PSI2Ny41IiB5PSIyNSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjEyIiBmaWxsPSJ3aGl0ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+R29vZ2xlIFBsYXk8L3RleHQ+Cjwvc3ZnPgo=" alt="Télécharger sur Google Play" />
-                        </a>
-                        <a href="#" class="download-btn">
-                            <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTM1IiBoZWlnaHQ9IjQwIiB2aWV3Qm94PSIwIDAgMTM1IDQwIiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgo8cmVjdCB3aWR0aD0iMTM1IiBoZWlnaHQ9IjQwIiByeD0iNSIgZmlsbD0iIzAwMDAwMCIvPgo8dGV4dCB4PSI2Ny41IiB5PSIyNSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjEyIiBmaWxsPSJ3aGl0ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+QXBwIFN0b3JlPC90ZXh0Pgo8L3N2Zz4K" alt="Télécharger sur App Store" />
-                        </a>
-                    </div>
-                </div>
-                
-                <div class="mobile-app-visual">
-                    <div class="phone-mockup">
-                        <div class="phone-screen">
-                            <div class="app-interface">
-                                <div class="app-header">
+        <!-- Section droite - Démonstration -->
+        <div class="demo-panel">
+            <!-- Barre d'état -->
                                     <div class="status-bar">
-                                        <span class="time">14:30</span>
-                                        <div class="battery">100%</div>
-                                    </div>
-                                    <div class="app-title">MOYOO Livreur</div>
-                                </div>
-                                
-                                <div class="app-content">
-                                    <div class="mission-card">
-                                        <div class="mission-header">
-                                            <h5>Nouvelle Mission</h5>
-                                            <span class="mission-id">#COL-2024-001</span>
-                                        </div>
-                                        <div class="mission-details">
-                                            <div class="detail-item">
-                                                <i class="ti ti-map-pin"></i>
-                                                <span>Riviera 2, Cocody</span>
-                                            </div>
-                                            <div class="detail-item">
-                                                <i class="ti ti-user"></i>
-                                                <span>Marie Traoré</span>
-                                            </div>
-                                            <div class="detail-item">
-                                                <i class="ti ti-phone"></i>
-                                                <span>+225 07 12 34 56</span>
-                                            </div>
-                                        </div>
-                                        <div class="mission-actions">
-                                            <button class="btn-accept">Accepter</button>
-                                            <button class="btn-navigate">Naviguer</button>
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="stats-row">
-                                        <div class="stat-item">
-                                            <span class="stat-number">12</span>
-                                            <span class="stat-label">Livraisons</span>
-                                        </div>
-                                        <div class="stat-item">
-                                            <span class="stat-number">45,000</span>
-                                            <span class="stat-label">FCFA</span>
-                                        </div>
-                                        <div class="stat-item">
-                                            <span class="stat-number">4.8</span>
-                                            <span class="stat-label">Note</span>
-                                        </div>
-                                    </div>
-                                </div>
+                <div class="status-item">
+                    <svg class="status-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    <span>Démarré</span>
+                            </div>
+                <div class="status-item">
+                    <svg class="status-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <span>Ramassage à 10:30</span>
+                            </div>
+                <div class="order-number">#123456789</div>
+                        </div>
+
+            <!-- Bulle de dialogue -->
+            <div class="message-bubble">
+                Commande passée il y a 10 min
+                            </div>
+
+            <!-- Carte géographique -->
+            <div class="map-container">
+                <div class="map-routes"></div>
+                <div class="route-line"></div>
+                <div class="driver-marker">👤</div>
+                        </div>
+
+            <!-- Cartes d'information -->
+            <div class="info-cards">
+                <!-- Carte véhicule -->
+                <div class="info-card">
+                    <div class="info-card-icon vehicle-icon">🚗</div>
+                    <div class="info-card-content">
+                        <div class="info-card-name">Honda bleue</div>
+                        <div class="info-card-details">
+                            <span>12345678</span>
+                            </div>
                             </div>
                         </div>
                     </div>
+        </div>
+    </section>
+
+    <!-- Section solutions -->
+    <section id="solutions" class="solutions-section">
+        <h2 class="solutions-title">
+            UNE SOLUTION PUISSANTE<br>
+            POUR TOUS LES SECTEURS
+        </h2>
+
+        <div class="solutions-grid">
+            <div class="solution-card">
+                <div class="solution-icon">🍔</div>
+                <p class="solution-text">Livraison de nourriture</p>
+                    </div>
+
+            <div class="solution-card">
+                <div class="solution-icon">🛒</div>
+                <p class="solution-text">Livraison e-commerce</p>
                 </div>
+
+            <div class="solution-card">
+                <div class="solution-icon">💼</div>
+                <p class="solution-text">Livraison B2B</p>
+                                    </div>
+
+            <div class="solution-card">
+                <div class="solution-icon">🛍️</div>
+                <p class="solution-text">Livraison retail</p>
+                                </div>
+
+            <div class="solution-card">
+                <div class="solution-icon">🏍️</div>
+                <p class="solution-text">Livraison express</p>
+                                        </div>
+
+            <div class="solution-card">
+                <div class="solution-icon">🍇</div>
+                <p class="solution-text">Livraison épicerie</p>
+                                    </div>
+
+            <div class="solution-card">
+                <div class="solution-icon">🚛</div>
+                <p class="solution-text">Transport et logistique</p>
+                                        </div>
+
+            <div class="solution-card">
+                <div class="solution-icon">💊</div>
+                <p class="solution-text">Livraison pharmaceutique</p>
             </div>
         </div>
     </section>
 
-    <!-- How it works -->
-    <section class="how-it-works">
-        <div class="container">
-            <div class="section-title">
-                <h2>Comment ça marche</h2>
-                <p>Trois étapes simples pour révolutionner votre logistique</p>
-            </div>
-            <div class="steps">
-                <div class="step">
-                    <div class="step-number">1</div>
-                    <h3>Créez votre compte</h3>
-                    <p>Inscrivez-vous gratuitement et accédez immédiatement à votre tableau de bord de gestion.</p>
-                </div>
-                <div class="step">
-                    <div class="step-number">2</div>
-                    <h3>Configurez vos livreurs</h3>
-                    <p>Ajoutez vos livreurs, configurez leurs véhicules et commencez à suivre leurs missions en temps réel.</p>
-                </div>
-                <div class="step">
-                    <div class="step-number">3</div>
-                    <h3>Gérez vos livraisons</h3>
-                    <p>Créez des colis, assignez des missions et suivez tout en temps réel avec notre moniteur GPS.</p>
-                </div>
-            </div>
-        </div>
-    </section>
+    <!-- Section fonctionnalités -->
+    <section id="fonctionnalites" class="features-section">
+        <h2 class="features-title">FONCTIONNALITÉS CLÉS</h2>
+        <p class="features-subtitle"></p>
+            Votre entreprise sera plus innovante et influente que jamais lorsque vous utiliserez les fonctionnalités de l'application de livraison à la demande MOYOO !
+        </p>
 
-    <!-- Features Section -->
-    <section class="features" id="features">
-        <div class="container">
-            <div class="section-title">
-                <h2>La plateforme qu'il vous faut pour mieux gérer vos livraisons</h2>
-                <p>Dites adieu à la frustration ! Simplifiez votre logistique en gérant tout en un seul endroit.</p>
-            </div>
             <div class="features-grid">
                 <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="ti ti-package"></i>
+                <div class="feature-icon">✈️📍</div>
+                <h3 class="feature-title">Suivi en temps réel</h3>
+                <p class="feature-description">
+                    Les clients peuvent suivre la localisation de leurs colis ainsi que le temps d'arrivée estimé avec cette fonctionnalité.
+                </p>
                     </div>
-                    <h3>Gestion des Colis</h3>
-                    <p>Créez, suivez et gérez tous vos colis avec des codes uniques et des statuts en temps réel.</p>
-                </div>
+
                 <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="ti ti-truck-delivery"></i>
+                <div class="feature-icon">📦📎</div>
+                <h3 class="feature-title">Gestion des commandes</h3>
+                <p class="feature-description">
+                    Avec la fonctionnalité de gestion des commandes, vous pouvez surveiller les performances des livreurs et gérer efficacement votre entreprise.
+                </p>
                     </div>
-                    <h3>Gestion des Livreurs</h3>
-                    <p>Gérez les profils de vos livreurs, leurs véhicules et suivez leurs performances.</p>
-                </div>
+
                 <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="ti ti-map-pin"></i>
+                <div class="feature-icon">🕐</div>
+                <h3 class="feature-title">Planification</h3>
+                <p class="feature-description">
+                    Avec la fonctionnalité de commande planifiée, les utilisateurs peuvent planifier en réservant des commandes et réserver l'heure.
+                </p>
                     </div>
-                    <h3>Moniteur GPS</h3>
-                    <p>Suivez la position de vos livreurs en mission sur une carte interactive en temps réel.</p>
-                </div>
+
                 <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="ti ti-users"></i>
+                <div class="feature-icon">👨‍✈️✓</div>
+                <h3 class="feature-title">Choix du livreur</h3>
+                <p class="feature-description">
+                    Lorsqu'une commande de livraison est créée, une notification est envoyée à chaque livreur, qui peut ensuite accepter ou refuser la demande.
+                </p>
                     </div>
-                    <h3>Gestion Clients & Marchands</h3>
-                    <p>Centralisez les informations de vos clients et marchands pour une gestion simplifiée.</p>
-                </div>
+
                 <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="ti ti-bell-ringing"></i>
+                <div class="feature-icon">💬💬</div>
+                <h3 class="feature-title">Messagerie en temps réel</h3>
+                <p class="feature-description">
+                    La messagerie gratuite et instantanée entre les clients et les livreurs est possible grâce à cette fonctionnalité.
+                </p>
                     </div>
-                    <h3>Notifications Automatiques</h3>
-                    <p>Envoyez des notifications SMS et push automatiques à vos clients et livreurs.</p>
-                </div>
+
                 <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="ti ti-chart-bar"></i>
+                <div class="feature-icon">🎯📍</div>
+                <h3 class="feature-title">Expédition automatique</h3>
+                <p class="feature-description">
+                    En sélectionnant cette option, le livreur le plus proche recevra la commande. Les commandes seront expédiées automatiquement.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section Comment ça marche -->
+    <section id="comment-ca-marche" class="how-it-works-section">
+        <div class="how-it-works-header">
+            <h2 class="how-it-works-title">Comment ça marche</h2>
+        </div>
+
+        <div class="how-it-works-container">
+            <div class="how-it-works-line"></div>
+
+            <!-- Étape 1 : Clients -->
+            <div class="how-it-works-step">
+                <div class="step-number-circle">1</div>
+                <div class="step-card left">
+                    <h3 class="step-card-title">Clients</h3>
+                    <p class="step-card-description">
+                        Les clients ou détaillants téléchargent leurs commandes et suivent l'avancement de la livraison en utilisant MOYOO Connect.
+                    </p>
+                        </div>
+                <div class="step-icon right">
+                    👥
+                        </div>
+                        </div>
+
+            <!-- Étape 2 : Répartiteurs -->
+            <div class="how-it-works-step">
+                <div class="step-number-circle">2</div>
+                <div class="step-icon left">
+                    📊
+                        </div>
+                <div class="step-card right">
+                    <h3 class="step-card-title">Répartiteurs</h3>
+                    <p class="step-card-description">
+                        Les répartiteurs optimisent les routes pour les livreurs en un seul clic en utilisant le Tableau de bord Répartiteur.
+                    </p>
+                        </div>
                     </div>
-                    <h3>Rapports & Analytics</h3>
-                    <p>Accédez à des tableaux de bord et rapports détaillés pour analyser vos performances.</p>
+
+            <!-- Étape 3 : Livreurs -->
+            <div class="how-it-works-step">
+                <div class="step-number-circle">3</div>
+                <div class="step-card left">
+                    <h3 class="step-card-title">Livreurs</h3>
+                    <p class="step-card-description">
+                        Naviguez, livrez efficacement et collectez les preuves de livraison en utilisant l'Application Livreur MOYOO.
+                    </p>
+                </div>
+                <div class="step-icon right">
+                    🚚
+                    </div>
+                </div>
+
+            <!-- Étape 4 : Destinataires -->
+            <div class="how-it-works-step">
+                <div class="step-number-circle">4</div>
+                <div class="step-icon left">
+                    📦
+                        </div>
+                <div class="step-card right">
+                    <h3 class="step-card-title">Destinataires</h3>
+                    <p class="step-card-description">
+                        Suivent leurs commandes, ajoutent des notes utiles et peuvent contacter directement les clients en utilisant la Page de Suivi.
+                    </p>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Zero Fees Section -->
-    <section class="zero-fees">
-        <div class="container">
-            <div class="zero-fees-content">
-                <div class="zero-fees-text">
-                    <h2>Essayez le zéro frais</h2>
-                    <p>Nos tarifs sont transparents, justes et conçus pour vous aider à optimiser votre logistique sans vous ruiner.</p>
-                    
-                    <div class="fees-list">
-                        <div class="fee-item">
-                            <i class="ti ti-check"></i>
-                            <span>ZÉRO frais de gestion</span>
-                        </div>
-                        <div class="fee-item">
-                            <i class="ti ti-check"></i>
-                            <span>ZÉRO frais pour créer un compte</span>
-                        </div>
-                        <div class="fee-item">
-                            <i class="ti ti-check"></i>
-                            <span>ZÉRO frais sur les notifications</span>
-                        </div>
-                        <div class="fee-item">
-                            <i class="ti ti-check"></i>
-                            <span>ZÉRO frais sur le suivi GPS</span>
-                        </div>
-                        <div class="fee-item">
-                            <i class="ti ti-check"></i>
-                            <span>ZÉRO frais sur les rapports</span>
-                        </div>
-                        <div class="fee-item">
-                            <i class="ti ti-check"></i>
-                            <span>ZÉRO frais sur l'application mobile</span>
-                        </div>
-                    </div>
-                    
-                    <div class="zero-fees-cta">
-                        <a href="#pricing" class="btn btn-outline">Consulter les tarifs</a>
-                    </div>
-                </div>
-                
-                <div class="zero-fees-visual">
-                    <div class="fees-badge">
-                        <div class="badge-content">
-                            <span class="badge-text">Zéro frais sur MOYOO</span>
-                            <span class="badge-subtitle">no limit</span>
-                        </div>
-                    </div>
-                </div>
+    <!-- Section Tarification -->
+    <section id="tarification" class="pricing-section">
+        <div class="pricing-header">
+            <div class="pricing-label">Tarification</div>
+            <h2 class="pricing-title">Choisissez le forfait adapté à vos besoins</h2>
+            <p class="pricing-subtitle">
+                Sélectionnez le plan qui correspond le mieux à votre activité et bénéficiez de toutes les fonctionnalités dont vous avez besoin.
+            </p>
             </div>
-        </div>
-    </section>
 
-    <!-- Pricing Section -->
-    <section class="pricing" id="pricing">
-        <div class="container">
-            <div class="section-title">
-                <h2>Essayez le zéro frais</h2>
-                <p>Nos tarifs sont transparents, justes et conçus pour vous aider à optimiser votre logistique sans vous ruiner.</p>
-            </div>
             <div class="pricing-grid">
-                <!-- Free Plan -->
+            <!-- Plan Starter -->
                 <div class="pricing-card">
-                    <h3>Gratuit</h3>
-                    <div class="price">0 <span class="period">FCFA/mois</span></div>
-                    <ul class="pricing-features">
-                        <li>Jusqu'à 50 colis/mois</li>
-                        <li>Gestion des livreurs</li>
-                        <li>Notifications de base</li>
-                        <li>Support par email</li>
-                        <li>Rapports simples</li>
-                    </ul>
-                    <a href="{{ route('auth.register') }}" class="btn btn-outline">Commencer Gratuitement</a>
+                <h3 class="pricing-plan-name">Starter</h3>
+                <p class="pricing-plan-description">
+                    Parfait pour les petites entreprises qui démarrent
+                </p>
+                <div class="pricing-price">
+                    <div class="pricing-amount">50 000 F</div>
+                    <div class="pricing-period">/ mois</div>
                 </div>
-                
-                <!-- Premium Plan -->
+                    <ul class="pricing-features">
+                    <li class="pricing-feature">
+                        <span class="pricing-feature-icon">✓</span>
+                        <span>Jusqu'à 100 livraisons par mois</span>
+                    </li>
+                    <li class="pricing-feature">
+                        <span class="pricing-feature-icon">✓</span>
+                        <span>Suivi en temps réel</span>
+                    </li>
+                    <li class="pricing-feature">
+                        <span class="pricing-feature-icon">✓</span>
+                        <span>Application mobile livreur</span>
+                    </li>
+                    <li class="pricing-feature">
+                        <span class="pricing-feature-icon">✓</span>
+                        <span>Tableau de bord de base</span>
+                    </li>
+                    <li class="pricing-feature">
+                        <span class="pricing-feature-icon">✓</span>
+                        <span>Support email</span>
+                    </li>
+                    <li class="pricing-feature">
+                        <span class="pricing-feature-icon">✓</span>
+                        <span>Gestion des commandes</span>
+                    </li>
+                    </ul>
+                <a href="#" class="pricing-button secondary">Commencer</a>
+                </div>
+
+            <!-- Plan Professional (Featured) -->
                 <div class="pricing-card featured">
                     <div class="pricing-badge">Populaire</div>
-                    <h3>Premium</h3>
-                    <div class="price">25,000 <span class="period">FCFA/mois</span></div>
-                    <ul class="pricing-features">
-                        <li>Colis illimités</li>
-                        <li>Toutes les fonctionnalités</li>
-                        <li><strong>Moniteur GPS en temps réel</strong></li>
-                        <li>Support prioritaire</li>
-                        <li>Rapports avancés</li>
-                        <li>API d'intégration</li>
-                    </ul>
-                    <a href="{{ route('subscriptions.payment', 2) }}" class="btn btn-primary">Choisir Premium</a>
+                <h3 class="pricing-plan-name">Professional</h3>
+                <p class="pricing-plan-description">
+                    La solution idéale pour les entreprises en croissance
+                </p>
+                <div class="pricing-price">
+                    <div class="pricing-amount">150 000 F</div>
+                    <div class="pricing-period">/ mois</div>
                 </div>
-                
-                <!-- Premium Annuel Plan -->
+                    <ul class="pricing-features">
+                    <li class="pricing-feature">
+                        <span class="pricing-feature-icon">✓</span>
+                        <span>Jusqu'à 500 livraisons par mois</span>
+                    </li>
+                    <li class="pricing-feature">
+                        <span class="pricing-feature-icon">✓</span>
+                        <span>Suivi en temps réel avancé</span>
+                    </li>
+                    <li class="pricing-feature">
+                        <span class="pricing-feature-icon">✓</span>
+                        <span>Application mobile livreur</span>
+                    </li>
+                    <li class="pricing-feature">
+                        <span class="pricing-feature-icon">✓</span>
+                        <span>Tableau de bord avancé</span>
+                    </li>
+                    <li class="pricing-feature">
+                        <span class="pricing-feature-icon">✓</span>
+                        <span>Optimisation automatique des routes</span>
+                    </li>
+                    <li class="pricing-feature">
+                        <span class="pricing-feature-icon">✓</span>
+                        <span>Rapports et analytics</span>
+                    </li>
+                    <li class="pricing-feature">
+                        <span class="pricing-feature-icon">✓</span>
+                        <span>API intégration</span>
+                    </li>
+                    <li class="pricing-feature">
+                        <span class="pricing-feature-icon">✓</span>
+                        <span>Support prioritaire</span>
+                    </li>
+                    <li class="pricing-feature">
+                        <span class="pricing-feature-icon">✓</span>
+                        <span>Gestion multi-utilisateurs</span>
+                    </li>
+                    </ul>
+                <a href="#" class="pricing-button primary">Commencer</a>
+                </div>
+
+            <!-- Plan Enterprise -->
                 <div class="pricing-card">
-                    <h3>Premium Annuel</h3>
-                    <div class="price">250,000 <span class="period">FCFA/an</span></div>
+                <h3 class="pricing-plan-name">Enterprise</h3>
+                <p class="pricing-plan-description">
+                    Pour les grandes entreprises avec des besoins spécifiques
+                </p>
+                <div class="pricing-price">
+                    <div class="pricing-amount">Sur mesure</div>
+                    <div class="pricing-period">Personnalisé</div>
+                </div>
                     <ul class="pricing-features">
-                        <li>Colis illimités</li>
-                        <li>Toutes les fonctionnalités</li>
-                        <li><strong>Moniteur GPS en temps réel</strong></li>
-                        <li>Support 24/7</li>
-                        <li>Formations incluses</li>
-                        <li>Intégrations personnalisées</li>
+                    <li class="pricing-feature">
+                        <span class="pricing-feature-icon">✓</span>
+                        <span>Livraisons illimitées</span>
+                    </li>
+                    <li class="pricing-feature">
+                        <span class="pricing-feature-icon">✓</span>
+                        <span>Toutes les fonctionnalités incluses</span>
+                    </li>
+                    <li class="pricing-feature">
+                        <span class="pricing-feature-icon">✓</span>
+                        <span>Application mobile sur mesure</span>
+                    </li>
+                    <li class="pricing-feature">
+                        <span class="pricing-feature-icon">✓</span>
+                        <span>Tableau de bord personnalisé</span>
+                    </li>
+                    <li class="pricing-feature">
+                        <span class="pricing-feature-icon">✓</span>
+                        <span>Intégrations personnalisées</span>
+                    </li>
+                    <li class="pricing-feature">
+                        <span class="pricing-feature-icon">✓</span>
+                        <span>Formation dédiée</span>
+                    </li>
+                    <li class="pricing-feature">
+                        <span class="pricing-feature-icon">✓</span>
+                        <span>Gestionnaire de compte dédié</span>
+                    </li>
+                    <li class="pricing-feature">
+                        <span class="pricing-feature-icon">✓</span>
+                        <span>Support 24/7</span>
+                    </li>
+                    <li class="pricing-feature">
+                        <span class="pricing-feature-icon">✓</span>
+                        <span>Contrat personnalisé</span>
+                    </li>
                     </ul>
-                    <a href="{{ route('subscriptions.payment', 3) }}" class="btn btn-outline">Choisir Annuel</a>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Testimonials Section -->
-    <section class="testimonials" id="testimonials">
-        <div class="container">
-            <div class="section-title">
-                <h2>Nos clients nous aiment</h2>
-                <p>+500 entreprises satisfaites • 4.8/5 étoiles</p>
-            </div>
-            <div class="testimonials-grid">
-                <div class="testimonial-card">
-                    <div class="testimonial-avatar">AK</div>
-                    <p class="testimonial-text">"MOYOO a transformé notre façon de gérer les livraisons. L'interface est intuitive et le suivi GPS est un atout majeur. Nous avons optimisé nos itinéraires de 40% !"</p>
-                    <div class="testimonial-author">Amadou Koné</div>
-                    <div class="testimonial-role">Directeur Logistique, LogiCôte</div>
-                </div>
-                <div class="testimonial-card">
-                    <div class="testimonial-avatar">MT</div>
-                    <p class="testimonial-text">"La facilité d'utilisation de MOYOO est incroyable. Nos livreurs ont rapidement adopté l'application et nos clients adorent les notifications en temps réel. Un gain de temps énorme !"</p>
-                    <div class="testimonial-author">Marie Traoré</div>
-                    <div class="testimonial-role">Gérante, ShopExpress</div>
-                </div>
-                <div class="testimonial-card">
-                    <div class="testimonial-avatar">JD</div>
-                    <p class="testimonial-text">"Le retour sur investissement avec MOYOO est impressionnant. Moins d'erreurs, des livraisons plus rapides et une meilleure satisfaction client. C'est un outil indispensable !"</p>
-                    <div class="testimonial-author">Jean Diabaté</div>
-                    <div class="testimonial-role">CEO, FastDelivery CI</div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- CTA Section -->
-    <section class="cta">
-        <div class="container">
-            <h2>Qu'attendez-vous ?</h2>
-            <p>Reprenez le contrôle de votre logistique</p>
-            <div class="hero-buttons">
-                <a href="{{ route('auth.register') }}" class="btn btn-success">
-                    <i class="ti ti-rocket"></i>
-                    Commencer Gratuitement
-                </a>
-                <a href="{{ route('auth.register') }}" class="btn btn-outline">
-                    <i class="ti ti-phone"></i>
-                    Nous Contacter
-                </a>
+                <a href="#contact" class="pricing-button secondary">Nous contacter</a>
             </div>
         </div>
     </section>
 
     <!-- Footer -->
-    <footer class="footer" id="contact">
-        <div class="container">
+    <footer id="contact" class="footer">
+        <div class="footer-container">
             <div class="footer-content">
-                <div class="footer-section">
-                    <h3>MOYOO Delivery</h3>
-                    <p>Révolutionnez votre logistique avec MOYOO Delivery, la solution complète pour la gestion de vos livraisons.</p>
+                <!-- Colonne 1 : À propos -->
+                <div class="footer-column footer-about">
+                    <h3>MOYOO</h3>
+                    <p>
+                        Solution complète de livraison à la demande pour optimiser vos opérations et améliorer l'expérience client.
+                    </p>
+                    <div class="footer-social">
+                        <a href="#" aria-label="Facebook">📘</a>
+                        <a href="#" aria-label="Twitter">🐦</a>
+                        <a href="#" aria-label="LinkedIn">💼</a>
+                        <a href="#" aria-label="Instagram">📷</a>
                 </div>
-                <div class="footer-section">
-                    <h3>Produit</h3>
+                </div>
+
+                <!-- Colonne 2 : Solutions -->
+                <div class="footer-column">
+                    <h3>Solutions</h3>
                     <ul>
-                        <li><a href="#features">Fonctionnalités</a></li>
-                        <li><a href="#pricing">Tarifs</a></li>
-                        <li><a href="{{ route('auth.login') }}">Se connecter</a></li>
-                        <li><a href="{{ route('auth.register') }}">S'inscrire</a></li>
+                        <li><a href="#solutions">Livraison de nourriture</a></li>
+                        <li><a href="#solutions">Livraison e-commerce</a></li>
+                        <li><a href="#solutions">Livraison B2B</a></li>
+                        <li><a href="#solutions">Livraison retail</a></li>
+                        <li><a href="#solutions">Livraison express</a></li>
                     </ul>
                 </div>
-                <div class="footer-section">
-                    <h3>Support</h3>
+
+                <!-- Colonne 3 : Fonctionnalités -->
+                <div class="footer-column">
+                    <h3>Fonctionnalités</h3>
                     <ul>
-                        <li><a href="{{ route('support.index') }}">Centre d'aide</a></li>
-                        <li><a href="{{ route('documentation.index') }}">Documentation</a></li>
-                        <li><a href="#contact">Contactez-nous</a></li>
+                        <li><a href="#fonctionnalites">Suivi en temps réel</a></li>
+                        <li><a href="#fonctionnalites">Gestion des commandes</a></li>
+                        <li><a href="#fonctionnalites">Optimisation des routes</a></li>
+                        <li><a href="#comment-ca-marche">Comment ça marche</a></li>
+                        <li><a href="#tarification">Tarification</a></li>
                     </ul>
                 </div>
-                <div class="footer-section">
+
+                <!-- Colonne 4 : Contact -->
+                <div class="footer-column">
                     <h3>Contact</h3>
                     <ul>
-                        <li>📞 +225 07 01 23 45 67</li>
-                        <li>✉️ support@moyoo.ci</li>
-                        <li>📍 Cocody, Riviera 2, Abidjan</li>
+                        <li><a href="mailto:contact@moyoo.com">contact@moyoo.com</a></li>
+                        <li><a href="tel:+221771234567">+221 77 123 45 67</a></li>
+                        <li><a href="#contact">Nous contacter</a></li>
+                        <li><a href="#tarification">Demander une démo</a></li>
+                        <li><a href="#">Support</a></li>
                     </ul>
                 </div>
             </div>
+
             <div class="footer-bottom">
-                <p>&copy; {{ date('Y') }} MOYOO Delivery. Tous droits réservés.</p>
+                <p>&copy; 2024 MOYOO. Tous droits réservés.</p>
+                <div class="footer-bottom-links">
+                    <a href="#">Mentions légales</a>
+                    <a href="#">Politique de confidentialité</a>
+                    <a href="#">Conditions d'utilisation</a>
+                    <a href="#">CGV</a>
+                </div>
             </div>
         </div>
     </footer>
 
-    <!-- Scroll to top button -->
-    <button class="scroll-to-top" id="scrollToTop">
-        <i class="ti ti-arrow-up"></i>
-    </button>
-
-    <!-- Scripts -->
-    <script src="{{ asset('assets/vendor/libs/jquery/jquery.js') }}"></script>
-    <script src="{{ asset('assets/vendor/libs/popper/popper.js') }}"></script>
-    <script src="{{ asset('assets/vendor/js/bootstrap.js') }}"></script>
-    <script src="{{ asset('assets/vendor/libs/node-waves/node-waves.js') }}"></script>
-    <script src="{{ asset('assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.js') }}"></script>
-    <script src="{{ asset('assets/vendor/libs/hammer/hammer.js') }}"></script>
-    <script src="{{ asset('assets/vendor/libs/i18n/i18n.js') }}"></script>
-    <script src="{{ asset('assets/vendor/libs/typeahead-js/typeahead.js') }}"></script>
-    <script src="{{ asset('assets/vendor/js/menu.js') }}"></script>
-    <script src="{{ asset('assets/js/main.js') }}"></script>
-    <script src="{{ asset('assets/vendor/libs/apex-charts/apexcharts.js') }}"></script>
-    <script src="{{ asset('assets/js/app-logistics-dashboard.js') }}"></script>
-    
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Navbar scroll effect
-            const navbar = document.getElementById('navbar');
-            const scrollToTopBtn = document.getElementById('scrollToTop');
-            
-            window.addEventListener('scroll', function() {
-                if (window.scrollY > 100) {
-                    navbar.classList.add('scrolled');
-                    scrollToTopBtn.classList.add('show');
-                } else {
-                    navbar.classList.remove('scrolled');
-                    scrollToTopBtn.classList.remove('show');
-                }
-            });
-            
-            // Smooth scrolling for navigation links
+        // Smooth scroll pour les liens d'ancrage
             document.querySelectorAll('a[href^="#"]').forEach(anchor => {
                 anchor.addEventListener('click', function (e) {
                     e.preventDefault();
                     const target = document.querySelector(this.getAttribute('href'));
                     if (target) {
-                        target.scrollIntoView({
-                            behavior: 'smooth',
-                            block: 'start'
-                        });
-                    }
-                });
-            });
-            
-            // Scroll to top functionality
-            scrollToTopBtn.addEventListener('click', function() {
+                    const headerOffset = 80;
+                    const elementPosition = target.getBoundingClientRect().top;
+                    const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+
                 window.scrollTo({
-                    top: 0,
+                        top: offsetPosition,
                     behavior: 'smooth'
+                    });
+                }
                 });
             });
-            
-            // Add animation classes on scroll
-            const observerOptions = {
-                threshold: 0.1,
-                rootMargin: '0px 0px -50px 0px'
-            };
-            
-            const observer = new IntersectionObserver(function(entries) {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        entry.target.classList.add('animate-fade-in-up');
+
+        // Mise en évidence de l'élément actif du menu lors du scroll
+        const sections = document.querySelectorAll('section[id]');
+        const navLinks = document.querySelectorAll('.nav-link');
+
+        function highlightActiveSection() {
+            const scrollPosition = window.scrollY + 150;
+
+            // Si on est tout en haut de la page, activer "Accueil"
+            if (window.scrollY < 100) {
+                navLinks.forEach(link => {
+                    link.classList.remove('active');
+                    if (link.getAttribute('href') === '#accueil') {
+                        link.classList.add('active');
                     }
                 });
-            }, observerOptions);
-            
-            // Observe all feature cards, steps, pricing cards, and testimonials
-            document.querySelectorAll('.feature-card, .step, .pricing-card, .testimonial-card').forEach(el => {
-                observer.observe(el);
+                return;
+            }
+
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                const sectionHeight = section.offsetHeight;
+                const sectionId = section.getAttribute('id');
+
+                if (scrollPosition >= sectionTop && scrollPosition < sectionTop + sectionHeight) {
+                    navLinks.forEach(link => {
+                        link.classList.remove('active');
+                        if (link.getAttribute('href') === `#${sectionId}`) {
+                            link.classList.add('active');
+                        }
+                    });
+                }
             });
-        });
+        }
+
+        window.addEventListener('scroll', highlightActiveSection);
+        window.addEventListener('load', highlightActiveSection);
+        highlightActiveSection(); // Définir l'état initial
     </script>
 </body>
 </html>

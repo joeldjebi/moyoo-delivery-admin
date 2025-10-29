@@ -200,15 +200,39 @@ $hasSubscription = $user && $user->subscriptionPlan;
                         </div>
 
                         <div class="row g-3">
-                            <div class="col-lg-2 col-md-6">
-                                <a href="{{ route('colis.create') }}" class="btn btn-outline-primary w-100 quick-action-btn d-flex flex-column align-items-center justify-content-center py-4">
+
+                            <div class="col-lg-3 col-md-6">
+                                <a href="{{ route('marchands.create') }}" class="btn btn-outline-info w-100 quick-action-btn d-flex flex-column align-items-center justify-content-center py-4">
                                     <div class="avatar mb-3">
-                                        <span class="avatar-initial rounded bg-label-primary">
-                                            <i class="ti ti-package ti-24px"></i>
+                                        <span class="avatar-initial rounded bg-label-info">
+                                            <i class="ti ti-user-plus ti-24px"></i>
                                         </span>
                                     </div>
-                                    <h6 class="mb-1">Créer un Colis</h6>
-                                    <small class="text-muted text-center">Nouveau colis à livrer</small>
+                                    <h6 class="mb-1">Créer un Marchand</h6>
+                                    <small class="text-muted text-center">Nouveau marchand</small>
+                                </a>
+                            </div>
+
+                            <div class="col-lg-2 col-md-6">
+                                <a href="{{ route('boutiques.create') }}" class="btn btn-outline-secondary w-100 quick-action-btn d-flex flex-column align-items-center justify-content-center py-4">
+                                    <div class="avatar mb-3">
+                                        <span class="avatar-initial rounded bg-label-secondary">
+                                            <i class="ti ti-building-store ti-24px"></i>
+                                        </span>
+                                    </div>
+                                    <h6 class="mb-1">Créer une Boutique</h6>
+                                    <small class="text-muted text-center">Nouvelle boutique</small>
+                                </a>
+                            </div>
+                            <div class="col-lg-2 col-md-6">
+                                <a href="{{ route('livreurs.create') }}" class="btn btn-outline-warning w-100 quick-action-btn d-flex flex-column align-items-center justify-content-center py-4">
+                                    <div class="avatar mb-3">
+                                        <span class="avatar-initial rounded bg-label-warning">
+                                            <i class="ti ti-truck-delivery ti-24px"></i>
+                                        </span>
+                                    </div>
+                                    <h6 class="mb-1">Créer un Livreur</h6>
+                                    <small class="text-muted text-center">Nouveau livreur</small>
                                 </a>
                             </div>
 
@@ -224,40 +248,22 @@ $hasSubscription = $user && $user->subscriptionPlan;
                                 </a>
                             </div>
 
-                            <div class="col-lg-3 col-md-6">
-                                <a href="{{ route('marchands.create') }}" class="btn btn-outline-info w-100 quick-action-btn d-flex flex-column align-items-center justify-content-center py-4">
+                            <div class="col-lg-2 col-md-6">
+                                <a href="{{ route('colis.create') }}" class="btn btn-outline-primary w-100 quick-action-btn d-flex flex-column align-items-center justify-content-center py-4">
                                     <div class="avatar mb-3">
-                                        <span class="avatar-initial rounded bg-label-info">
-                                            <i class="ti ti-user-plus ti-24px"></i>
+                                        <span class="avatar-initial rounded bg-label-primary">
+                                            <i class="ti ti-package ti-24px"></i>
                                         </span>
                                     </div>
-                                    <h6 class="mb-1">Créer un Marchand</h6>
-                                    <small class="text-muted text-center">Nouveau marchand</small>
+                                    <h6 class="mb-1">Créer un Colis</h6>
+                                    <small class="text-muted text-center">Nouveau colis à livrer</small>
                                 </a>
                             </div>
 
-                            <div class="col-lg-2 col-md-6">
-                                <a href="{{ route('livreurs.create') }}" class="btn btn-outline-warning w-100 quick-action-btn d-flex flex-column align-items-center justify-content-center py-4">
-                                    <div class="avatar mb-3">
-                                        <span class="avatar-initial rounded bg-label-warning">
-                                            <i class="ti ti-truck-delivery ti-24px"></i>
-                                        </span>
-                                    </div>
-                                    <h6 class="mb-1">Créer un Livreur</h6>
-                                    <small class="text-muted text-center">Nouveau livreur</small>
-                                </a>
-                            </div>
-                            <div class="col-lg-2 col-md-6">
-                                <a href="{{ route('boutiques.create') }}" class="btn btn-outline-secondary w-100 quick-action-btn d-flex flex-column align-items-center justify-content-center py-4">
-                                    <div class="avatar mb-3">
-                                        <span class="avatar-initial rounded bg-label-secondary">
-                                            <i class="ti ti-building-store ti-24px"></i>
-                                        </span>
-                                    </div>
-                                    <h6 class="mb-1">Créer une Boutique</h6>
-                                    <small class="text-muted text-center">Nouvelle boutique</small>
-                                </a>
-                            </div>
+
+
+
+
                         </div>
                     </div>
                 </div>
