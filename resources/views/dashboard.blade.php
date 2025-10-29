@@ -57,6 +57,96 @@
 .quick-action-btn:hover .avatar {
     transform: scale(1.1);
 }
+
+/* Styles pour Intro.js - Guide de démarrage */
+.introjs-overlay {
+    background: rgba(0, 0, 0, 0.7);
+}
+
+.introjs-tooltip {
+    max-width: 400px;
+    min-width: 300px;
+    font-family: 'Public Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+.introjs-tooltipbuttons {
+    border-top: 1px solid #d9dee3;
+    padding: 10px 15px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.introjs-button {
+    color: #696cff;
+    border-color: #696cff;
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    border-radius: 0.375rem;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.introjs-button:hover {
+    background-color: #696cff;
+    color: white;
+    border-color: #696cff;
+}
+
+.introjs-nextbutton {
+    background-color: #696cff;
+    color: white;
+    border-color: #696cff;
+}
+
+.introjs-nextbutton:hover {
+    background-color: #5f61e6;
+    border-color: #5f61e6;
+}
+
+.introjs-prevbutton {
+    color: #696cff;
+    border-color: #696cff;
+}
+
+.introjs-skipbutton {
+    color: #a1acb8;
+    font-size: 0.8rem;
+    padding: 0.5rem 1rem;
+    white-space: nowrap;
+    flex-shrink: 0;
+    text-decoration: none;
+    display: inline-block;
+    right: 40px !important;
+}
+
+.introjs-skipbutton:hover {
+    color: #696cff;
+    text-decoration: underline;
+}
+
+
+.introjs-bullets {
+    text-align: center;
+    margin-top: 10px;
+}
+
+.introjs-bullets ul li a {
+    background: #d9dee3;
+}
+
+.introjs-bullets ul li a.active {
+    background: #696cff;
+}
+
+.introjs-helperLayer {
+    border: 2px solid #696cff;
+    box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.7), 0 0 20px rgba(105, 108, 255, 0.5);
+}
 </style>
 
 <!-- Informations d'Abonnement -->
@@ -185,24 +275,30 @@ $hasSubscription = $user && $user->subscriptionPlan;
         <!-- Boutons d'Action Rapide -->
         <div class="row g-4 mb-4">
             <div class="col-12">
-                <div class="card">
+                <div class="card" id="quick-actions-section" data-intro="Bienvenue ! Cette section vous permet d'accéder rapidement aux actions principales de votre tableau de bord." data-step="1">
                     <div class="card-body">
                         <div class="d-flex align-items-center justify-content-between mb-3">
                             <div>
                                 <h5 class="card-title mb-1">Actions Rapides</h5>
                                 <p class="text-muted mb-0">Créez rapidement de nouveaux éléments</p>
                             </div>
-                            <div class="avatar">
-                                <span class="avatar-initial rounded bg-label-primary">
-                                    <i class="ti ti-bolt ti-24px"></i>
-                                </span>
+                            <div class="d-flex align-items-center gap-2">
+                                <button type="button" class="btn btn-sm btn-outline-primary" onclick="startQuickActionsGuide()" title="Voir le guide de démarrage">
+                                    <i class="ti ti-help ti-sm me-1"></i>
+                                    Guide
+                                </button>
+                                <div class="avatar">
+                                    <span class="avatar-initial rounded bg-label-primary">
+                                        <i class="ti ti-bolt ti-24px"></i>
+                                    </span>
+                                </div>
                             </div>
                         </div>
 
                         <div class="row g-3">
 
                             <div class="col-lg-3 col-md-6">
-                                <a href="{{ route('marchands.create') }}" class="btn btn-outline-info w-100 quick-action-btn d-flex flex-column align-items-center justify-content-center py-4">
+                                <a href="{{ route('marchands.create') }}" id="quick-action-marchand" class="btn btn-outline-info w-100 quick-action-btn d-flex flex-column align-items-center justify-content-center py-4" data-intro="Créez un nouveau marchand pour ajouter un partenaire commercial à votre plateforme." data-step="2">
                                     <div class="avatar mb-3">
                                         <span class="avatar-initial rounded bg-label-info">
                                             <i class="ti ti-user-plus ti-24px"></i>
@@ -214,7 +310,7 @@ $hasSubscription = $user && $user->subscriptionPlan;
                             </div>
 
                             <div class="col-lg-2 col-md-6">
-                                <a href="{{ route('boutiques.create') }}" class="btn btn-outline-secondary w-100 quick-action-btn d-flex flex-column align-items-center justify-content-center py-4">
+                                <a href="{{ route('boutiques.create') }}" id="quick-action-boutique" class="btn btn-outline-secondary w-100 quick-action-btn d-flex flex-column align-items-center justify-content-center py-4" data-intro="Ajoutez une nouvelle boutique pour associer un point de vente à un marchand." data-step="3">
                                     <div class="avatar mb-3">
                                         <span class="avatar-initial rounded bg-label-secondary">
                                             <i class="ti ti-building-store ti-24px"></i>
@@ -225,7 +321,7 @@ $hasSubscription = $user && $user->subscriptionPlan;
                                 </a>
                             </div>
                             <div class="col-lg-2 col-md-6">
-                                <a href="{{ route('livreurs.create') }}" class="btn btn-outline-warning w-100 quick-action-btn d-flex flex-column align-items-center justify-content-center py-4">
+                                <a href="{{ route('livreurs.create') }}" id="quick-action-livreur" class="btn btn-outline-warning w-100 quick-action-btn d-flex flex-column align-items-center justify-content-center py-4" data-intro="Enregistrez un nouveau livreur pour gérer les livraisons de vos commandes." data-step="4">
                                     <div class="avatar mb-3">
                                         <span class="avatar-initial rounded bg-label-warning">
                                             <i class="ti ti-truck-delivery ti-24px"></i>
@@ -237,7 +333,7 @@ $hasSubscription = $user && $user->subscriptionPlan;
                             </div>
 
                             <div class="col-lg-3 col-md-6">
-                                <a href="{{ route('ramassages.create') }}" class="btn btn-outline-success w-100 quick-action-btn d-flex flex-column align-items-center justify-content-center py-4">
+                                <a href="{{ route('ramassages.create') }}" id="quick-action-ramassage" class="btn btn-outline-success w-100 quick-action-btn d-flex flex-column align-items-center justify-content-center py-4" data-intro="Créez un ramassage pour organiser la collecte de colis depuis les boutiques." data-step="5">
                                     <div class="avatar mb-3">
                                         <span class="avatar-initial rounded bg-label-success">
                                             <i class="ti ti-truck ti-24px"></i>
@@ -249,7 +345,7 @@ $hasSubscription = $user && $user->subscriptionPlan;
                             </div>
 
                             <div class="col-lg-2 col-md-6">
-                                <a href="{{ route('colis.create') }}" class="btn btn-outline-primary w-100 quick-action-btn d-flex flex-column align-items-center justify-content-center py-4">
+                                <a href="{{ route('colis.create') }}" id="quick-action-colis" class="btn btn-outline-primary w-100 quick-action-btn d-flex flex-column align-items-center justify-content-center py-4" data-intro="Créez un nouveau colis à livrer pour organiser vos expéditions." data-step="6">
                                     <div class="avatar mb-3">
                                         <span class="avatar-initial rounded bg-label-primary">
                                             <i class="ti ti-package ti-24px"></i>
@@ -2019,5 +2115,115 @@ function showErrorRamassages(message) {
     `;
 }
 </script>
+
+<!-- Intro.js CSS et JS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intro.js@7.2.0/introjs.min.css">
+<script src="https://cdn.jsdelivr.net/npm/intro.js@7.2.0/intro.min.js"></script>
+
+<script>
+// Guide de démarrage - Actions Rapides
+// Fonction globale pour démarrer le guide
+window.startQuickActionsGuide = function() {
+    introJs().setOptions({
+        steps: [
+            {
+                element: '#quick-actions-section',
+                intro: 'Bienvenue ! Cette section vous permet d\'accéder rapidement aux actions principales de votre tableau de bord.',
+                position: 'bottom'
+            },
+            {
+                element: '#quick-action-marchand',
+                intro: 'Créez un nouveau marchand pour ajouter un partenaire commercial à votre plateforme.',
+                position: 'top'
+            },
+            {
+                element: '#quick-action-boutique',
+                intro: 'Ajoutez une nouvelle boutique pour associer un point de vente à un marchand.',
+                position: 'top'
+            },
+            {
+                element: '#quick-action-livreur',
+                intro: 'Enregistrez un nouveau livreur pour gérer les livraisons de vos commandes.',
+                position: 'top'
+            },
+            {
+                element: '#quick-action-ramassage',
+                intro: 'Créez un ramassage pour organiser la collecte de colis depuis les boutiques.',
+                position: 'top'
+            },
+            {
+                element: '#quick-action-colis',
+                intro: 'Créez un nouveau colis à livrer pour organiser vos expéditions.',
+                position: 'top'
+            }
+        ],
+        showProgress: true,
+        showBullets: true,
+        exitOnOverlayClick: false,
+        exitOnEsc: true,
+        nextLabel: 'Suivant →',
+        prevLabel: '← Précédent',
+        doneLabel: 'Terminer',
+        skipLabel: 'Passer',
+        tooltipClass: 'customTooltip',
+        highlightClass: 'customHighlight'
+    }).start().oncomplete(function() {
+        // Marquer que l'utilisateur a vu le guide
+        localStorage.setItem('hasSeenQuickActionsGuide', 'true');
+    }).onexit(function() {
+        // Marquer aussi si l'utilisateur quitte le guide
+        localStorage.setItem('hasSeenQuickActionsGuide', 'true');
+    });
+};
+
+// Démarrer automatiquement au chargement de la page si c'est la première visite
+document.addEventListener('DOMContentLoaded', function() {
+    // Vérifier si l'utilisateur a déjà vu le guide
+    const hasSeenQuickActionsGuide = localStorage.getItem('hasSeenQuickActionsGuide');
+
+    // Démarrer automatiquement si c'est la première visite
+    if (!hasSeenQuickActionsGuide) {
+        // Attendre un peu pour que la page soit complètement chargée
+        setTimeout(function() {
+            window.startQuickActionsGuide();
+        }, 1000);
+    }
+});
+</script>
+
+<style>
+/* Styles supplémentaires pour le guide */
+.customTooltip {
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.customHighlight {
+    border-radius: 0.5rem;
+}
+
+/* Bouton pour relancer le guide (optionnel) */
+#restart-guide-btn {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1000;
+    background: #696cff;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(105, 108, 255, 0.3);
+    transition: all 0.3s ease;
+    display: none; /* Masqué par défaut, peut être activé si besoin */
+}
+
+#restart-guide-btn:hover {
+    background: #5f61e6;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(105, 108, 255, 0.4);
+}
+</style>
 
 @include('layouts.footer')

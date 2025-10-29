@@ -12,7 +12,7 @@ const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379';
 
 // Base de données MySQL
 const dbConfig = {
-    host: process.env.DB_HOST || 'localhost',
+    host: process.env.DB_HOST || '127.0.0.1',
     user: process.env.DB_USERNAME || 'root',
     password: process.env.DB_PASSWORD || '',
     database: process.env.DB_DATABASE || 'admin_delivery',
@@ -445,7 +445,8 @@ async function startServer() {
 
         server.listen(PORT, '0.0.0.0', () => {
             console.log(`🚀 Serveur Socket.IO démarré sur le port ${PORT}`);
-            console.log(`🌐 Accessible sur : http://192.168.1.4:${PORT}`);
+            console.log(`🌐 Accessible sur : http://192.168.1.29:${PORT}`);
+            console.log(`🌐 Accessible sur : http://localhost:${PORT}`);
             console.log(`🗄️  MySQL connecté: ${dbConfig.host}:${dbConfig.database}`);
         });
     } catch (error) {

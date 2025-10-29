@@ -217,7 +217,7 @@ app.get('/health', (req, res) => {
 // Démarrer le serveur
 server.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Serveur Socket.IO MOYOO démarré sur le port ${PORT}`);
-    console.log(`📡 URL: http://192.168.1.4:${PORT}`);
+    console.log(`📡 URL: http://192.168.1.29:${PORT}`);
     console.log(`🔧 Transports: websocket, polling`);
     console.log(`🔒 Authentification: JWT`);
     console.log(`⏰ Timestamp: ${new Date().toISOString()}`);

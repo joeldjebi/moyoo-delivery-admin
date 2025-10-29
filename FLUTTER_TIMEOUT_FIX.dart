@@ -22,7 +22,7 @@ class AppConfig {
 }
 
 class LocationService {
-  static const String BASE_URL = 'http://192.168.1.4:8000/api';
+  static const String BASE_URL = 'http://192.168.1.29:8000/api';
 
   // Obtenir la position avec timeout augmenté
   static Future<Position> getCurrentPosition() async {
@@ -115,7 +115,7 @@ class LocationService {
 }
 
 class SocketService {
-  static const String SOCKET_URL = 'http://192.168.1.4:3000';
+  static const String SOCKET_URL = 'http://192.168.1.29:3000';
   IO.Socket? _socket;
   String? _lastToken;
   Timer? _reconnectTimer;

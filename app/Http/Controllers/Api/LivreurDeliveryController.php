@@ -615,7 +615,7 @@ class LivreurDeliveryController extends Controller
      *                 @OA\Property(property="status", type="integer", example=2),
      *                 @OA\Property(property="status_label", type="string", example="Livré"),
      *                 @OA\Property(property="date_livraison_effective", type="string", format="date-time", example="2025-10-13T14:30:00Z"),
-     *                 @OA\Property(property="photo_proof_url", type="string", example="http://192.168.1.5:8000/storage/livraisons/proofs/colis_1_1760357729.jpg")
+     *                 @OA\Property(property="photo_proof_url", type="string", example="http://192.168.1.29:8000/storage/livraisons/proofs/colis_1_1760357729.jpg")
      *             )
      *         )
      *     ),

@@ -296,7 +296,7 @@ let selectedLivreurId = null;
 let currentFilter = 'all';
 
 // Configuration Socket.IO
-const SOCKET_URL = 'http://192.168.1.4:3000';
+const SOCKET_URL = 'http://192.168.1.29:3000';
 
 // Initialisation de la carte et Socket.IO
 window.addEventListener('load', function() {
