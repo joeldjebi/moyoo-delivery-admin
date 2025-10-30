@@ -24,16 +24,21 @@ class SubscriptionPlanSeeder extends Seeder
             'features' => [
                 'Accès de base à la plateforme'
             ],
-            'max_colis_per_month' => null,
-            'max_livreurs' => null,
-            'max_marchands' => null,
+            'max_colis_per_month' => 5,
+            'max_livreurs' => 2,
+            'max_marchands' => 2,
             'whatsapp_notifications' => false,
-            'firebase_notifications' => false,
+            'whatsapp_sms_limit' => null,
+            'firebase_notifications' => true,
             'api_access' => false,
             'advanced_reports' => false,
             'priority_support' => false,
             'is_active' => true,
-            'sort_order' => 1
+            'sort_order' => 1,
+            'entreprise_id' => null,
+            'pricing_plan_id' => null,
+            'started_at' => null,
+            'expires_at' => null
         ]);
 
         // Plan Premium
@@ -51,12 +56,17 @@ class SubscriptionPlanSeeder extends Seeder
             'max_livreurs' => null,
             'max_marchands' => null,
             'whatsapp_notifications' => true,
+            'whatsapp_sms_limit' => null,
             'firebase_notifications' => true,
             'api_access' => true,
             'advanced_reports' => true,
             'priority_support' => true,
             'is_active' => true,
-            'sort_order' => 2
+            'sort_order' => 2,
+            'entreprise_id' => null,
+            'pricing_plan_id' => null,
+            'started_at' => null,
+            'expires_at' => null
         ]);
     }
 }
