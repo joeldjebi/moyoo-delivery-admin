@@ -90,10 +90,10 @@ class TarifLivraisonController extends Controller
             $data['tarifs'] = $query->orderBy('commune_depart_id')->orderBy('commune_id')->orderBy('amount')->paginate(15)->appends($request->query());
 
             // Données pour les filtres
-            $data['communes'] = Commune::where('id', $entreprise->commune_id)
-            ->orderBy('libelle')
-            ->with('entreprise')
-            ->get();
+            // Commune de départ = commune de l'entreprise
+            $data['communeDepart'] = Commune::with('entreprise')->find($entreprise->commune_id);
+            // Communes de destination: toutes les communes disponibles
+            $data['allCommunes'] = Commune::orderBy('libelle')->get();
             $data['typeEngins'] = Type_engin::where('entreprise_id', $entreprise->id)
             ->orderBy('libelle')->get();
             $data['modeLivraisons'] = Mode_livraison::where('entreprise_id', $entreprise->id)
@@ -165,6 +165,7 @@ class TarifLivraisonController extends Controller
 
             // Validation des données
             $request->validate([
+                'commune_depart_id' => 'required|exists:communes,id',
                 'commune_id' => 'required|exists:communes,id',
                 'type_engin_id' => 'required|exists:type_engins,id',
                 'mode_livraison_id' => 'required|exists:mode_livraisons,id',

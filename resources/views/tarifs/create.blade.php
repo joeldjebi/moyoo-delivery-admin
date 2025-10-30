@@ -51,10 +51,20 @@
 
                         <div class="row g-3">
                             <div class="col-md-6">
-                                <label for="commune_id" class="form-label">Commune <span class="text-danger">*</span></label>
+                                <label class="form-label">Commune de Départ <span class="text-danger">*</span></label>
+                                <select class="form-select" id="commune_depart_id_display" disabled>
+                                    <option value="{{ $communeDepart->id ?? '' }}">
+                                        {{ $communeDepart->libelle ?? '—' }}
+                                    </option>
+                                </select>
+                                <input type="hidden" name="commune_depart_id" id="commune_depart_id" value="{{ old('commune_depart_id', $communeDepart->id ?? '') }}">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="commune_id" class="form-label">Commune de Destination <span class="text-danger">*</span></label>
                                 <select class="form-select @error('commune_id') is-invalid @enderror" id="commune_id" name="commune_id" required>
                                     <option value="">Sélectionner une commune</option>
-                                    @foreach($communes as $commune)
+                                    @foreach($allCommunes as $commune)
                                         <option value="{{ $commune->id }}" {{ old('commune_id') == $commune->id ? 'selected' : '' }}>
                                             {{ $commune->libelle }}
                                         </option>
@@ -179,8 +189,8 @@
                                 <div class="avatar avatar-lg bg-label-primary rounded-circle mx-auto mb-2">
                                     <i class="ti ti-map-pin"></i>
                                 </div>
-                                <h6 class="mb-1">Commune</h6>
-                                <p class="text-muted mb-0" id="preview-commune">-</p>
+                                <h6 class="mb-1">Commune de Départ</h6>
+                                <p class="text-muted mb-0" id="preview-commune-depart">{{ $communeDepart->libelle ?? '-' }}</p>
                             </div>
                         </div>
                         <div class="col-md-3">
@@ -234,7 +244,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const temp = tempSelect.options[tempSelect.selectedIndex]?.text || '-';
         const amount = amountInput.value ? parseFloat(amountInput.value).toLocaleString('fr-FR') + ' FCFA' : '-';
 
-        document.getElementById('preview-commune').textContent = commune;
+        document.getElementById('preview-commune-depart').textContent = document.getElementById('commune_depart_id_display')?.options[0]?.text || '{{ $communeDepart->libelle ?? '-' }}';
         document.getElementById('preview-type-engin').textContent = typeEngin;
         document.getElementById('preview-mode-temp').textContent = modeLivraison + ' - ' + temp;
         document.getElementById('preview-amount').textContent = amount;
