@@ -175,8 +175,16 @@ class TarifLivraisonController extends Controller
 
             DB::beginTransaction();
 
+            // Entreprise et commune de départ (déduites de l'utilisateur)
+            $entreprise = Entreprise::getEntrepriseByUser($user->id);
+            if (!$entreprise) {
+                return redirect()->route('entreprise.create')->with('error', 'Veuillez d\'abord créer votre entreprise.');
+            }
+
             // Vérifier si un tarif existe déjà pour cette combinaison
-            $existingTarif = TarifLivraison::where('commune_id', $request->commune_id)
+            $existingTarif = TarifLivraison::where('entreprise_id', $entreprise->id)
+                                         ->where('commune_depart_id', $entreprise->commune_id)
+                                         ->where('commune_id', $request->commune_id)
                                          ->where('type_engin_id', $request->type_engin_id)
                                          ->where('mode_livraison_id', $request->mode_livraison_id)
                                          ->where('poids_id', $request->poids_id)
@@ -191,6 +199,8 @@ class TarifLivraisonController extends Controller
 
             // Créer le tarif
             $tarif = TarifLivraison::create([
+                'entreprise_id' => $entreprise->id,
+                'commune_depart_id' => $entreprise->commune_id,
                 'commune_id' => $request->commune_id,
                 'type_engin_id' => $request->type_engin_id,
                 'mode_livraison_id' => $request->mode_livraison_id,
@@ -289,8 +299,14 @@ class TarifLivraisonController extends Controller
 
             DB::beginTransaction();
 
-            // Vérifier si un autre tarif existe déjà pour cette combinaison
-            $existingTarif = TarifLivraison::where('commune_id', $request->commune_id)
+            // Vérifier si un autre tarif existe déjà pour cette combinaison (contexte entreprise + commune de départ)
+            $entreprise = Entreprise::getEntrepriseByUser($user->id);
+            // $entreprise peut être null si supprimée, on garde une vérification douce
+            $existingTarif = TarifLivraison::when($entreprise, function($q) use ($entreprise) {
+                                            return $q->where('entreprise_id', $entreprise->id)
+                                                     ->where('commune_depart_id', $entreprise->commune_id);
+                                        })
+                                         ->where('commune_id', $request->commune_id)
                                          ->where('type_engin_id', $request->type_engin_id)
                                          ->where('mode_livraison_id', $request->mode_livraison_id)
                                          ->where('poids_id', $request->poids_id)
