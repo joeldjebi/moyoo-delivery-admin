@@ -17,7 +17,8 @@ class Entreprise extends Model
         'commune_id',
         'statut',
         'logo',
-        'created_by'
+        'created_by',
+        'not_update'
     ];
 
     protected $casts = [

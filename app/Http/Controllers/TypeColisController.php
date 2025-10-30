@@ -24,7 +24,8 @@ class TypeColisController extends Controller
         $user = Auth::user();
 
         // Récupérer tous les types de colis avec pagination
-        $typeColis = Type_colis::with('user')
+        $typeColis = Type_colis::where('entreprise_id', $user->entreprise_id)
+        ->with('user')
             ->orderBy('created_at', 'desc')
             ->paginate(15);
 

@@ -303,34 +303,49 @@ class TenantBootstrapService
 		}
 	}
 
-	protected function seedSubscriptionPlan(int $entrepriseId): void
-	{
-		SubscriptionPlan::firstOrCreate(
-			['entreprise_id' => $entrepriseId, 'slug' => 'starter'],
-			[
-				'name' => 'Starter',
-				'description' => 'Plan de démarrage',
-				'price' => 0,
-				'currency' => 'XOF',
-				'duration_days' => 30,
-				'features' => [
-					'whatsapp_notifications' => false,
-					'firebase_notifications' => true,
-				],
-				'is_active' => true,
-				'sort_order' => 0,
-			]
-		);
-	}
+    protected function seedSubscriptionPlan(int $entrepriseId): void
+    {
+        // Aligner sur pricing_plans (plan gratuit par défaut)
+        $pricingFree = \App\Models\PricingPlan::where('price', 0)->first();
+
+        $payload = [
+            'name' => $pricingFree->name ?? 'Free',
+            'slug' => 'free',
+            'description' => $pricingFree->description ?? 'Plan gratuit pour commencer',
+            'price' => $pricingFree->price ?? 0,
+            'currency' => $pricingFree->currency ?? 'XOF',
+            'duration_days' => 30,
+            'features' => $pricingFree->features ?? [
+                "Jusqu'à 20 colis par mois",
+                "Jusqu'à 2 livreurs",
+                "Jusqu'à 5 marchands",
+                "Support par email",
+                "Tableau de bord basique",
+                "Rapports mensuels",
+                "Suivi en temps réel"
+            ],
+            'pricing_plan_id' => $pricingFree->id ?? null,
+            'is_active' => true,
+            'sort_order' => 1,
+            'started_at' => now(),
+            'expires_at' => now()->addDays(30),
+        ];
+
+        SubscriptionPlan::updateOrCreate(
+            ['entreprise_id' => $entrepriseId, 'slug' => 'free'],
+            $payload
+        );
+    }
 
 	protected function seedTarifs(int $entrepriseId): void
 	{
-		try {
+        try {
 			// Augmenter la limite de mémoire pour la génération des tarifs
 			ini_set('memory_limit', '512M');
 
 			// Exécuter le seeder pour générer les tarifs de l'entreprise
-			Artisan::call('db:seed', [
+            \Config::set('seed.entreprise_id', $entrepriseId);
+            Artisan::call('db:seed', [
 				'--class' => 'EntrepriseTarifSeeder',
 				'--force' => true
 			]);

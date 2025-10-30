@@ -24,7 +24,7 @@ class TypeEnginController extends Controller
         $user = Auth::user();
 
         // Récupérer tous les types d'engins avec pagination
-        $typeEngins = Type_engin::with('user')
+        $typeEngins = Type_engin::where('entreprise_id', $user->entreprise_id)
             ->orderBy('created_at', 'desc')
             ->paginate(15);
 

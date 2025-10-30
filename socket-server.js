@@ -445,7 +445,7 @@ async function startServer() {
 
         server.listen(PORT, '0.0.0.0', () => {
             console.log(`🚀 Serveur Socket.IO démarré sur le port ${PORT}`);
-            console.log(`🌐 Accessible sur : http://192.168.1.29:${PORT}`);
+            console.log(`🌐 Accessible sur : http://192.168.1.11:${PORT}`);
             console.log(`🌐 Accessible sur : http://localhost:${PORT}`);
             console.log(`🗄️  MySQL connecté: ${dbConfig.host}:${dbConfig.database}`);
         });

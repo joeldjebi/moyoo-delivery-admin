@@ -24,34 +24,35 @@ class TarifLivraisonSeeder extends Seeder
         TarifLivraison::truncate();
         echo "Anciens tarifs supprimés.\n";
 
-        // Récupérer l'entreprise pour obtenir la commune de départ
-        $entreprise = Entreprise::first();
-        if (!$entreprise) {
+        // Générer pour chaque entreprise existante
+        $entreprises = Entreprise::all();
+        if ($entreprises->isEmpty()) {
             echo "Aucune entreprise trouvée. Veuillez d'abord créer une entreprise.\n";
             return;
         }
 
-        $communeDepart = $entreprise->commune;
-        echo "Commune de départ: {$communeDepart->libelle}\n";
+        foreach ($entreprises as $entreprise) {
+            $communeDepart = $entreprise->commune;
+            echo "Entreprise: {$entreprise->name} — Commune de départ: {$communeDepart->libelle}\n";
 
-        $communes = Commune::all();
-        $typeEngins = Type_engin::all();
-        $modeLivraisons = Mode_livraison::all();
-        $poids = Poid::all();
-        $temps = Temp::all();
+            $communes = Commune::all();
+            $typeEngins = Type_engin::where('entreprise_id', $entreprise->id)->get();
+            $modeLivraisons = Mode_livraison::where('entreprise_id', $entreprise->id)->get();
+            $poids = Poid::where('entreprise_id', $entreprise->id)->get();
+            $temps = Temp::where('entreprise_id', $entreprise->id)->get();
 
-        $count = 0;
-        $total = $communes->count() * $typeEngins->count() * $modeLivraisons->count() * $poids->count() * $temps->count();
+            $count = 0;
+            $total = $communes->count() * $typeEngins->count() * $modeLivraisons->count() * $poids->count() * $temps->count();
 
-        echo "Total de combinaisons à créer: {$total}\n";
+            echo "Total de combinaisons à créer: {$total}\n";
 
-        foreach ($communes as $commune) {
-            foreach ($typeEngins as $typeEngin) {
-                foreach ($modeLivraisons as $modeLivraison) {
-                    foreach ($poids as $poid) {
-                        foreach ($temps as $temp) {
-                            // Déterminer le montant selon la logique
-                            $amount = 1000; // Montant de base
+            foreach ($communes as $commune) {
+                foreach ($typeEngins as $typeEngin) {
+                    foreach ($modeLivraisons as $modeLivraison) {
+                        foreach ($poids as $poid) {
+                            foreach ($temps as $temp) {
+                                // Déterminer le montant selon la logique
+                                $amount = 1000; // Montant de base
 
                             // Augmenter selon le type d'engin
                             if ($typeEngin->id == 2) { // Voiture
@@ -81,6 +82,7 @@ class TarifLivraisonSeeder extends Seeder
 
                             // Créer le tarif
                             TarifLivraison::create([
+                                    'entreprise_id' => $entreprise->id,
                                 'commune_depart_id' => $communeDepart->id,
                                 'commune_id' => $commune->id,
                                 'type_engin_id' => $typeEngin->id,
@@ -88,13 +90,14 @@ class TarifLivraisonSeeder extends Seeder
                                 'poids_id' => $poid->id,
                                 'temp_id' => $temp->id,
                                 'amount' => $amount,
-                                'created_by' => 1
+                                    'created_by' => $entreprise->created_by ?? 1
                             ]);
 
                             $count++;
 
                             if ($count % 50 == 0) {
                                 echo "Créés: {$count}/{$total}\n";
+                            }
                             }
                         }
                     }

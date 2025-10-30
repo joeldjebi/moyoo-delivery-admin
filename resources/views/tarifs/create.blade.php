@@ -26,6 +26,21 @@
         </div>
     </div>
 
+    <!-- Messages flash -->
+    @if(session('success'))
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            {{ session('success') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+
+    @if(session('error'))
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            {{ session('error') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+
     <!-- Messages d'erreur -->
     @if($errors->any())
         <div class="alert alert-danger alert-dismissible fade show" role="alert">
@@ -53,11 +68,14 @@
                             <div class="col-md-6">
                                 <label class="form-label">Commune de Départ <span class="text-danger">*</span></label>
                                 <select class="form-select" id="commune_depart_id_display" disabled>
-                                    <option value="{{ $communeDepart->id ?? '' }}">
-                                        {{ $communeDepart->libelle ?? '—' }}
+                                    <option value="{{ $communes->id ?? '' }}">
+                                        {{ $communes->libelle ?? '—' }}
                                     </option>
                                 </select>
-                                <input type="hidden" name="commune_depart_id" id="commune_depart_id" value="{{ old('commune_depart_id', $communeDepart->id ?? '') }}">
+                                <input type="hidden" name="commune_depart_id" id="commune_depart_id" value="{{ old('commune_depart_id', $communes->id ?? '') }}">
+                                @error('commune_depart_id')
+                                    <div class="text-danger small mt-1">{{ $message }}</div>
+                                @enderror
                             </div>
 
                             <div class="col-md-6">

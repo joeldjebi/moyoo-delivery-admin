@@ -40,7 +40,11 @@
                 </h5>
             </div>
             <div class="card-body">
-                @if($current_subscription && $current_subscription['subscription']['has_active_subscription'])
+                @php
+                    $planData = $current_subscription['plan'] ?? null;
+                    $subsData = $current_subscription['subscription'] ?? null;
+                @endphp
+                @if(!empty($subsData) && !empty($subsData['has_active_subscription']))
                     <div class="alert alert-success" role="alert">
                         <h4 class="alert-heading d-flex align-items-center">
                             <i class="ti ti-check ti-sm me-2"></i>Abonnement Actif
@@ -51,24 +55,30 @@
                     <div class="row">
                         <div class="col-md-6">
                             <h6>Plan d'Abonnement</h6>
-                            <p><strong>{{ $current_subscription['plan']['name'] ?? 'Aucun plan assigné' }}</strong></p>
-                            <p class="text-muted">{{ $current_subscription['plan']['description'] ?? '' }}</p>
+                            <p><strong>{{ $planData['name'] ?? 'Aucun plan assigné' }}</strong></p>
+                            <p class="text-muted">{{ $planData['description'] ?? '' }}</p>
                         </div>
                         <div class="col-md-6">
                             <h6>Détails</h6>
-                            <p><strong>Prix:</strong> {{ $current_subscription['plan']['price'] ?? 'N/A' }} {{ $current_subscription['plan']['currency'] ?? '' }}</p>
-                            <p><strong>Durée totale:</strong> {{ $current_subscription['subscription']['real_duration_days'] ?? 'N/A' }} jours</p>
-                            <p><strong>Jours restants:</strong> {{ $current_subscription['subscription']['remaining_days'] ?? 'N/A' }} jours</p>
-                            @if($current_subscription['subscription']['expires_at'])
-                                <p><strong>Expire le:</strong> {{ $current_subscription['subscription']['expires_at']->format('d/m/Y H:i') }}</p>
+                            <p><strong>Prix:</strong> {{ $planData['price'] ?? 'N/A' }} {{ $planData['currency'] ?? '' }}</p>
+                            <p><strong>Durée totale:</strong> {{ $subsData['real_duration_days'] ?? 'N/A' }} jours</p>
+                            <p><strong>Jours restants:</strong> {{ $subsData['remaining_days'] ?? 'N/A' }} jours</p>
+                            @if(!empty($subsData['expires_at']))
+                                <p><strong>Expire le:</strong> {{ $subsData['expires_at']->format('d/m/Y H:i') }}</p>
                             @endif
                         </div>
                     </div>
 
-                    @if($current_subscription['plan']['features'] && count($current_subscription['plan']['features']) > 0)
+                    @php
+                        $planFeatures = [];
+                        if (!empty($planData['features'])) {
+                            $planFeatures = is_array($planData['features']) ? $planData['features'] : json_decode($planData['features'], true) ?? [];
+                        }
+                    @endphp
+                    @if(!empty($planFeatures) && count($planFeatures) > 0)
                         <h6 class="mt-4">Fonctionnalités Incluses</h6>
                         <div class="row">
-                            @foreach($current_subscription['plan']['features'] as $feature)
+                            @foreach($planFeatures as $feature)
                                 <div class="col-md-6">
                                     <div class="d-flex align-items-center mb-2">
                                         <i class="ti ti-check text-success me-2"></i>

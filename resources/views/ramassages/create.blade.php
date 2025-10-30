@@ -67,11 +67,7 @@
 
                         <div class="col-12 mb-3">
                             <label for="adresse_ramassage" class="form-label">Adresse de Ramassage <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="adresse_ramassage" name="adresse_ramassage" value="{{ old('adresse_ramassage') }}" required autocomplete="off" placeholder="Saisissez l'adresse...">
-                            <input type="hidden" id="adresse_ramassage_lat" name="adresse_ramassage_lat" value="{{ old('adresse_ramassage_lat') }}">
-                            <input type="hidden" id="adresse_ramassage_lng" name="adresse_ramassage_lng" value="{{ old('adresse_ramassage_lng') }}">
-                            <input type="hidden" id="adresse_ramassage_place_id" name="adresse_ramassage_place_id" value="{{ old('adresse_ramassage_place_id') }}">
-                            <small class="text-muted">Commencez à taper et sélectionnez une adresse proposée par Google.</small>
+                            <textarea class="form-control" id="adresse_ramassage" name="adresse_ramassage" rows="3" required>{{ old('adresse_ramassage') }}</textarea>
                         </div>
 
                         <div class="col-md-6 mb-3">
@@ -590,42 +586,3 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 </script>
-
-<!-- Google Places Autocomplete pour l'adresse de ramassage -->
-<script>
-function initPickupAddressAutocomplete() {
-    var input = document.getElementById('adresse_ramassage');
-    if (!input) return;
-    if (!window.google || !google.maps || !google.maps.places) return;
-
-    var autocomplete = new google.maps.places.Autocomplete(input, {
-        fields: ['formatted_address', 'geometry', 'place_id', 'name']
-        // componentRestrictions: { country: ['ci'] }
-    });
-
-    autocomplete.addListener('place_changed', function() {
-        var place = autocomplete.getPlace();
-        if (!place) return;
-
-        var formatted = place.formatted_address || place.name || input.value;
-        input.value = formatted;
-
-        var latInput = document.getElementById('adresse_ramassage_lat');
-        var lngInput = document.getElementById('adresse_ramassage_lng');
-        var placeIdInput = document.getElementById('adresse_ramassage_place_id');
-
-        if (place.geometry && place.geometry.location) {
-            if (latInput) latInput.value = place.geometry.location.lat();
-            if (lngInput) lngInput.value = place.geometry.location.lng();
-        }
-        if (place.place_id && placeIdInput) {
-            placeIdInput.value = place.place_id;
-        }
-    });
-}
-</script>
-<style>
-/* S'assurer que la liste des suggestions (pac-container) passe au-dessus des modals/cards */
-.pac-container { z-index: 2000 !important; }
-</style>
-<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDDSH9d5fmy1JBzTrBBQFEsTQw5LvAGM&libraries=places&loading=async&callback=initPickupAddressAutocomplete" async defer></script>

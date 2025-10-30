@@ -20,8 +20,9 @@ class EntrepriseTarifSeeder extends Seeder
     {
         echo "=== GÉNÉRATION DES TARIFS OPTIMISÉS BASÉS SUR L'ENTREPRISE ===\n";
 
-        // Récupérer l'entreprise
-        $entreprise = Entreprise::first();
+        // Récupérer l'entreprise cible (via config injectée par le contrôleur) ou fallback sur la première
+        $entrepriseId = config('seed.entreprise_id');
+        $entreprise = $entrepriseId ? Entreprise::find($entrepriseId) : Entreprise::first();
         if (!$entreprise) {
             echo "Aucune entreprise trouvée. Veuillez d'abord créer une entreprise.\n";
             return;

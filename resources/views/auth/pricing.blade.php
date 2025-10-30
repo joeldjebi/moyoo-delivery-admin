@@ -141,63 +141,68 @@
                         </thead>
                         <tbody>
                             @php
-                                // Fonctionnalités selon le nombre de plans affichés
-                                if (auth()->check()) {
-                                    // Utilisateur connecté : seulement les plans payants (Premium, Premium Annuel)
-                                    $features = [
-                                        'Livraisons par mois' => ['Illimitées', 'Illimitées'],
-                                        'Accès à la plateforme' => [true, true],
-                                        'Support par email' => [true, true],
-                                        'Tableau de bord' => ['Avancé', 'Avancé'],
-                                        'Rapports' => ['Personnalisés', 'Personnalisés'],
-                                        'Suivi en temps réel' => [true, true],
-                                        'Notifications SMS' => [true, true],
-                                        'Notifications WhatsApp' => [true, true],
-                                        'Accès API' => [true, true],
-                                        'Analyses avancées' => [true, true],
-                                        'Gestion multi-entrepôts' => [true, true],
-                                        'Support 24/7' => [true, true],
-                                        'Formation en ligne' => [true, true],
-                                        'Priorité nouvelles fonctionnalités' => [false, true],
-                                        'Facturation annuelle' => [false, true],
-                                        'Remise annuelle' => [false, '16.7%']
-                                    ];
-                                } else {
-                                    // Visiteur non connecté : tous les plans (Démarrage, Premium, Premium Annuel)
-                                    $features = [
-                                        'Livraisons par mois' => ['20', 'Illimitées', 'Illimitées'],
-                                        'Accès à la plateforme' => [true, true, true],
-                                        'Support par email' => [true, true, true],
-                                        'Tableau de bord' => ['Basique', 'Avancé', 'Avancé'],
-                                        'Rapports' => ['Mensuels', 'Personnalisés', 'Personnalisés'],
-                                        'Suivi en temps réel' => [true, true, true],
-                                        'Notifications SMS' => [false, true, true],
-                                        'Notifications WhatsApp' => [false, true, true],
-                                        'Accès API' => [false, true, true],
-                                        'Analyses avancées' => [false, true, true],
-                                        'Gestion multi-entrepôts' => [false, true, true],
-                                        'Support 24/7' => [false, true, true],
-                                        'Formation en ligne' => [false, true, true],
-                                        'Priorité nouvelles fonctionnalités' => [false, false, true],
-                                        'Facturation annuelle' => [false, false, true],
-                                        'Remise annuelle' => [false, false, '16.7%']
-                                    ];
+                                // Construire la comparaison dynamiquement depuis pricing_plans.features
+                                $planFeatureMap = [];
+                                $allFeatureLabels = [];
+                                $planColis = []; // valeur normalisée: '20' ou 'Illimitées'
+                                $colisIllimRegex = '/illimit/i';
+                                $colis20Regex = '/20\s*colis/i';
+                                foreach ($plans as $plan) {
+                                    $feat = $plan['features'] ?? [];
+                                    $featuresArray = is_array($feat) ? $feat : (json_decode($feat, true) ?? []);
+                                    $planFeatureMap[$plan['id']] = $featuresArray;
+                                    foreach ($featuresArray as $label) {
+                                        // Détection des libellés liés aux colis (pour normalisation)
+                                        if (preg_match($colisIllimRegex, $label)) {
+                                            $planColis[$plan['id']] = 'Illimitées';
+                                            continue;
+                                        }
+                                        if (preg_match($colis20Regex, $label)) {
+                                            // Ne pas écraser l'illimité si déjà détecté
+                                            if (!isset($planColis[$plan['id']])) {
+                                                $planColis[$plan['id']] = '20';
+                                            }
+                                            continue;
+                                        }
+                                        $allFeatureLabels[$label] = true;
+                                    }
                                 }
+                                $featureList = array_keys($allFeatureLabels);
+                                sort($featureList);
                             @endphp
 
-                            @foreach($features as $feature => $values)
+                            {{-- Ligne normalisée : Livraisons par mois --}}
+                            <tr>
+                                <td><strong>Livraisons par mois</strong></td>
+                                @foreach($plans as $plan)
+                                    @php $value = $planColis[$plan['id']] ?? null; @endphp
+                                    <td class="text-center">
+                                        @if($value === 'Illimitées')
+                                            <span class="badge bg-light text-dark">Illimitées</span>
+                                        @elseif($value === '20')
+                                            <span class="badge bg-light text-dark">20</span>
+                                        @else
+                                            <i class="ti ti-x text-danger"></i>
+                                        @endif
+                                    </td>
+                                @endforeach
+                            </tr>
+
+                            @foreach($featureList as $feature)
                                 <tr>
                                     <td><strong>{{ $feature }}</strong></td>
-                                    @foreach($values as $value)
+                                    @foreach($plans as $plan)
+                                        @php
+                                            $feat = $planFeatureMap[$plan['id']] ?? [];
+                                            // Filtrer les features liées aux colis déjà normalisées
+                                            $isColisRelated = preg_match($colisIllimRegex, $feature) || preg_match($colis20Regex, $feature);
+                                            if ($isColisRelated) { $hasFeature = false; } else { $hasFeature = in_array($feature, $feat, true); }
+                                        @endphp
                                         <td class="text-center">
-                                            @if(is_bool($value))
-                                                @if($value)
-                                                    <i class="ti ti-check text-success"></i>
-                                                @else
-                                                    <i class="ti ti-x text-danger"></i>
-                                                @endif
+                                            @if($hasFeature)
+                                                <i class="ti ti-check text-success"></i>
                                             @else
-                                                <span class="badge bg-light text-dark">{{ $value }}</span>
+                                                <i class="ti ti-x text-danger"></i>
                                             @endif
                                         </td>
                                     @endforeach

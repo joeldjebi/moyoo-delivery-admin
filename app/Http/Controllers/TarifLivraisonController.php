@@ -134,7 +134,7 @@ class TarifLivraisonController extends Controller
             $data['communes'] = Commune::where('id', $entreprise->commune_id)
             ->orderBy('libelle')
             ->with('entreprise')
-            ->get();
+            ->first();
             $data['typeEngins'] = Type_engin::where('entreprise_id', $entreprise->id)
             ->orderBy('libelle')->get();
             $data['modeLivraisons'] = Mode_livraison::where('entreprise_id', $entreprise->id)
@@ -143,6 +143,7 @@ class TarifLivraisonController extends Controller
             ->orderBy('libelle')->get();
             $data['temps'] = Temp::where('entreprise_id', $entreprise->id)
             ->orderBy('libelle')->get();
+            $data['allCommunes'] = Commune::orderBy('libelle')->get();
 
             return view('tarifs.create', $data);
         } catch (\Exception $e) {

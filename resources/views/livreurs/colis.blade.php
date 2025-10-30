@@ -2,7 +2,6 @@
 @include('layouts.menu')
 
 <!-- Contenu de la page -->
-<div class="container-xxl flex-grow-1 container-p-y">
     <div class="row">
         <div class="col-12">
             <div class="card">
@@ -233,6 +232,5 @@
             </div>
         </div>
     </div>
-</div>
 
 @include('layouts.footer')

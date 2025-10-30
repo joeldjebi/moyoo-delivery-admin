@@ -98,6 +98,21 @@ class EntrepriseController extends Controller
                 'commune_id' => $request->commune_id
             ]);
 
+            // Générer automatiquement les tarifs pour cette entreprise
+            try {
+                // Passer l'ID via la config pour le seeder
+                \Config::set('seed.entreprise_id', $entreprise->id);
+                Artisan::call('db:seed', ['--class' => 'EntrepriseTarifSeeder']);
+                Log::info('Tarifs générés automatiquement à la création de l\'entreprise', [
+                    'entreprise_id' => $entreprise->id
+                ]);
+            } catch (\Exception $e) {
+                Log::error('Erreur génération automatique des tarifs', [
+                    'entreprise_id' => $entreprise->id,
+                    'error' => $e->getMessage()
+                ]);
+            }
+
             return redirect()->route('entreprise.index')->with('success', 'Entreprise créée avec succès !');
 
         } catch (\Exception $e) {
@@ -163,7 +178,8 @@ class EntrepriseController extends Controller
                 'email' => $request->email,
                 'adresse' => $request->adresse,
                 'commune_id' => $request->commune_id,
-                'logo' => $logoPath
+                'logo' => $logoPath,
+                'not_update' => 1
             ]);
 
             Log::info('Entreprise mise à jour', [
@@ -226,7 +242,8 @@ class EntrepriseController extends Controller
                 return redirect()->route('entreprise.create');
             }
 
-            // Exécuter le seeder pour regénérer les tarifs
+            // Exécuter le seeder pour regénérer les tarifs pour l'entreprise courante
+            \Config::set('seed.entreprise_id', $entreprise->id);
             Artisan::call('db:seed', ['--class' => 'EntrepriseTarifSeeder']);
 
             Log::info('Tarifs régénérés', [
