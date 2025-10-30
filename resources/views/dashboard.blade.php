@@ -2183,10 +2183,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Démarrer automatiquement si c'est la première visite
     if (!hasSeenQuickActionsGuide) {
+        // Marquer immédiatement pour n'afficher qu'une seule fois automatiquement
+        localStorage.setItem('hasSeenQuickActionsGuide', 'true');
         // Attendre un peu pour que la page soit complètement chargée
         setTimeout(function() {
-            window.startQuickActionsGuide();
-        }, 1000);
+            if (typeof window.startQuickActionsGuide === 'function') {
+                window.startQuickActionsGuide();
+            }
+        }, 800);
     }
 });
 </script>
