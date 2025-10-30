@@ -128,43 +128,17 @@ class AuthController extends Controller
             $request->session()->regenerate();
             RateLimiter::clear($key);
 
-            // Log de la connexion réussie
-            Log::info('Connexion réussie', [
-                'user_id' => $user->id,
-                'email' => $user->email,
-                'first_name' => $user->first_name,
-                'last_name' => $user->last_name,
-                'entreprise_id' => $user->entreprise_id,
-                'remember_me' => $request->boolean('remember'),
-                'session_id' => $request->session()->getId(),
-                'ip' => $request->ip(),
-                'user_agent' => $request->userAgent(),
-                'login_time' => now()->toDateTimeString()
-            ]);
-
-            // Log des permissions et accès
-            Log::info('Vérification des accès utilisateur', [
-                'user_id' => $user->id,
-                'email' => $user->email,
-                'entreprise_id' => $user->entreprise_id,
-                'has_entreprise' => !is_null($user->entreprise_id),
-                'ip' => $request->ip()
-            ]);
+            // Redirection si les informations d'entreprise doivent être mises à jour
+            $entreprise = Entreprise::getEntrepriseByUser($user->id);
+            if ($entreprise && (int)($entreprise->not_update) === 0) {
+                return redirect()->to('/entreprise');
+            }
 
             return redirect()->intended(route('dashboard'));
         }
 
         // Incrémenter le compteur de tentatives
         RateLimiter::hit($key, 300); // 5 minutes
-
-        // Log de la tentative échouée
-        Log::warning('Tentative de connexion échouée', [
-            'email' => $request->email,
-            'ip' => $request->ip(),
-            'user_agent' => $request->userAgent(),
-            'attempts_remaining' => 5 - RateLimiter::attempts($key),
-            'reason' => 'Identifiants incorrects'
-        ]);
 
         // Message d'erreur générique pour éviter la fuite d'informations
         throw ValidationException::withMessages([
