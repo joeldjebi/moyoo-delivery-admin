@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use App\Models\SubscriptionPlan;
+use Carbon\Carbon;
 
 class SubscriptionPlanSeeder extends Seeder
 {
@@ -14,13 +15,14 @@ class SubscriptionPlanSeeder extends Seeder
     public function run(): void
     {
         // Plan Free (aligné sur pricing_plans id=1)
+        $freeDuration = 30;
         SubscriptionPlan::create([
             'name' => 'Free',
             'slug' => 'free',
             'description' => 'Plan gratuit pour commencer',
             'price' => 0.00,
             'currency' => 'XOF',
-            'duration_days' => 30,
+            'duration_days' => $freeDuration,
             'features' => [
                 "Jusqu'à 20 colis par mois",
                 "Jusqu'à 2 livreurs",
@@ -43,18 +45,19 @@ class SubscriptionPlanSeeder extends Seeder
             'sort_order' => 1,
             'entreprise_id' => null,
             'pricing_plan_id' => 1,
-            'started_at' => null,
-            'expires_at' => null
+            'started_at' => Carbon::now(),
+            'expires_at' => Carbon::now()->addDays($freeDuration)
         ]);
 
         // Plan Premium
+        $premiumDuration = 30; // mensuel par défaut
         SubscriptionPlan::create([
             'name' => 'Premium',
             'slug' => 'premium',
             'description' => 'Plan premium pour les entreprises en croissance',
             'price' => 25000.00,
             'currency' => 'XOF',
-            'duration_days' => 30,
+            'duration_days' => $premiumDuration,
             'features' => [
                 "Colis illimités",
                 "Livreurs illimités",
@@ -84,8 +87,8 @@ class SubscriptionPlanSeeder extends Seeder
             'sort_order' => 2,
             'entreprise_id' => null,
             'pricing_plan_id' => 2,
-            'started_at' => null,
-            'expires_at' => null
+            'started_at' => Carbon::now(),
+            'expires_at' => Carbon::now()->addDays($premiumDuration)
         ]);
     }
 }
