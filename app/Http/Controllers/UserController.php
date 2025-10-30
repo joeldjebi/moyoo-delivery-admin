@@ -131,6 +131,19 @@ class UserController extends Controller
             // Envoyer le mot de passe via email
             $this->sendPasswordViaEmail($newUser, $generatedPassword);
 
+            // Assigner automatiquement le plan Free au nouvel utilisateur (par défaut)
+            try {
+                $freePlan = \App\Models\SubscriptionPlan::where('slug', 'free')->first();
+                if ($freePlan) {
+                    $newUser->assignSubscriptionPlan($freePlan->id, true);
+                }
+            } catch (\Exception $e) {
+                \Log::error('Erreur assignation plan Free au nouvel utilisateur', [
+                    'user_id' => $newUser->id,
+                    'error' => $e->getMessage()
+                ]);
+            }
+
             Log::info('Utilisateur créé par un admin', [
                 'admin_id' => Auth::id(),
                 'admin_email' => Auth::user()->email,
