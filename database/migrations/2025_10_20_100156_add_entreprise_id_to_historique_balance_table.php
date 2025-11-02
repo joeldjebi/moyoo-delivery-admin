@@ -11,11 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('historique_balance', function (Blueprint $table) {
-            // La colonne entreprise_id existe déjà, on ajoute seulement la contrainte et l'index
-            $table->foreign('entreprise_id')->references('id')->on('entreprises')->onDelete('cascade');
-            $table->index('entreprise_id');
-        });
+        if (Schema::hasTable('historique_balance')) {
+            Schema::table('historique_balance', function (Blueprint $table) {
+                if (Schema::hasColumn('historique_balance', 'entreprise_id')) {
+                    try { $table->foreign('entreprise_id')->references('id')->on('entreprises')->onDelete('cascade'); } catch (\Throwable $e) {}
+                    try { $table->index('entreprise_id'); } catch (\Throwable $e) {}
+                }
+            });
+        }
     }
 
     /**
@@ -23,10 +26,11 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('historique_balance', function (Blueprint $table) {
-            $table->dropForeign(['entreprise_id']);
-            $table->dropIndex(['entreprise_id']);
-            // On ne supprime pas la colonne car elle existait déjà
-        });
+        if (Schema::hasTable('historique_balance')) {
+            Schema::table('historique_balance', function (Blueprint $table) {
+                try { $table->dropForeign(['entreprise_id']); } catch (\Throwable $e) {}
+                try { $table->dropIndex(['entreprise_id']); } catch (\Throwable $e) {}
+            });
+        }
     }
 };

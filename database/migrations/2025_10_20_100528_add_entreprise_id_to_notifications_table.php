@@ -11,11 +11,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('notifications', function (Blueprint $table) {
-            $table->bigInteger('entreprise_id')->nullable()->after('notifiable_id');
-            $table->foreign('entreprise_id')->references('id')->on('entreprises')->onDelete('cascade');
-            $table->index('entreprise_id');
-        });
+        if (Schema::hasTable('notifications')) {
+            Schema::table('notifications', function (Blueprint $table) {
+                if (!Schema::hasColumn('notifications', 'entreprise_id')) {
+                    $table->bigInteger('entreprise_id')->nullable()->after('notifiable_id');
+                }
+                try { $table->foreign('entreprise_id')->references('id')->on('entreprises')->onDelete('cascade'); } catch (\Throwable $e) {}
+                try { $table->index('entreprise_id'); } catch (\Throwable $e) {}
+            });
+        }
     }
 
     /**
@@ -23,10 +27,14 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('notifications', function (Blueprint $table) {
-            $table->dropForeign(['entreprise_id']);
-            $table->dropIndex(['entreprise_id']);
-            $table->dropColumn('entreprise_id');
-        });
+        if (Schema::hasTable('notifications')) {
+            Schema::table('notifications', function (Blueprint $table) {
+                try { $table->dropForeign(['entreprise_id']); } catch (\Throwable $e) {}
+                try { $table->dropIndex(['entreprise_id']); } catch (\Throwable $e) {}
+                if (Schema::hasColumn('notifications', 'entreprise_id')) {
+                    $table->dropColumn('entreprise_id');
+                }
+            });
+        }
     }
 };

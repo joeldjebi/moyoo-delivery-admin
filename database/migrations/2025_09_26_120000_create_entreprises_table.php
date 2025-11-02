@@ -21,6 +21,7 @@ return new class extends Migration
             $table->integer('statut')->default(1);
             $table->string('logo')->nullable();
             $table->unsignedBigInteger('created_by');
+            $table->integer('not_update')->default(0);
             $table->timestamps();
             $table->softDeletes();
 

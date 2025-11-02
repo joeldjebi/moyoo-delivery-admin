@@ -1,0 +1,22 @@
+-- Exemple de configuration pgloader
+-- Usage: pgloader scripts/pgloader.load
+
+-- Remplacez les URI ci-dessous par vos accès réels MySQL et PostgreSQL
+LOAD DATABASE
+     FROM mysql://USER_MYSQL:MDP_MYSQL@127.0.0.1:3306/NOM_BDD_MYSQL
+     INTO postgresql://postgres:root@127.0.0.1:5432/admin_delivery
+
+ WITH include drop, create tables, create indexes, reset sequences,
+      workers = 4, concurrency = 2
+
+ SET maintenance_work_mem to '512MB', work_mem to '128MB', search_path to 'public'
+
+ CAST type datetime to timestamptz using zero-dates-to-null,
+      type date to date using zero-dates-to-null,
+      type tinyint when (= 1) to boolean using tinyint-to-boolean,
+      type tinyint when (= 0) to boolean using tinyint-to-boolean
+
+ BEFORE LOAD DO
+ $$ create extension if not exists "uuid-ossp"; $$;
+
+

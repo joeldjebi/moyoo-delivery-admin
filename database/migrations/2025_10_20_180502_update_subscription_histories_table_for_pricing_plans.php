@@ -33,7 +33,9 @@ return new class extends Migration
             $table->json('payment_data')->nullable()->after('transaction_id');
 
             // Ajouter les index et contraintes
-            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
+            if (Schema::hasTable('users')) {
+                try { $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade'); } catch (\Throwable $e) {}
+            }
             $table->index(['user_id', 'status']);
             $table->index(['expires_at']);
         });

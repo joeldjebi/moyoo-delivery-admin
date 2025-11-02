@@ -20,7 +20,8 @@ return new class extends Migration
             $table->timestamps();
 
             $table->unique('livreur_id');
-            $table->foreign('livreur_id')->references('id')->on('users')->onDelete('cascade');
+            // Référence vers la table des livreurs
+            $table->foreign('livreur_id')->references('id')->on('livreurs')->onDelete('cascade');
         });
     }
 

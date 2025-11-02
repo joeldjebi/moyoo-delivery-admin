@@ -159,6 +159,7 @@ class ColisController extends Controller
 
 
             return view('colis.create', $data);
+
         } catch (\Exception $e) {
             Log::error('Erreur lors du chargement du formulaire de création: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Erreur lors du chargement du formulaire.');

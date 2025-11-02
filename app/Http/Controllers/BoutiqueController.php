@@ -205,7 +205,6 @@ class BoutiqueController extends Controller
                 'user_id' => $user->id,
                 'boutique_data' => [
                     'libelle' => $validatedData['libelle'],
-                    'mobile' => $validatedData['mobile'],
                     'marchand_id' => $validatedData['marchand_id'],
                     'status' => $validatedData['status'],
                     'entreprise_id' => $user->entreprise_id,
@@ -216,8 +215,8 @@ class BoutiqueController extends Controller
             $boutique = Boutique::create([
                 'libelle' => $validatedData['libelle'],
                 'mobile' => $validatedData['mobile'],
-                'adresse' => $validatedData['adresse'],
-                'adresse_gps' => $validatedData['adresse_gps'],
+                'adresse' => $validatedData['adresse'] ?? null,
+                'adresse_gps' => $validatedData['adresse_gps'] ?? null,
                 'cover_image' => $coverImagePath,
                 'marchand_id' => $validatedData['marchand_id'],
                 'status' => $validatedData['status'],
@@ -268,7 +267,7 @@ class BoutiqueController extends Controller
             ]);
 
             return redirect()->back()
-                ->with('error', 'Une erreur est survenue lors de la création de la boutique.')
+                ->with('error', 'Une erreur est survenue lors de la création de la boutique.', $e->getMessage())
                 ->withInput();
         }
     }
@@ -428,6 +427,7 @@ class BoutiqueController extends Controller
             // Mettre à jour la boutique
             $boutique->update([
                 'libelle' => $validatedData['libelle'],
+                'mobile' => $validatedData['mobile'],
                 'adresse' => $validatedData['adresse'],
                 'adresse_gps' => $validatedData['adresse_gps'],
                 'cover_image' => $coverImagePath,

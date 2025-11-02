@@ -123,6 +123,9 @@
     display: inline-block;
     right: 40px !important;
 }
+.introjs-tooltip-header a.introjs-skipbutton {
+    right: 40px !important;
+}
 
 .introjs-skipbutton:hover {
     color: #696cff;
@@ -467,7 +470,7 @@ $hasSubscription = $user && $user->subscriptionPlan;
                     <p class="mb-1">Total des colis</p>
                     <p class="mb-0">
                             <span class="text-heading fw-medium me-2">Tous les temps</span>
-                            <small class="text-muted d-block">Hier: {{ $stats['hier'] }} colis</small>
+                            <small class="text-muted d-block">Hier: {{ $stats['hier'] ?? 0 }} colis</small>
                     </p>
                 </div>
                 </div>
@@ -551,7 +554,7 @@ $hasSubscription = $user && $user->subscriptionPlan;
                         <p class="mb-1">Total livreurs</p>
                     <p class="mb-0">
                             <span class="text-heading fw-medium me-2">{{ $livreurStats['actifs'] }} actifs</span>
-                            <small class="text-muted d-block">Hier: {{ $livreurStats['hier'] }} ajoutés</small>
+                            <small class="text-muted d-block">Hier: {{ $livreurStats['hier'] ?? 0 }} ajoutés</small>
                     </p>
                 </div>
                 </div>
@@ -571,7 +574,7 @@ $hasSubscription = $user && $user->subscriptionPlan;
                         <p class="mb-1">Total marchands</p>
                         <p class="mb-0">
                             <span class="text-heading fw-medium me-2">{{ $marchandStats['actifs'] }} actifs</span>
-                            <small class="text-muted d-block">Hier: {{ $marchandStats['hier'] }} ajoutés</small>
+                            <small class="text-muted d-block">Hier: {{ $marchandStats['hier'] ?? 0 }} ajoutés</small>
                         </p>
                     </div>
                 </div>
@@ -822,13 +825,13 @@ $hasSubscription = $user && $user->subscriptionPlan;
                         <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
                         <div class="me-2">
                             <h6 class="mb-0 fw-normal">Colis en attente de livraison</h6>
-                            <small class="text-{{ $recentActivities['performance_data']['packages_out_for_delivery']['variation_type'] }} fw-normal d-block">
-                            <i class="ti ti-chevron-{{ $recentActivities['performance_data']['packages_out_for_delivery']['variation'] >= 0 ? 'up' : 'down' }} mb-1 me-1"></i>
-                            {{ abs($recentActivities['performance_data']['packages_out_for_delivery']['variation']) }}%
+                            <small class="text-{{ $recentActivities['performance_data']['packages_out_for_delivery']['variation_type'] ?? 'secondary' }} fw-normal d-block">
+                            <i class="ti ti-chevron-{{ ($recentActivities['performance_data']['packages_out_for_delivery']['variation'] ?? 0) >= 0 ? 'up' : 'down' }} mb-1 me-1"></i>
+                            {{ abs($recentActivities['performance_data']['packages_out_for_delivery']['variation'] ?? 0) }}%
                             </small>
                         </div>
                         <div class="user-progress">
-                            <h6 class="text-body mb-0">{{ number_format($recentActivities['performance_data']['packages_out_for_delivery']['count']) }}</h6>
+                            <h6 class="text-body mb-0">{{ number_format($recentActivities['performance_data']['packages_out_for_delivery']['count'] ?? 0) }}</h6>
                         </div>
                         </div>
                     </li>
@@ -841,13 +844,13 @@ $hasSubscription = $user && $user->subscriptionPlan;
                         <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
                         <div class="me-2">
                             <h6 class="mb-0 fw-normal">Colis livrés</h6>
-                            <small class="text-{{ $recentActivities['performance_data']['packages_delivered']['variation_type'] }} fw-normal d-block">
-                            <i class="ti ti-chevron-{{ $recentActivities['performance_data']['packages_delivered']['variation'] >= 0 ? 'up' : 'down' }} mb-1 me-1"></i>
-                            {{ abs($recentActivities['performance_data']['packages_delivered']['variation']) }}%
+                            <small class="text-{{ $recentActivities['performance_data']['packages_delivered']['variation_type'] ?? 'secondary' }} fw-normal d-block">
+                            <i class="ti ti-chevron-{{ ($recentActivities['performance_data']['packages_delivered']['variation'] ?? 0) >= 0 ? 'up' : 'down' }} mb-1 me-1"></i>
+                            {{ abs($recentActivities['performance_data']['packages_delivered']['variation'] ?? 0) }}%
                             </small>
                         </div>
                         <div class="user-progress">
-                            <h6 class="text-body mb-0">{{ number_format($recentActivities['performance_data']['packages_delivered']['count']) }}</h6>
+                            <h6 class="text-body mb-0">{{ number_format($recentActivities['performance_data']['packages_delivered']['count'] ?? 0) }}</h6>
                         </div>
                         </div>
                     </li>
@@ -860,13 +863,13 @@ $hasSubscription = $user && $user->subscriptionPlan;
                         <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
                         <div class="me-2">
                             <h6 class="mb-0 fw-normal">Taux de succès de livraison</h6>
-                            <small class="text-{{ $recentActivities['performance_data']['delivery_success_rate']['variation_type'] }} fw-normal d-block">
-                            <i class="ti ti-chevron-{{ $recentActivities['performance_data']['delivery_success_rate']['variation'] >= 0 ? 'up' : 'down' }} mb-1 me-1"></i>
-                            {{ abs($recentActivities['performance_data']['delivery_success_rate']['variation']) }}%
+                            <small class="text-{{ $recentActivities['performance_data']['delivery_success_rate']['variation_type'] ?? 'secondary' }} fw-normal d-block">
+                            <i class="ti ti-chevron-{{ ($recentActivities['performance_data']['delivery_success_rate']['variation'] ?? 0) >= 0 ? 'up' : 'down' }} mb-1 me-1"></i>
+                            {{ abs($recentActivities['performance_data']['delivery_success_rate']['variation'] ?? 0) }}%
                             </small>
                         </div>
                         <div class="user-progress">
-                            <h6 class="text-body mb-0">{{ $recentActivities['performance_data']['delivery_success_rate']['rate'] }}%</h6>
+                            <h6 class="text-body mb-0">{{ $recentActivities['performance_data']['delivery_success_rate']['rate'] ?? 0 }}%</h6>
                         </div>
                         </div>
                     </li>
@@ -879,13 +882,13 @@ $hasSubscription = $user && $user->subscriptionPlan;
                         <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
                         <div class="me-2">
                             <h6 class="mb-0 fw-normal">Temps moyen de livraison</h6>
-                            <small class="text-{{ $recentActivities['performance_data']['average_delivery_time']['variation_type'] }} fw-normal d-block">
-                            <i class="ti ti-chevron-{{ $recentActivities['performance_data']['average_delivery_time']['variation'] >= 0 ? 'up' : 'down' }} mb-1 me-1"></i>
-                            {{ abs($recentActivities['performance_data']['average_delivery_time']['variation']) }}%
+                            <small class="text-{{ $recentActivities['performance_data']['average_delivery_time']['variation_type'] ?? 'secondary' }} fw-normal d-block">
+                            <i class="ti ti-chevron-{{ ($recentActivities['performance_data']['average_delivery_time']['variation'] ?? 0) >= 0 ? 'up' : 'down' }} mb-1 me-1"></i>
+                            {{ abs($recentActivities['performance_data']['average_delivery_time']['variation'] ?? 0) }}%
                             </small>
                         </div>
                         <div class="user-progress">
-                            <h6 class="text-body mb-0">{{ $recentActivities['performance_data']['average_delivery_time']['days'] }} Jours</h6>
+                            <h6 class="text-body mb-0">{{ $recentActivities['performance_data']['average_delivery_time']['days'] ?? 0 }} Jours</h6>
                         </div>
                         </div>
                     </li>
@@ -898,13 +901,13 @@ $hasSubscription = $user && $user->subscriptionPlan;
                         <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
                         <div class="me-2">
                             <h6 class="mb-0 fw-normal">Satisfaction client</h6>
-                            <small class="text-{{ $recentActivities['performance_data']['customer_satisfaction']['variation_type'] }} fw-normal d-block">
-                            <i class="ti ti-chevron-{{ $recentActivities['performance_data']['customer_satisfaction']['variation'] >= 0 ? 'up' : 'down' }} mb-1 me-1"></i>
-                            {{ abs($recentActivities['performance_data']['customer_satisfaction']['variation']) }}%
+                            <small class="text-{{ $recentActivities['performance_data']['customer_satisfaction']['variation_type'] ?? 'secondary' }} fw-normal d-block">
+                            <i class="ti ti-chevron-{{ ($recentActivities['performance_data']['customer_satisfaction']['variation'] ?? 0) >= 0 ? 'up' : 'down' }} mb-1 me-1"></i>
+                            {{ abs($recentActivities['performance_data']['customer_satisfaction']['variation'] ?? 0) }}%
                             </small>
                         </div>
                         <div class="user-progress">
-                            <h6 class="text-body mb-0">{{ number_format($recentActivities['performance_data']['customer_satisfaction']['rating'], 1) }}/5</h6>
+                            <h6 class="text-body mb-0">{{ number_format($recentActivities['performance_data']['customer_satisfaction']['rating'] ?? 0, 1) }}/5</h6>
                         </div>
                         </div>
                     </li>
@@ -924,7 +927,7 @@ $hasSubscription = $user && $user->subscriptionPlan;
             <div class="card-header d-flex align-items-center justify-content-between">
                 <div class="card-title mb-0">
                 <h5 class="mb-1">Statistiques d'expédition</h5>
-                    <p class="card-subtitle">Nombre total de livraisons {{ array_sum($chartData['delivery_data']) }}</p>
+                    <p class="card-subtitle">Nombre total de livraisons {{ array_sum($chartData['delivery_data'] ?? []) }}</p>
                 </div>
                 <div class="btn-group">
                     <button type="button" class="btn btn-label-primary" id="currentMonthBtn">{{ now()->format('F') }}</button>
@@ -1214,7 +1217,7 @@ $hasSubscription = $user && $user->subscriptionPlan;
                     </tr>
                 </thead>
                 <tbody>
-                    @if(count($recentActivities['colis_en_cours_data']) > 0)
+                    @if(isset($recentActivities['colis_en_cours_data']) && count($recentActivities['colis_en_cours_data']) > 0)
                         @foreach($recentActivities['colis_en_cours_data'] as $livraison)
                             <tr>
                                 <td>
@@ -1538,9 +1541,9 @@ function initializeChart() {
     }
 
     // Données du graphique d'expédition
-    const shipmentLabels = @json($chartData['shipment_labels']);
-    const shipmentData = @json($chartData['shipment_data']);
-    const deliveryData = @json($chartData['delivery_data']);
+    const shipmentLabels = @json($chartData['shipment_labels'] ?? []);
+    const shipmentData = @json($chartData['shipment_data'] ?? []);
+    const deliveryData = @json($chartData['delivery_data'] ?? []);
 
     // Configuration du graphique
     const ctx = document.getElementById('shipmentStatisticsChart').getContext('2d');

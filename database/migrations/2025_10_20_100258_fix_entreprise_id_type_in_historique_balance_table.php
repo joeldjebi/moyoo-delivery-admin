@@ -11,10 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('historique_balance', function (Blueprint $table) {
-            // Modifier le type de entreprise_id pour correspondre à la table entreprises
-            $table->bigInteger('entreprise_id')->nullable()->change();
-        });
+        if (Schema::hasTable('historique_balance') && Schema::hasColumn('historique_balance', 'entreprise_id')) {
+            Schema::table('historique_balance', function (Blueprint $table) {
+                // Modifier le type de entreprise_id pour correspondre à la table entreprises
+                $table->bigInteger('entreprise_id')->nullable()->change();
+            });
+        }
     }
 
     /**
@@ -22,9 +24,11 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('historique_balance', function (Blueprint $table) {
-            // Revenir au type unsigned
-            $table->unsignedBigInteger('entreprise_id')->nullable()->change();
-        });
+        if (Schema::hasTable('historique_balance') && Schema::hasColumn('historique_balance', 'entreprise_id')) {
+            Schema::table('historique_balance', function (Blueprint $table) {
+                // Revenir au type unsigned (si pertinent en MySQL)
+                try { $table->unsignedBigInteger('entreprise_id')->nullable()->change(); } catch (\Throwable $e) {}
+            });
+        }
     }
 };

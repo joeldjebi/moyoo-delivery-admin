@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Validation\ValidationException;
 use App\Models\User;
 use App\Models\EmailVerification;
@@ -131,7 +132,7 @@ class AuthController extends Controller
             // Redirection si les informations d'entreprise doivent être mises à jour
             $entreprise = Entreprise::getEntrepriseByUser($user->id);
             if ($entreprise && (int)($entreprise->not_update) === 0) {
-                return redirect()->to('/entreprise');
+                return redirect()->intended(route('entreprise.index'));
             }
 
             return redirect()->intended(route('dashboard'));
@@ -643,6 +644,44 @@ class AuthController extends Controller
                 Log::error('Tenant bootstrap failed', [
                     'error' => $tb->getMessage(),
                     'entreprise_id' => $entreprise->id
+                ]);
+            }
+
+            // Fallback: si les permissions de rôle ne sont pas seedées, les insérer maintenant
+            try {
+                if (\App\Models\RolePermission::where('entreprise_id', $entreprise->id)->count() === 0) {
+                    Artisan::call('seed:role-permissions', ['--entreprise_id' => $entreprise->id]);
+                    Log::info('Role permissions seeded via fallback for entreprise', [
+                        'entreprise_id' => $entreprise->id
+                    ]);
+                }
+            } catch (\Throwable $e) {
+                Log::warning('Fallback seeding role_permissions failed', [
+                    'entreprise_id' => $entreprise->id,
+                    'error' => $e->getMessage()
+                ]);
+            }
+
+            // Accorder tous les droits au nouvel utilisateur (rôle admin + permissions du rôle admin)
+            try {
+                $adminPermissions = \App\Models\RolePermission::where('entreprise_id', $entreprise->id)
+                    ->where('role', 'admin')
+                    ->value('permissions') ?: [];
+
+                $user->update([
+                    'role' => 'admin',
+                    'user_type' => 'entreprise_admin',
+                    'permissions' => $adminPermissions,
+                ]);
+
+                Log::info('Permissions admin attribuées au nouvel utilisateur', [
+                    'user_id' => $user->id,
+                    'entreprise_id' => $entreprise->id
+                ]);
+            } catch (\Throwable $e) {
+                Log::warning('Attribution des permissions admin échouée', [
+                    'user_id' => $user->id,
+                    'error' => $e->getMessage()
                 ]);
             }
 

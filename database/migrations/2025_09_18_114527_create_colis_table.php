@@ -22,7 +22,8 @@ return new class extends Migration
             $table->text('instructions_livraison')->nullable(); // Instructions spéciales pour ce colis
 
             // Relations avec zone et commune
-            $table->foreignId('zone_id')->constrained()->onUpdate('cascade')->onDelete('cascade');
+            // La table des zones est 'zone_activites'
+            $table->foreignId('zone_id')->constrained('zone_activites')->onUpdate('cascade')->onDelete('cascade');
             $table->foreignId('commune_id')->constrained()->onUpdate('cascade')->onDelete('cascade');
 
             // Ordre et planification

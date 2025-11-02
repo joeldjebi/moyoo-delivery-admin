@@ -19,10 +19,15 @@ class RolePermission extends Model
     /**
      * Obtenir les permissions pour un rôle donné
      */
-    public static function getPermissionsForRole($role)
+    public static function getPermissionsForRole($role, $entrepriseId = null)
     {
-        $rolePermission = self::where('role', $role)->first();
-        return $rolePermission ? $rolePermission->permissions : [];
+        $entrepriseId = $entrepriseId ?? (auth()->user()->entreprise_id ?? null);
+        $query = self::where('role', $role);
+        if ($entrepriseId) {
+            $query->where('entreprise_id', $entrepriseId);
+        }
+        $rolePermission = $query->first();
+        return $rolePermission ? ($rolePermission->permissions ?? []) : [];
     }
 
     /**

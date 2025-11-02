@@ -60,13 +60,36 @@ class DashboardController extends Controller
             return view('dashboard', [
                 'title' => 'Tableau de Bord',
                 'menu' => 'dashboard',
-                'stats' => ['total' => 0, 'livres' => 0, 'en_cours' => 0, 'en_attente' => 0, 'aujourdhui' => 0, 'cette_semaine' => 0],
+                'stats' => [
+                    'total' => 0,
+                    'livres' => 0,
+                    'en_cours' => 0,
+                    'en_attente' => 0,
+                    'aujourdhui' => 0,
+                    'hier' => 0,
+                    'cette_semaine' => 0,
+                    'ce_mois' => 0
+                ],
                 'fraisStats' => ['aujourdhui' => 0, 'cette_semaine' => 0, 'ce_mois' => 0, 'total' => 0],
-                'livreurStats' => ['total' => 0, 'actifs' => 0, 'inactifs' => 0],
-                'marchandStats' => ['total' => 0, 'actifs' => 0, 'inactifs' => 0],
-                'chartData' => ['colis_par_jour' => [], 'colis_par_mois' => [], 'repartition_statut' => []],
-                'ramassages' => collect([])
-                // 'recentActivities' => ['derniers_colis' => [], 'dernieres_livraisons' => []]
+                'livreurStats' => ['total' => 0, 'actifs' => 0, 'inactifs' => 0, 'hier' => 0],
+                'marchandStats' => ['total' => 0, 'actifs' => 0, 'inactifs' => 0, 'hier' => 0],
+                'chartData' => [
+                    'shipment_labels' => [],
+                    'shipment_data' => [],
+                    'delivery_data' => [],
+                    'colis_par_jour' => [],
+                    'colis_par_mois' => [],
+                    'repartition_statut' => []
+                ],
+                'ramassages' => collect([]),
+                'recentActivities' => [
+                    'derniers_colis' => collect(),
+                    'dernieres_livraisons' => collect(),
+                    'dernieres_boutiques' => collect(),
+                    'performance_data' => [],
+                    'colis_en_cours_data' => collect(),
+                    'ramassages_data' => collect()
+                ]
             ]);
         }
     }

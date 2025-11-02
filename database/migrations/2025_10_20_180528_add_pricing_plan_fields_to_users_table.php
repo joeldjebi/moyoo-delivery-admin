@@ -11,16 +11,18 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            // Ajouter le champ pour le plan de pricing actuel
-            $table->unsignedBigInteger('current_pricing_plan_id')->nullable()->after('subscription_plan_id');
-
-            // Ajouter une contrainte de clé étrangère
-            $table->foreign('current_pricing_plan_id')->references('id')->on('pricing_plans')->onDelete('set null');
-
-            // Ajouter un index
-            $table->index('current_pricing_plan_id');
-        });
+        if (Schema::hasTable('users')) {
+            Schema::table('users', function (Blueprint $table) {
+                // Ajouter le champ pour le plan de pricing actuel
+                if (!Schema::hasColumn('users', 'current_pricing_plan_id')) {
+                    $table->unsignedBigInteger('current_pricing_plan_id')->nullable()->after('subscription_plan_id');
+                }
+                // Ajouter une contrainte de clé étrangère
+                try { $table->foreign('current_pricing_plan_id')->references('id')->on('pricing_plans')->onDelete('set null'); } catch (\Throwable $e) {}
+                // Ajouter un index
+                try { $table->index('current_pricing_plan_id'); } catch (\Throwable $e) {}
+            });
+        }
     }
 
     /**
@@ -28,10 +30,14 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->dropForeign(['current_pricing_plan_id']);
-            $table->dropIndex(['current_pricing_plan_id']);
-            $table->dropColumn('current_pricing_plan_id');
-        });
+        if (Schema::hasTable('users')) {
+            Schema::table('users', function (Blueprint $table) {
+                try { $table->dropForeign(['current_pricing_plan_id']); } catch (\Throwable $e) {}
+                try { $table->dropIndex(['current_pricing_plan_id']); } catch (\Throwable $e) {}
+                if (Schema::hasColumn('users', 'current_pricing_plan_id')) {
+                    $table->dropColumn('current_pricing_plan_id');
+                }
+            });
+        }
     }
 };

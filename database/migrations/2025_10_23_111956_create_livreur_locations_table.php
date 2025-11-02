@@ -30,7 +30,8 @@ return new class extends Migration
             $table->index('timestamp');
             $table->index('status');
             $table->index(['livreur_id', 'timestamp']);
-            $table->foreign('livreur_id')->references('id')->on('users')->onDelete('cascade');
+            // Référence vers la table des livreurs
+            $table->foreign('livreur_id')->references('id')->on('livreurs')->onDelete('cascade');
             $table->foreign('ramassage_id')->references('id')->on('ramassages')->onDelete('set null');
             $table->foreign('historique_livraison_id')->references('id')->on('historique_livraisons')->onDelete('set null');
         });
