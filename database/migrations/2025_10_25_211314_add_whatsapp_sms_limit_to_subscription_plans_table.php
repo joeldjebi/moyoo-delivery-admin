@@ -12,7 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('subscription_plans', function (Blueprint $table) {
-            $table->integer('whatsapp_sms_limit')->nullable()->after('whatsapp_notifications');
+            if (!Schema::hasColumn('subscription_plans', 'whatsapp_sms_limit')) {
+                $table->integer('whatsapp_sms_limit')->nullable()->after('whatsapp_notifications');
+            }
         });
     }
 

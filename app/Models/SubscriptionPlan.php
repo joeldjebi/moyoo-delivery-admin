@@ -282,6 +282,10 @@ class SubscriptionPlan extends Model
     {
         return self::where('entreprise_id', $entrepriseId)
             ->where('is_active', true)
+            ->where(function($query) {
+                $query->whereNull('expires_at')
+                      ->orWhere('expires_at', '>', now());
+            })
             ->exists();
     }
 
@@ -292,6 +296,10 @@ class SubscriptionPlan extends Model
     {
         return self::where('entreprise_id', $entrepriseId)
             ->where('is_active', true)
+            ->where(function($query) {
+                $query->whereNull('expires_at')
+                      ->orWhere('expires_at', '>', now());
+            })
             ->with('pricingPlan')
             ->first();
     }

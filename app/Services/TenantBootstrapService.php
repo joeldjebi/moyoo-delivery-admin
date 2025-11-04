@@ -305,36 +305,67 @@ class TenantBootstrapService
 
     protected function seedSubscriptionPlan(int $entrepriseId): void
     {
-        // Aligner sur pricing_plans (plan gratuit par défaut)
-        $pricingFree = \App\Models\PricingPlan::where('price', 0)->first();
+        try {
+            // Aligner sur pricing_plans (plan gratuit par défaut)
+            $pricingFree = \App\Models\PricingPlan::where('price', 0)->first();
 
-        $payload = [
-            'name' => $pricingFree->name ?? 'Free',
-            'slug' => 'free',
-            'description' => $pricingFree->description ?? 'Plan gratuit pour commencer',
-            'price' => $pricingFree->price ?? 0,
-            'currency' => $pricingFree->currency ?? 'XOF',
-            'duration_days' => 30,
-            'features' => $pricingFree->features ?? [
-                "Jusqu'à 20 colis par mois",
-                "Jusqu'à 2 livreurs",
-                "Jusqu'à 5 marchands",
-                "Support par email",
-                "Tableau de bord basique",
-                "Rapports mensuels",
-                "Suivi en temps réel"
-            ],
-            'pricing_plan_id' => $pricingFree->id ?? null,
-            'is_active' => true,
-            'sort_order' => 1,
-            'started_at' => now(),
-            'expires_at' => now()->addDays(30),
-        ];
+            if (!$pricingFree) {
+                \Log::warning('Aucun plan gratuit trouvé dans pricing_plans', [
+                    'entreprise_id' => $entrepriseId
+                ]);
+            }
 
-        SubscriptionPlan::updateOrCreate(
-            ['entreprise_id' => $entrepriseId, 'slug' => 'free'],
-            $payload
-        );
+            $payload = [
+                'name' => $pricingFree->name ?? 'Free',
+                'slug' => 'free',
+                'entreprise_id' => $entrepriseId,
+                'description' => $pricingFree->description ?? 'Plan gratuit pour commencer',
+                'price' => $pricingFree->price ?? 0,
+                'currency' => $pricingFree->currency ?? 'XOF',
+                'duration_days' => 30,
+                'features' => $pricingFree->features ?? [
+                    "Jusqu'à 20 colis par mois",
+                    "Jusqu'à 2 livreurs",
+                    "Jusqu'à 5 marchands",
+                    "Support par email",
+                    "Tableau de bord basique",
+                    "Rapports mensuels",
+                    "Suivi en temps réel"
+                ],
+                'max_colis_per_month' => 20,
+                'max_livreurs' => 2,
+                'max_marchands' => 5,
+                'whatsapp_notifications' => false,
+                'firebase_notifications' => false,
+                'api_access' => false,
+                'advanced_reports' => false,
+                'priority_support' => false,
+                'pricing_plan_id' => $pricingFree->id ?? null,
+                'is_active' => true,
+                'sort_order' => 1,
+                'started_at' => now(),
+                'expires_at' => now()->addYear(), // Plan gratuit = 1 an
+            ];
+
+            $subscriptionPlan = SubscriptionPlan::updateOrCreate(
+                ['entreprise_id' => $entrepriseId, 'slug' => 'free'],
+                $payload
+            );
+
+            \Log::info('Subscription plan créé/mis à jour pour l\'entreprise', [
+                'entreprise_id' => $entrepriseId,
+                'subscription_plan_id' => $subscriptionPlan->id,
+                'name' => $subscriptionPlan->name,
+                'slug' => $subscriptionPlan->slug
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Erreur lors de la création du subscription plan', [
+                'entreprise_id' => $entrepriseId,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            // Ne pas faire échouer le bootstrap complet si le subscription plan échoue
+        }
     }
 
 	protected function seedTarifs(int $entrepriseId): void

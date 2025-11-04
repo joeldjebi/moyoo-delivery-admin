@@ -12,8 +12,12 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('subscription_plans', function (Blueprint $table) {
-            $table->timestamp('started_at')->nullable()->after('pricing_plan_id');
-            $table->timestamp('expires_at')->nullable()->after('started_at');
+            if (!Schema::hasColumn('subscription_plans', 'started_at')) {
+                $table->timestamp('started_at')->nullable()->after('pricing_plan_id');
+            }
+            if (!Schema::hasColumn('subscription_plans', 'expires_at')) {
+                $table->timestamp('expires_at')->nullable()->after('started_at');
+            }
         });
     }
 
