@@ -173,10 +173,39 @@ class RapportController extends Controller
     }
 
 
+    public function showLivraison($id)
+    {
+        $user = Auth::user();
+        $entrepriseId = $user->entreprise_id ?? 1;
+
+        if (!$entrepriseId || $entrepriseId == 1) {
+            $entreprise = Entreprise::where('created_by', $user->id)->first();
+            $entrepriseId = $entreprise ? $entreprise->id : 1;
+        }
+
+        $livraison = Historique_livraison::where('id', $id)
+            ->where('entreprise_id', $entrepriseId)
+            ->with([
+                'colis.zone',
+                'colis.packageColis.marchand',
+                'colis.packageColis.boutique',
+                'livreur',
+                'livraison',
+                'packageColis.marchand',
+                'packageColis.boutique'
+            ])
+            ->firstOrFail();
+
+        return response()->json([
+            'success' => true,
+            'livraison' => $livraison
+        ]);
+    }
+
     private function getLivraisonsReport($entrepriseId, $request = null)
     {
         $query = Historique_livraison::where('entreprise_id', $entrepriseId)
-            ->with(['colis.zone', 'livreur']);
+            ->with(['colis.zone', 'livreur', 'packageColis', 'livraison']);
 
         if ($request) {
             if ($request->filled('search')) {

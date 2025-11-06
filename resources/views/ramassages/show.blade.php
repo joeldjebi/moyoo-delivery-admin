@@ -341,6 +341,70 @@
                         @endif
 
 
+                        <!-- Photos des Colis Ramassés -->
+                        @if(count($photosColis ?? []) > 0)
+                            <div class="col-12 mb-4">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6 class="card-title mb-0">
+                                            <i class="ti ti-photo me-2"></i>
+                                            Photos des Colis Ramassés ({{ count($photosColis) }})
+                                        </h6>
+                                        @if($photosColis[0]['date'] ?? null)
+                                            <small class="text-muted">Date: {{ $photosColis[0]['date'] }}</small>
+                                        @endif
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row g-3">
+                                            @foreach($photosColis as $photo)
+                                                <div class="col-md-4 col-lg-3">
+                                                    <div class="card border">
+                                                        <div class="card-body p-2">
+                                                            <div class="position-relative">
+                                                                <img src="{{ $photo['url'] }}"
+                                                                     alt="{{ $photo['filename'] }}"
+                                                                     class="img-fluid rounded"
+                                                                     style="max-height: 200px; width: 100%; object-fit: cover;"
+                                                                     onerror="this.src='{{ asset('images/placeholder-image.png') }}'">
+                                                                <a href="{{ $photo['url'] }}"
+                                                                   target="_blank"
+                                                                   class="btn btn-sm btn-outline-primary position-absolute top-0 end-0 m-2"
+                                                                   title="Voir en grand">
+                                                                    <i class="ti ti-maximize"></i>
+                                                                </a>
+                                                            </div>
+                                                            <div class="mt-2">
+                                                                <small class="text-muted d-block">{{ $photo['filename'] }}</small>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        @endif
+
+                        <!-- Notes du Livreur -->
+                        @if(!empty($notesLivreurText))
+                            <div class="col-12 mb-4">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6 class="card-title mb-0">
+                                            <i class="ti ti-note me-2"></i>
+                                            Notes du Livreur
+                                        </h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="bg-light p-3 rounded">
+                                            <p class="mb-0" style="white-space: pre-wrap;">{{ $notesLivreurText }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        @endif
+
                         <!-- Gestion des Colis -->
                         <div class="col-12 mb-4">
                             <div class="card">

@@ -636,15 +636,70 @@ class AuthController extends Controller
                     'entreprise_id' => $entreprise->id,
                     'user_id' => $user->id
                 ]);
-                app(\App\Services\TenantBootstrapService::class)->bootstrapEntreprise($entreprise->id, $user->id);
+
+                $bootstrapService = app(\App\Services\TenantBootstrapService::class);
+                $bootstrapService->bootstrapEntreprise($entreprise->id, $user->id);
+
+                // Vérification finale après bootstrap
+                $bootstrapVerification = $bootstrapService->verifyBootstrap($entreprise->id, $user->id);
+
+                if (!$bootstrapVerification['success']) {
+                    Log::warning('Bootstrap incomplet après création compte', [
+                        'entreprise_id' => $entreprise->id,
+                        'missing' => $bootstrapVerification['missing'],
+                        'passed' => $bootstrapVerification['passed_checks'],
+                        'total' => $bootstrapVerification['total_checks']
+                    ]);
+
+                    // Tenter une dernière réparation
+                    $bootstrapService->repairMissingData($entreprise->id, $user->id, $bootstrapVerification['missing']);
+
+                    // Vérifier à nouveau
+                    $finalVerification = $bootstrapService->verifyBootstrap($entreprise->id, $user->id);
+                    if ($finalVerification['success']) {
+                        Log::info('Bootstrap complété après réparation finale', [
+                            'entreprise_id' => $entreprise->id
+                        ]);
+                    } else {
+                        Log::error('Bootstrap toujours incomplet après réparation', [
+                            'entreprise_id' => $entreprise->id,
+                            'still_missing' => $finalVerification['missing']
+                        ]);
+                    }
+                } else {
+                    Log::info('Bootstrap complété avec succès', [
+                        'entreprise_id' => $entreprise->id,
+                        'checks_passed' => $bootstrapVerification['passed_checks'],
+                        'total_checks' => $bootstrapVerification['total_checks']
+                    ]);
+                }
+
                 Log::info('Tenant bootstrap end', [
                     'entreprise_id' => $entreprise->id
                 ]);
             } catch (\Throwable $tb) {
                 Log::error('Tenant bootstrap failed', [
                     'error' => $tb->getMessage(),
+                    'trace' => $tb->getTraceAsString(),
                     'entreprise_id' => $entreprise->id
                 ]);
+
+                // Tenter une réparation d'urgence
+                try {
+                    $bootstrapService = app(\App\Services\TenantBootstrapService::class);
+                    $bootstrapVerification = $bootstrapService->verifyBootstrap($entreprise->id, $user->id);
+                    if (!$bootstrapVerification['success']) {
+                        $bootstrapService->repairMissingData($entreprise->id, $user->id, $bootstrapVerification['missing']);
+                        Log::info('Réparation d\'urgence effectuée après échec bootstrap', [
+                            'entreprise_id' => $entreprise->id
+                        ]);
+                    }
+                } catch (\Throwable $repairError) {
+                    Log::error('Réparation d\'urgence échouée', [
+                        'entreprise_id' => $entreprise->id,
+                        'error' => $repairError->getMessage()
+                    ]);
+                }
             }
 
             // Fallback: si les permissions de rôle ne sont pas seedées, les insérer maintenant

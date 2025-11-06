@@ -98,7 +98,7 @@ class LivreurRamassageController extends Controller
         try {
             $livreur = Auth::guard('livreur')->user();
 
-            $query = Ramassage::with(['marchand', 'boutique', 'livreur'])
+            $query = Ramassage::with(['marchand', 'boutique', 'planifications.livreur'])
                 ->whereHas('planifications', function ($q) use ($livreur) {
                     $q->where('livreur_id', $livreur->id);
                 });
@@ -109,6 +109,101 @@ class LivreurRamassageController extends Controller
             }
 
             $ramassages = $query->orderBy('date_planifiee', 'desc')->get();
+
+            // Préparer les données pour la réponse (formater selon le modèle Flutter)
+            $ramassagesData = [];
+            foreach ($ramassages as $ramassage) {
+                // Ajouter le livreur depuis la première planification
+                $firstPlanification = $ramassage->planifications->first();
+                if ($firstPlanification && $firstPlanification->livreur) {
+                    $ramassage->setRelation('livreur', $firstPlanification->livreur);
+                }
+
+                // Convertir colis_data en JSON string pour correspondre au modèle Flutter
+                $colisDataJson = is_array($ramassage->colis_data)
+                    ? json_encode($ramassage->colis_data)
+                    : ($ramassage->colis_data ?? '[]');
+
+                // Préparer les données du ramassage
+                $ramassageData = $ramassage->toArray();
+
+                // Remplacer colis_data array par JSON string
+                $ramassageData['colis_data'] = $colisDataJson;
+
+                // S'assurer que montant_total est une string
+                $ramassageData['montant_total'] = (string) ($ramassage->montant_total ?? '0');
+
+                // Formater les dates en string ISO (format attendu par Flutter)
+                $ramassageData['date_demande'] = $ramassage->date_demande ? $ramassage->date_demande->toIso8601String() : '';
+                $ramassageData['date_planifiee'] = $ramassage->date_planifiee ? $ramassage->date_planifiee->toIso8601String() : '';
+                $ramassageData['date_effectuee'] = $ramassage->date_effectuee ? $ramassage->date_effectuee->toIso8601String() : null;
+                $ramassageData['date_debut_ramassage'] = $ramassage->date_debut_ramassage ? $ramassage->date_debut_ramassage->toIso8601String() : null;
+                $ramassageData['date_fin_ramassage'] = $ramassage->date_fin_ramassage ? $ramassage->date_fin_ramassage->toIso8601String() : null;
+                $ramassageData['created_at'] = $ramassage->created_at ? $ramassage->created_at->toIso8601String() : '';
+                $ramassageData['updated_at'] = $ramassage->updated_at ? $ramassage->updated_at->toIso8601String() : '';
+
+                // S'assurer que les champs nullable sont bien null et non des chaînes vides
+                $nullableFields = ['difference_colis', 'type_difference', 'raison_difference', 'livreur_id',
+                                   'photo_ramassage', 'notes_livreur', 'notes_ramassage', 'notes'];
+                foreach ($nullableFields as $field) {
+                    if (isset($ramassageData[$field]) && $ramassageData[$field] === '') {
+                        $ramassageData[$field] = null;
+                    }
+                }
+
+                // Formater marchand et boutique
+                if ($ramassage->marchand) {
+                    $ramassageData['marchand'] = [
+                        'id' => $ramassage->marchand->id,
+                        'entreprise_id' => $ramassage->marchand->entreprise_id ?? 0,
+                        'first_name' => $ramassage->marchand->first_name ?? '',
+                        'last_name' => $ramassage->marchand->last_name ?? '',
+                        'mobile' => $ramassage->marchand->mobile ?? '',
+                        'email' => $ramassage->marchand->email ?? '',
+                        'adresse' => $ramassage->marchand->adresse ?? '',
+                        'status' => $ramassage->marchand->status ?? 'active',
+                        'commune_id' => $ramassage->marchand->commune_id ?? 0,
+                        'created_by' => (string) ($ramassage->marchand->created_by ?? ''),
+                        'deleted_at' => $ramassage->marchand->deleted_at ? $ramassage->marchand->deleted_at->toIso8601String() : null,
+                        'created_at' => $ramassage->marchand->created_at ? $ramassage->marchand->created_at->toIso8601String() : '',
+                        'updated_at' => $ramassage->marchand->updated_at ? $ramassage->marchand->updated_at->toIso8601String() : '',
+                    ];
+                }
+
+                if ($ramassage->boutique) {
+                    $ramassageData['boutique'] = [
+                        'id' => $ramassage->boutique->id,
+                        'entreprise_id' => $ramassage->boutique->entreprise_id ?? 0,
+                        'libelle' => $ramassage->boutique->libelle ?? '',
+                        'mobile' => $ramassage->boutique->mobile ?? '',
+                        'adresse' => $ramassage->boutique->adresse ?? '',
+                        'adresse_gps' => $ramassage->boutique->adresse_gps ?? '',
+                        'cover_image' => $ramassage->boutique->cover_image ?? '',
+                        'marchand_id' => $ramassage->boutique->marchand_id ?? 0,
+                        'status' => $ramassage->boutique->status ?? 'active',
+                        'created_by' => (string) ($ramassage->boutique->created_by ?? ''),
+                        'deleted_at' => $ramassage->boutique->deleted_at ? $ramassage->boutique->deleted_at->toIso8601String() : null,
+                        'created_at' => $ramassage->boutique->created_at ? $ramassage->boutique->created_at->toIso8601String() : '',
+                        'updated_at' => $ramassage->boutique->updated_at ? $ramassage->boutique->updated_at->toIso8601String() : '',
+                    ];
+                }
+
+                // Formater livreur si présent
+                if ($ramassage->livreur) {
+                    $ramassageData['livreur'] = [
+                        'id' => $ramassage->livreur->id,
+                        'first_name' => $ramassage->livreur->first_name ?? '',
+                        'last_name' => $ramassage->livreur->last_name ?? '',
+                        'mobile' => $ramassage->livreur->mobile ?? '',
+                        'email' => $ramassage->livreur->email ?? '',
+                        'status' => $ramassage->livreur->status ?? 'actif',
+                    ];
+                } else {
+                    $ramassageData['livreur'] = null;
+                }
+
+                $ramassagesData[] = $ramassageData;
+            }
 
             // Calculer les statistiques des colis par statut
             $stats = [
@@ -141,14 +236,14 @@ class LivreurRamassageController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Ramassages récupérés avec succès',
-                'data' => $ramassages,
+                'data' => $ramassagesData,
                 'statistiques' => [
                     'colis_termines' => $stats['termine'],
                     'colis_en_attente' => $stats['en_attente'],
                     'colis_en_cours' => $stats['en_cours'],
                     'colis_annules' => $stats['annule'],
                     'total' => array_sum($stats),
-                    'montant_total_encaisse' => $montantTotalEncaisse
+                    'montant_total_encaisse' => (int) $montantTotalEncaisse
                 ]
             ]);
 
@@ -468,7 +563,7 @@ class LivreurRamassageController extends Controller
      *                     @OA\Items(
      *                         type="object",
      *                         @OA\Property(property="filename", type="string", example="colis_1_1760355000_1.jpg"),
-     *                         @OA\Property(property="url", type="string", example="http://192.168.1.11:8000/storage/ramassages/photos/colis_1_1760355000_1.jpg"),
+     *                         @OA\Property(property="url", type="string", example="http://192.168.1.6:8000/storage/ramassages/photos/colis_1_1760355000_1.jpg"),
      *                         @OA\Property(property="path", type="string", example="ramassages/photos/colis_1_1760355000_1.jpg")
      *                     )
      *                 ),
@@ -518,11 +613,23 @@ class LivreurRamassageController extends Controller
             'raison_difference' => 'nullable|string|max:500'
         ]);
 
+        // Gérer les fichiers - peut être un seul fichier ou un array
+        $photosColis = $request->file('photos_colis');
+        $isArray = is_array($photosColis);
+
         // Validation des fichiers
-        $fileValidator = Validator::make($request->all(), [
-            'photos_colis' => 'required|array|min:1',
-            'photos_colis.*' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:10240'
-        ]);
+        if ($isArray) {
+            // Si c'est un array, valider chaque fichier
+            $fileValidator = Validator::make($request->all(), [
+                'photos_colis' => 'required|array|min:1',
+                'photos_colis.*' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:10240'
+            ]);
+        } else {
+            // Si c'est un seul fichier, valider comme un fichier unique
+            $fileValidator = Validator::make($request->all(), [
+                'photos_colis' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:10240'
+            ]);
+        }
 
         if ($validator->fails() || $fileValidator->fails()) {
             $errors = $validator->errors()->merge($fileValidator->errors());
@@ -544,8 +651,11 @@ class LivreurRamassageController extends Controller
                   ->where('statut_planification', 'en_cours');
             })->where('statut', 'en_cours')->findOrFail($id);
 
-            // Gérer l'upload des photos de colis (obligatoires)
-            $photosColis = $request->file('photos_colis');
+            // S'assurer que photosColis est un array
+            if (!is_array($photosColis)) {
+                $photosColis = $photosColis ? [$photosColis] : [];
+            }
+
             $uploadedPhotosColis = [];
 
             foreach ($photosColis as $index => $photoColis) {

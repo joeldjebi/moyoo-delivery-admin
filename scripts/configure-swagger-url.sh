@@ -4,7 +4,7 @@
 # Usage: ./scripts/configure-swagger-url.sh [URL]
 
 # URL par défaut
-DEFAULT_URL="http://192.168.1.11:8000"
+DEFAULT_URL="http://192.168.1.6:8000"
 
 # Utiliser l'URL fournie en paramètre ou l'URL par défaut
 SWAGGER_URL=${1:-$DEFAULT_URL}

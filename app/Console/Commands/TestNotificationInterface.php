@@ -73,7 +73,7 @@ class TestNotificationInterface extends Command
 
         $this->newLine();
         $this->info('=== Instructions d\'utilisation ===');
-        $this->info('1. Accédez à l\'interface web: http://192.168.1.11:8000/notifications/settings');
+        $this->info('1. Accédez à l\'interface web: http://192.168.1.6:8000/notifications/settings');
         $this->info('2. Cliquez sur \'Activer les Notifications\'');
         $this->info('3. Autorisez les notifications dans votre navigateur');
         $this->info('4. Le token FCM sera automatiquement enregistré');

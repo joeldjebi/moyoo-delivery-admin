@@ -280,6 +280,9 @@ class Colis extends Model
         // Calculer le montant de livraison en utilisant la méthode du modèle
         $montantLivraison = $this->calculateDeliveryCost();
 
+        // Convertir en entier (la colonne est de type integer)
+        $montantLivraison = (int) round((float) $montantLivraison);
+
         // Créer l'historique de livraison
         \App\Models\Historique_livraison::create([
             'entreprise_id' => $this->entreprise_id,
@@ -326,6 +329,9 @@ class Colis extends Model
 
         // Calculer le montant de livraison en utilisant la méthode du modèle
         $montantLivraison = $this->calculateDeliveryCost();
+
+        // Convertir en entier (la colonne est de type integer)
+        $montantLivraison = (int) round((float) $montantLivraison);
 
         // Mapper le statut du colis vers le statut de l'historique
         $statusHistorique = match($this->status) {

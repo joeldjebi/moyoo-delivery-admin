@@ -157,7 +157,8 @@
                                         <th>Zone</th>
                                         <th>Livreur</th>
                                         <th>Statut</th>
-                                        <th>Date Livraison</th>
+                                        <th>Montant à Encaisser</th>
+                                        <th>Date Création</th>
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
@@ -175,11 +176,13 @@
                                             </td>
                                             <td>{{ $livraison->colis->nom_client ?? 'N/A' }}</td>
                                             <td>
-                                                <span class="badge bg-label-primary">{{ $livraison->colis->zone->libelle ?? 'N/A' }}</span>
+                                                <span class="badge bg-label-primary">{{ $livraison->colis->zone->nom ?? $livraison->colis->zone->libelle ?? 'N/A' }}</span>
                                             </td>
                                             <td>
                                                 @if($livraison->livreur)
-                                                    {{ $livraison->livreur->first_name }} {{ $livraison->livreur->last_name }}
+                                                    <span class="badge bg-label-info">
+                                                        {{ $livraison->livreur->first_name }} {{ $livraison->livreur->last_name }}
+                                                    </span>
                                                 @else
                                                     <span class="text-muted">Non assigné</span>
                                                 @endif
@@ -195,25 +198,39 @@
                                                     @case('livre')
                                                         <span class="badge bg-label-success">Livré</span>
                                                         @break
-                                                    @case('retour')
-                                                        <span class="badge bg-label-danger">Retour</span>
+                                                    @case('annule_client')
+                                                        <span class="badge bg-label-danger">Annulé (Client)</span>
+                                                        @break
+                                                    @case('annule_livreur')
+                                                        <span class="badge bg-label-danger">Annulé (Livreur)</span>
+                                                        @break
+                                                    @case('annule_marchand')
+                                                        <span class="badge bg-label-danger">Annulé (Marchand)</span>
                                                         @break
                                                     @default
                                                         <span class="badge bg-label-secondary">{{ ucfirst($livraison->status) }}</span>
                                                 @endswitch
                                             </td>
+                                            <td>
+                                                <span class="fw-semibold text-info">{{ number_format($livraison->montant_a_encaisse ?? 0, 0, ',', ' ') }} FCFA</span>
+                                            </td>
                                             <td>{{ $livraison->created_at->format('d/m/Y H:i') }}</td>
                                             <td>
-                                                @if($livraison->colis)
-                                                    <a href="{{ route('colis.show', $livraison->colis->id) }}" class="btn btn-sm btn-outline-primary">
+                                                <div class="d-flex gap-1">
+                                                    <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#livraisonModal{{ $livraison->id }}" title="Voir les détails">
                                                         <i class="ti ti-eye"></i>
-                                                    </a>
-                                                @endif
+                                                    </button>
+                                                    @if($livraison->colis)
+                                                        <a href="{{ route('colis.show', $livraison->colis->id) }}" class="btn btn-sm btn-outline-secondary" data-bs-toggle="tooltip" title="Voir le colis">
+                                                            <i class="ti ti-package"></i>
+                                                        </a>
+                                                    @endif
+                                                </div>
                                             </td>
                                         </tr>
                                     @empty
                                         <tr>
-                                            <td colspan="7" class="text-center py-4">
+                                            <td colspan="8" class="text-center py-4">
                                                 <i class="ti ti-truck-off ti-48px text-muted mb-2"></i>
                                                 <p class="text-muted">Aucune livraison trouvée</p>
                                             </td>
@@ -222,6 +239,261 @@
                                 </tbody>
                             </table>
                         </div>
+
+                        <!-- Modales de détails pour chaque livraison -->
+                        @foreach($livraisons as $livraison)
+                            <div class="modal fade" id="livraisonModal{{ $livraison->id }}" tabindex="-1" aria-labelledby="livraisonModalLabel{{ $livraison->id }}" aria-hidden="true">
+                                <div class="modal-dialog modal-lg modal-dialog-scrollable">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="livraisonModalLabel{{ $livraison->id }}">
+                                                <i class="ti ti-truck me-2"></i>
+                                                Détails de la Livraison #{{ $livraison->id }}
+                                            </h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <div class="row">
+                                                <!-- Informations principales -->
+                                                <div class="col-md-6 mb-4">
+                                                    <h6 class="text-primary mb-3"><i class="ti ti-info-circle me-2"></i>Informations Principales</h6>
+                                                    <table class="table table-sm">
+                                                        <tr>
+                                                            <th width="40%">ID Livraison:</th>
+                                                            <td><span class="badge bg-label-secondary">#{{ $livraison->id }}</span></td>
+                                                        </tr>
+                                                        <tr>
+                                                            <th>Code Colis:</th>
+                                                            <td>
+                                                                @if($livraison->colis)
+                                                                    <a href="{{ route('colis.show', $livraison->colis->id) }}" class="text-decoration-none">
+                                                                        <span class="fw-semibold">{{ $livraison->colis->code }}</span>
+                                                                    </a>
+                                                                @else
+                                                                    <span class="text-muted">N/A</span>
+                                                                @endif
+                                                            </td>
+                                                        </tr>
+                                                        <tr>
+                                                            <th>Statut:</th>
+                                                            <td>
+                                                                @switch($livraison->status)
+                                                                    @case('en_attente')
+                                                                        <span class="badge bg-label-warning">En attente</span>
+                                                                        @break
+                                                                    @case('en_cours')
+                                                                        <span class="badge bg-label-info">En cours</span>
+                                                                        @break
+                                                                    @case('livre')
+                                                                        <span class="badge bg-label-success">Livré</span>
+                                                                        @break
+                                                                    @case('annule_client')
+                                                                        <span class="badge bg-label-danger">Annulé (Client)</span>
+                                                                        @break
+                                                                    @case('annule_livreur')
+                                                                        <span class="badge bg-label-danger">Annulé (Livreur)</span>
+                                                                        @break
+                                                                    @case('annule_marchand')
+                                                                        <span class="badge bg-label-danger">Annulé (Marchand)</span>
+                                                                        @break
+                                                                    @default
+                                                                        <span class="badge bg-label-secondary">{{ ucfirst($livraison->status) }}</span>
+                                                                @endswitch
+                                                            </td>
+                                                        </tr>
+                                                        <tr>
+                                                            <th>Livreur:</th>
+                                                            <td>
+                                                                @if($livraison->livreur)
+                                                                    <span class="badge bg-label-info">
+                                                                        {{ $livraison->livreur->first_name }} {{ $livraison->livreur->last_name }}
+                                                                    </span>
+                                                                @else
+                                                                    <span class="text-muted">Non assigné</span>
+                                                                @endif
+                                                            </td>
+                                                        </tr>
+                                                        <tr>
+                                                            <th>Zone:</th>
+                                                            <td>
+                                                                <span class="badge bg-label-primary">{{ $livraison->colis->zone->nom ?? $livraison->colis->zone->libelle ?? 'N/A' }}</span>
+                                                            </td>
+                                                        </tr>
+                                                        <tr>
+                                                            <th>Client:</th>
+                                                            <td>{{ $livraison->colis->nom_client ?? 'N/A' }}</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <th>Code Validation:</th>
+                                                            <td>
+                                                                @if($livraison->code_validation_utilise)
+                                                                    <span class="badge bg-label-primary">{{ $livraison->code_validation_utilise }}</span>
+                                                                @else
+                                                                    <span class="text-muted">-</span>
+                                                                @endif
+                                                            </td>
+                                                        </tr>
+                                                    </table>
+                                                </div>
+
+                                                <!-- Informations financières -->
+                                                <div class="col-md-6 mb-4">
+                                                    <h6 class="text-success mb-3"><i class="ti ti-currency-franc me-2"></i>Informations Financières</h6>
+                                                    <table class="table table-sm">
+                                                        <tr>
+                                                            <th width="40%">Montant à Encaisser:</th>
+                                                            <td><span class="fw-semibold text-info">{{ number_format($livraison->montant_a_encaisse ?? 0, 0, ',', ' ') }} FCFA</span></td>
+                                                        </tr>
+                                                        <tr>
+                                                            <th>Prix de Vente:</th>
+                                                            <td><span class="fw-semibold text-primary">{{ number_format($livraison->prix_de_vente ?? 0, 0, ',', ' ') }} FCFA</span></td>
+                                                        </tr>
+                                                        <tr>
+                                                            <th>Frais de Livraison:</th>
+                                                            <td><span class="fw-semibold text-success">{{ number_format($livraison->montant_de_la_livraison ?? 0, 0, ',', ' ') }} FCFA</span></td>
+                                                        </tr>
+                                                        <tr>
+                                                            <th>Package Colis ID:</th>
+                                                            <td>
+                                                                @if($livraison->package_colis_id)
+                                                                    <span class="badge bg-label-secondary">#{{ $livraison->package_colis_id }}</span>
+                                                                @else
+                                                                    <span class="text-muted">-</span>
+                                                                @endif
+                                                            </td>
+                                                        </tr>
+                                                        <tr>
+                                                            <th>Livraison ID:</th>
+                                                            <td>
+                                                                @if($livraison->livraison_id)
+                                                                    <span class="badge bg-label-secondary">#{{ $livraison->livraison_id }}</span>
+                                                                @else
+                                                                    <span class="text-muted">-</span>
+                                                                @endif
+                                                            </td>
+                                                        </tr>
+                                                        <tr>
+                                                            <th>Entreprise ID:</th>
+                                                            <td><span class="badge bg-label-secondary">#{{ $livraison->entreprise_id }}</span></td>
+                                                        </tr>
+                                                    </table>
+                                                </div>
+
+                                                <!-- Informations de livraison -->
+                                                <div class="col-md-6 mb-4">
+                                                    <h6 class="text-info mb-3"><i class="ti ti-calendar me-2"></i>Dates et Horaires</h6>
+                                                    <table class="table table-sm">
+                                                        <tr>
+                                                            <th width="40%">Date Création:</th>
+                                                            <td>{{ $livraison->created_at->format('d/m/Y H:i:s') }}</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <th>Date Mise à Jour:</th>
+                                                            <td>{{ $livraison->updated_at->format('d/m/Y H:i:s') }}</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <th>Date Livraison Effective:</th>
+                                                            <td>
+                                                                @if($livraison->date_livraison_effective)
+                                                                    <span class="text-success">{{ \Carbon\Carbon::parse($livraison->date_livraison_effective)->format('d/m/Y H:i:s') }}</span>
+                                                                @else
+                                                                    <span class="text-muted">-</span>
+                                                                @endif
+                                                            </td>
+                                                        </tr>
+                                                        <tr>
+                                                            <th>Créé par:</th>
+                                                            <td>{{ $livraison->created_by ?? 'N/A' }}</td>
+                                                        </tr>
+                                                    </table>
+                                                </div>
+
+                                                <!-- Informations GPS et Preuve -->
+                                                <div class="col-md-6 mb-4">
+                                                    <h6 class="text-warning mb-3"><i class="ti ti-map-pin me-2"></i>Localisation et Preuve</h6>
+                                                    <table class="table table-sm">
+                                                        <tr>
+                                                            <th width="40%">GPS (Lat/Long):</th>
+                                                            <td>
+                                                                @if($livraison->latitude && $livraison->longitude)
+                                                                    <a href="https://www.google.com/maps?q={{ $livraison->latitude }},{{ $livraison->longitude }}" target="_blank" class="badge bg-label-success">
+                                                                        <i class="ti ti-map-pin me-1"></i>
+                                                                        {{ number_format($livraison->latitude, 6) }}, {{ number_format($livraison->longitude, 6) }}
+                                                                    </a>
+                                                                @else
+                                                                    <span class="text-muted">-</span>
+                                                                @endif
+                                                            </td>
+                                                        </tr>
+                                                        <tr>
+                                                            <th>Photo de Preuve:</th>
+                                                            <td>
+                                                                @if($livraison->photo_proof_path)
+                                                                    <a href="{{ asset('storage/' . $livraison->photo_proof_path) }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                                                        <i class="ti ti-photo me-1"></i>Voir la photo
+                                                                    </a>
+                                                                @else
+                                                                    <span class="text-muted">-</span>
+                                                                @endif
+                                                            </td>
+                                                        </tr>
+                                                        <tr>
+                                                            <th>Signature:</th>
+                                                            <td>
+                                                                @if($livraison->signature_data)
+                                                                    <span class="badge bg-label-warning">
+                                                                        <i class="ti ti-signature me-1"></i>Signature disponible
+                                                                    </span>
+                                                                @else
+                                                                    <span class="text-muted">-</span>
+                                                                @endif
+                                                            </td>
+                                                        </tr>
+                                                    </table>
+                                                </div>
+
+                                                <!-- Note de livraison -->
+                                                @if($livraison->note_livraison)
+                                                <div class="col-12 mb-4">
+                                                    <h6 class="text-secondary mb-3"><i class="ti ti-note me-2"></i>Note de Livraison</h6>
+                                                    <div class="card bg-light">
+                                                        <div class="card-body">
+                                                            <p class="mb-0">{{ $livraison->note_livraison }}</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                @endif
+
+                                                <!-- Motif d'annulation -->
+                                                @if($livraison->motif_annulation)
+                                                <div class="col-12 mb-4">
+                                                    <h6 class="text-danger mb-3"><i class="ti ti-alert-circle me-2"></i>Motif d'Annulation</h6>
+                                                    <div class="card bg-danger-subtle">
+                                                        <div class="card-body">
+                                                            <p class="mb-0 text-danger">{{ $livraison->motif_annulation }}</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                @endif
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer">
+                                            @if($livraison->colis)
+                                                <a href="{{ route('colis.show', $livraison->colis->id) }}" class="btn btn-outline-primary">
+                                                    <i class="ti ti-package me-1"></i>Voir le Colis
+                                                </a>
+                                            @endif
+                                            @if($livraison->packageColis)
+                                                <a href="{{ route('colis.package.show', $livraison->packageColis->id) }}" class="btn btn-outline-info">
+                                                    <i class="ti ti-box me-1"></i>Voir le Package
+                                                </a>
+                                            @endif
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        @endforeach
 
                         @if($livraisons->hasPages())
                             <div class="d-flex justify-content-center mt-3">

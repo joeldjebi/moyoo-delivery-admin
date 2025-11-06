@@ -7,11 +7,11 @@
     },
     "servers": [
         {
-            "url": "http://192.168.1.11:8000",
+            "url": "http://192.168.1.6:8000",
             "description": "Serveur de développement MOYOO"
         },
         {
-            "url": "http://192.168.1.11:8000"
+            "url": "http://192.168.1.6:8000"
         }
     ],
     "paths": {
@@ -1407,7 +1407,7 @@
                                                 },
                                                 "photo": {
                                                     "type": "string",
-                                                    "example": "http://192.168.1.11:8000/storage/livreurs/photo.jpg"
+                                                    "example": "http://192.168.1.6:8000/storage/livreurs/photo.jpg"
                                                 }
                                             },
                                             "type": "object"
@@ -2439,7 +2439,7 @@
                                                 },
                                                 "photo_proof_url": {
                                                     "type": "string",
-                                                    "example": "http://192.168.1.11:8000/storage/livraisons/proofs/colis_1_1760357729.jpg"
+                                                    "example": "http://192.168.1.6:8000/storage/livraisons/proofs/colis_1_1760357729.jpg"
                                                 }
                                             },
                                             "type": "object"
@@ -4976,7 +4976,7 @@
                                                             },
                                                             "url": {
                                                                 "type": "string",
-                                                                "example": "http://192.168.1.11:8000/storage/ramassages/photos/colis_1_1760355000_1.jpg"
+                                                                "example": "http://192.168.1.6:8000/storage/ramassages/photos/colis_1_1760355000_1.jpg"
                                                             },
                                                             "path": {
                                                                 "type": "string",

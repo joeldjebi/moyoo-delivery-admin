@@ -170,7 +170,9 @@ class LivreurDeliveryController extends Controller
 
             $montantTotalEncaisse = 0;
 
-            foreach ($colis as $colisItem) {
+            // Formater les colis selon le modèle Flutter
+            $formattedColis = $colis->map(function ($colisItem) use (&$stats, &$montantTotalEncaisse) {
+                // Calculer les statistiques
                 switch ($colisItem->status) {
                     case 0: // en_attente
                         $stats['en_attente']++;
@@ -180,7 +182,7 @@ class LivreurDeliveryController extends Controller
                         break;
                     case 2: // livre
                         $stats['livre']++;
-                        $montantTotalEncaisse += (float) $colisItem->montant_a_encaisse;
+                        $montantTotalEncaisse += (int) ($colisItem->montant_a_encaisse ?? 0);
                         break;
                     case 3:
                     case 4:
@@ -188,19 +190,22 @@ class LivreurDeliveryController extends Controller
                         $stats['annule']++;
                         break;
                 }
-            }
+
+                // Formater le colis selon le modèle Flutter
+                return $this->formatColisForFlutter($colisItem);
+            });
 
             return response()->json([
                 'success' => true,
                 'message' => 'Colis assignés récupérés avec succès',
-                'data' => $colis,
+                'data' => $formattedColis->values()->all(),
                 'statistiques' => [
-                    'colis_en_attente' => $stats['en_attente'],
-                    'colis_en_cours' => $stats['en_cours'],
-                    'colis_livres' => $stats['livre'],
-                    'colis_annules' => $stats['annule'],
-                    'total' => array_sum($stats),
-                    'montant_total_encaisse' => $montantTotalEncaisse
+                    'colis_en_attente' => (int) $stats['en_attente'],
+                    'colis_en_cours' => (int) $stats['en_cours'],
+                    'colis_livres' => (int) $stats['livre'],
+                    'colis_annules' => (int) $stats['annule'],
+                    'total' => (int) array_sum($stats),
+                    'montant_total_encaisse' => (int) $montantTotalEncaisse
                 ]
             ]);
 
@@ -210,6 +215,595 @@ class LivreurDeliveryController extends Controller
                 'message' => 'Erreur lors de la récupération des colis: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    /**
+     * Formater un colis selon le modèle Flutter
+     */
+    private function formatColisForFlutter($colis)
+    {
+        // Formater Commune
+        $commune = $colis->commune ? [
+            'id' => (int) $colis->commune->id,
+            'entreprise_id' => (int) ($colis->commune->entreprise_id ?? 0),
+            'libelle' => (string) ($colis->commune->libelle ?? ''),
+            'ville_id' => (int) ($colis->commune->ville_id ?? 0),
+            'deleted_at' => $colis->commune->deleted_at ? $colis->commune->deleted_at->toIso8601String() : null,
+            'created_at' => $colis->commune->created_at ? $colis->commune->created_at->toIso8601String() : '',
+            'updated_at' => $colis->commune->updated_at ? $colis->commune->updated_at->toIso8601String() : '',
+        ] : [
+            'id' => 0,
+            'entreprise_id' => 0,
+            'libelle' => '',
+            'ville_id' => 0,
+            'deleted_at' => null,
+            'created_at' => '',
+            'updated_at' => '',
+        ];
+
+        // Formater Livraison
+        $livraison = $colis->livraison ? [
+            'id' => (int) $colis->livraison->id,
+            'entreprise_id' => (int) ($colis->livraison->entreprise_id ?? 0),
+            'uuid' => (string) ($colis->livraison->uuid ?? ''),
+            'numero_de_livraison' => (string) ($colis->livraison->numero_de_livraison ?? ''),
+            'colis_id' => (int) ($colis->livraison->colis_id ?? 0),
+            'package_colis_id' => (int) ($colis->livraison->package_colis_id ?? 0),
+            'marchand_id' => (int) ($colis->livraison->marchand_id ?? 0),
+            'boutique_id' => (int) ($colis->livraison->boutique_id ?? 0),
+            'adresse_de_livraison' => (string) ($colis->livraison->adresse_de_livraison ?? ''),
+            'status' => (int) ($colis->livraison->status ?? 0),
+            'note_livraison' => $colis->livraison->note_livraison ? (string) $colis->livraison->note_livraison : null,
+            'code_validation' => (string) ($colis->livraison->code_validation ?? ''),
+            'created_by' => (string) ($colis->livraison->created_by ?? ''),
+            'deleted_at' => $colis->livraison->deleted_at ? $colis->livraison->deleted_at->toIso8601String() : null,
+            'created_at' => $colis->livraison->created_at ? $colis->livraison->created_at->toIso8601String() : '',
+            'updated_at' => $colis->livraison->updated_at ? $colis->livraison->updated_at->toIso8601String() : '',
+        ] : [
+            'id' => 0,
+            'entreprise_id' => 0,
+            'uuid' => '',
+            'numero_de_livraison' => '',
+            'colis_id' => 0,
+            'package_colis_id' => 0,
+            'marchand_id' => 0,
+            'boutique_id' => 0,
+            'adresse_de_livraison' => '',
+            'status' => 0,
+            'note_livraison' => null,
+            'code_validation' => '',
+            'created_by' => '',
+            'deleted_at' => null,
+            'created_at' => '',
+            'updated_at' => '',
+        ];
+
+        // Formater PackageColis
+        $packageColis = $colis->packageColis ? [
+            'id' => (int) $colis->packageColis->id,
+            'entreprise_id' => (int) ($colis->packageColis->entreprise_id ?? 0),
+            'numero_package' => (string) ($colis->packageColis->numero_package ?? ''),
+            'marchand_id' => (int) ($colis->packageColis->marchand_id ?? 0),
+            'boutique_id' => (int) ($colis->packageColis->boutique_id ?? 0),
+            'nombre_colis' => (int) ($colis->packageColis->nombre_colis ?? 0),
+            'communes_selected' => is_array($colis->packageColis->communes_selected)
+                ? array_map('strval', $colis->packageColis->communes_selected)
+                : [],
+            'colis_ids' => is_array($colis->packageColis->colis_ids)
+                ? array_map('intval', $colis->packageColis->colis_ids)
+                : [],
+            'livreur_id' => (int) ($colis->packageColis->livreur_id ?? 0),
+            'engin_id' => (int) ($colis->packageColis->engin_id ?? 0),
+            'statut' => (string) ($colis->packageColis->statut ?? ''),
+            'created_by' => (int) ($colis->packageColis->created_by ?? 0),
+            'created_at' => $colis->packageColis->created_at ? $colis->packageColis->created_at->toIso8601String() : '',
+            'updated_at' => $colis->packageColis->updated_at ? $colis->packageColis->updated_at->toIso8601String() : '',
+        ] : [
+            'id' => 0,
+            'entreprise_id' => 0,
+            'numero_package' => '',
+            'marchand_id' => 0,
+            'boutique_id' => 0,
+            'nombre_colis' => 0,
+            'communes_selected' => [],
+            'colis_ids' => [],
+            'livreur_id' => 0,
+            'engin_id' => 0,
+            'statut' => '',
+            'created_by' => 0,
+            'created_at' => '',
+            'updated_at' => '',
+        ];
+
+        // Formater Livreur
+        $livreur = $colis->livreur ? [
+            'id' => (int) $colis->livreur->id,
+            'entreprise_id' => (int) ($colis->livreur->entreprise_id ?? 0),
+            'first_name' => (string) ($colis->livreur->first_name ?? ''),
+            'last_name' => (string) ($colis->livreur->last_name ?? ''),
+            'mobile' => (string) ($colis->livreur->mobile ?? ''),
+            'email' => (string) ($colis->livreur->email ?? ''),
+            'status' => (string) ($colis->livreur->status ?? ''),
+            'email_verified_at' => $colis->livreur->email_verified_at ? $colis->livreur->email_verified_at->toIso8601String() : null,
+            'engin_id' => (int) ($colis->livreur->engin_id ?? 0),
+            'photo' => (string) ($colis->livreur->photo ?? ''),
+            'permis' => (string) ($colis->livreur->permis ?? ''),
+            'adresse' => (string) ($colis->livreur->adresse ?? ''),
+            'zone_activite_id' => $colis->livreur->zone_activite_id ? (int) $colis->livreur->zone_activite_id : null,
+            'password' => (string) ($colis->livreur->password ?? ''),
+            'created_by' => (string) ($colis->livreur->created_by ?? ''),
+            'updated_by' => (string) ($colis->livreur->updated_by ?? ''),
+            'deleted_by' => $colis->livreur->deleted_by ? (string) $colis->livreur->deleted_by : null,
+            'remember_token' => $colis->livreur->remember_token ? (string) $colis->livreur->remember_token : null,
+            'created_at' => $colis->livreur->created_at ? $colis->livreur->created_at->toIso8601String() : '',
+            'updated_at' => $colis->livreur->updated_at ? $colis->livreur->updated_at->toIso8601String() : '',
+            'deleted_at' => $colis->livreur->deleted_at ? $colis->livreur->deleted_at->toIso8601String() : null,
+        ] : [
+            'id' => 0,
+            'entreprise_id' => 0,
+            'first_name' => '',
+            'last_name' => '',
+            'mobile' => '',
+            'email' => '',
+            'status' => '',
+            'email_verified_at' => null,
+            'engin_id' => 0,
+            'photo' => '',
+            'permis' => '',
+            'adresse' => '',
+            'zone_activite_id' => null,
+            'password' => '',
+            'created_by' => '',
+            'updated_by' => '',
+            'deleted_by' => null,
+            'remember_token' => null,
+            'created_at' => '',
+            'updated_at' => '',
+            'deleted_at' => null,
+        ];
+
+        // Formater Engin
+        $engin = $colis->engin ? [
+            'id' => (int) $colis->engin->id,
+            'entreprise_id' => (int) ($colis->engin->entreprise_id ?? 0),
+            'libelle' => (string) ($colis->engin->libelle ?? ''),
+            'matricule' => (string) ($colis->engin->matricule ?? ''),
+            'marque' => (string) ($colis->engin->marque ?? ''),
+            'modele' => (string) ($colis->engin->modele ?? ''),
+            'couleur' => (string) ($colis->engin->couleur ?? ''),
+            'immatriculation' => (string) ($colis->engin->immatriculation ?? ''),
+            'etat' => (string) ($colis->engin->etat ?? ''),
+            'status' => (string) ($colis->engin->status ?? ''),
+            'type_engin_id' => (int) ($colis->engin->type_engin_id ?? 0),
+            'created_by' => (string) ($colis->engin->created_by ?? ''),
+            'created_at' => $colis->engin->created_at ? $colis->engin->created_at->toIso8601String() : '',
+            'updated_at' => $colis->engin->updated_at ? $colis->engin->updated_at->toIso8601String() : '',
+            'deleted_at' => $colis->engin->deleted_at ? $colis->engin->deleted_at->toIso8601String() : null,
+        ] : [
+            'id' => 0,
+            'entreprise_id' => 0,
+            'libelle' => '',
+            'matricule' => '',
+            'marque' => '',
+            'modele' => '',
+            'couleur' => '',
+            'immatriculation' => '',
+            'etat' => '',
+            'status' => '',
+            'type_engin_id' => 0,
+            'created_by' => '',
+            'created_at' => '',
+            'updated_at' => '',
+            'deleted_at' => null,
+        ];
+
+        // Formater Poids
+        $poids = $colis->poids ? [
+            'id' => (int) $colis->poids->id,
+            'libelle' => (string) ($colis->poids->libelle ?? ''),
+            'created_by' => (string) ($colis->poids->created_by ?? ''),
+            'entreprise_id' => (int) ($colis->poids->entreprise_id ?? 0),
+            'deleted_at' => $colis->poids->deleted_at ? $colis->poids->deleted_at->toIso8601String() : null,
+            'created_at' => $colis->poids->created_at ? $colis->poids->created_at->toIso8601String() : '',
+            'updated_at' => $colis->poids->updated_at ? $colis->poids->updated_at->toIso8601String() : '',
+        ] : [
+            'id' => 0,
+            'libelle' => '',
+            'created_by' => '',
+            'entreprise_id' => 0,
+            'deleted_at' => null,
+            'created_at' => '',
+            'updated_at' => '',
+        ];
+
+        // Formater ModeLivraison
+        $modeLivraison = $colis->modeLivraison ? [
+            'id' => (int) $colis->modeLivraison->id,
+            'libelle' => (string) ($colis->modeLivraison->libelle ?? ''),
+            'description' => (string) ($colis->modeLivraison->description ?? ''),
+            'created_by' => (string) ($colis->modeLivraison->created_by ?? ''),
+            'entreprise_id' => (int) ($colis->modeLivraison->entreprise_id ?? 0),
+            'deleted_at' => $colis->modeLivraison->deleted_at ? $colis->modeLivraison->deleted_at->toIso8601String() : null,
+            'created_at' => $colis->modeLivraison->created_at ? $colis->modeLivraison->created_at->toIso8601String() : '',
+            'updated_at' => $colis->modeLivraison->updated_at ? $colis->modeLivraison->updated_at->toIso8601String() : '',
+        ] : [
+            'id' => 0,
+            'libelle' => '',
+            'description' => '',
+            'created_by' => '',
+            'entreprise_id' => 0,
+            'deleted_at' => null,
+            'created_at' => '',
+            'updated_at' => '',
+        ];
+
+        // Formater Temp
+        $temp = $colis->temp ? [
+            'id' => (int) $colis->temp->id,
+            'entreprise_id' => (int) ($colis->temp->entreprise_id ?? 0),
+            'libelle' => (string) ($colis->temp->libelle ?? ''),
+            'description' => (string) ($colis->temp->description ?? ''),
+            'heure_debut' => (string) ($colis->temp->heure_debut ?? ''),
+            'heure_fin' => (string) ($colis->temp->heure_fin ?? ''),
+            'is_weekend' => (bool) ($colis->temp->is_weekend ?? false),
+            'is_holiday' => (bool) ($colis->temp->is_holiday ?? false),
+            'is_active' => (bool) ($colis->temp->is_active ?? true),
+            'created_by' => (int) ($colis->temp->created_by ?? 0),
+            'deleted_at' => $colis->temp->deleted_at ? $colis->temp->deleted_at->toIso8601String() : null,
+            'created_at' => $colis->temp->created_at ? $colis->temp->created_at->toIso8601String() : '',
+            'updated_at' => $colis->temp->updated_at ? $colis->temp->updated_at->toIso8601String() : '',
+        ] : [
+            'id' => 0,
+            'entreprise_id' => 0,
+            'libelle' => '',
+            'description' => '',
+            'heure_debut' => '',
+            'heure_fin' => '',
+            'is_weekend' => false,
+            'is_holiday' => false,
+            'is_active' => true,
+            'created_by' => 0,
+            'deleted_at' => null,
+            'created_at' => '',
+            'updated_at' => '',
+        ];
+
+        // Formater le Colis principal
+        return [
+            'id' => (int) $colis->id,
+            'entreprise_id' => (int) ($colis->entreprise_id ?? 0),
+            'package_colis_id' => (int) ($colis->package_colis_id ?? 0),
+            'uuid' => (string) ($colis->uuid ?? ''),
+            'code' => (string) ($colis->code ?? ''),
+            'status' => (int) ($colis->status ?? 0),
+            'nom_client' => (string) ($colis->nom_client ?? ''),
+            'telephone_client' => (string) ($colis->telephone_client ?? ''),
+            'adresse_client' => (string) ($colis->adresse_client ?? ''),
+            'montant_a_encaisse' => (int) ($colis->montant_a_encaisse ?? 0),
+            'prix_de_vente' => (int) ($colis->prix_de_vente ?? 0),
+            'numero_facture' => (string) ($colis->numero_facture ?? ''),
+            'note_client' => (string) ($colis->note_client ?? ''),
+            'instructions_livraison' => $colis->instructions_livraison ? (string) $colis->instructions_livraison : null,
+            'zone_id' => (int) ($colis->zone_id ?? 0),
+            'commune_id' => (int) ($colis->commune_id ?? 0),
+            'ordre_livraison' => $colis->ordre_livraison ? (int) $colis->ordre_livraison : null,
+            'date_livraison_prevue' => $colis->date_livraison_prevue ? $colis->date_livraison_prevue->toIso8601String() : null,
+            'livreur_id' => (int) ($colis->livreur_id ?? 0),
+            'engin_id' => (int) ($colis->engin_id ?? 0),
+            'poids_id' => (int) ($colis->poids_id ?? 0),
+            'mode_livraison_id' => (int) ($colis->mode_livraison_id ?? 0),
+            'temp_id' => (int) ($colis->temp_id ?? 0),
+            'created_by' => (string) ($colis->created_by ?? ''),
+            'deleted_at' => $colis->deleted_at ? $colis->deleted_at->toIso8601String() : null,
+            'created_at' => $colis->created_at ? $colis->created_at->toIso8601String() : '',
+            'updated_at' => $colis->updated_at ? $colis->updated_at->toIso8601String() : '',
+            'commune' => $commune,
+            'livraison' => $livraison,
+            'package_colis' => $packageColis,
+            'livreur' => $livreur,
+            'engin' => $engin,
+            'poids' => $poids,
+            'mode_livraison' => $modeLivraison,
+            'temp' => $temp,
+        ];
+    }
+
+    /**
+     * Formater un colis détaillé selon le modèle Flutter
+     */
+    private function formatColisDetailForFlutter($colis, $historique)
+    {
+        // Récupérer commune_zone pour accéder aux relations hasOneThrough
+        // Utiliser la relation chargée si disponible, sinon la requête
+        $communeZone = $colis->commune_zone;
+        if (!$communeZone) {
+            $communeZone = \App\Models\Commune_zone::where('zone_id', $colis->zone_id)
+                ->where('entreprise_id', $colis->entreprise_id)
+                ->with(['typeColis', 'delai', 'marchand'])
+                ->first();
+        }
+
+        // Formater HistoriqueLivraison
+        $historiqueLivraison = $historique ? [
+            'id' => (int) $historique->id,
+            'entreprise_id' => (int) ($historique->entreprise_id ?? 0),
+            'package_colis_id' => (int) ($historique->package_colis_id ?? 0),
+            'livraison_id' => (int) ($historique->livraison_id ?? 0),
+            'status' => (string) ($historique->status ?? ''),
+            'code_validation_utilise' => $historique->code_validation_utilise ? (string) $historique->code_validation_utilise : null,
+            'photo_proof_path' => $historique->photo_proof_path ? (string) $historique->photo_proof_path : null,
+            'signature_data' => $historique->signature_data ? (string) $historique->signature_data : null,
+            'note_livraison' => $historique->note_livraison ? (string) $historique->note_livraison : null,
+            'motif_annulation' => $historique->motif_annulation ? (string) $historique->motif_annulation : null,
+            'date_livraison_effective' => $historique->date_livraison_effective ? (\Carbon\Carbon::parse($historique->date_livraison_effective))->toIso8601String() : null,
+            'latitude' => $historique->latitude ? (float) $historique->latitude : null,
+            'longitude' => $historique->longitude ? (float) $historique->longitude : null,
+            'colis_id' => (int) ($historique->colis_id ?? 0),
+            'livreur_id' => (int) ($historique->livreur_id ?? 0),
+            'montant_a_encaisse' => (int) round((float) ($historique->montant_a_encaisse ?? 0)),
+            'prix_de_vente' => (int) round((float) ($historique->prix_de_vente ?? 0)),
+            'montant_de_la_livraison' => (int) round((float) ($historique->montant_de_la_livraison ?? 0)),
+            'created_by' => (string) ($historique->created_by ?? ''),
+            'deleted_at' => $historique->deleted_at ? $historique->deleted_at->toIso8601String() : null,
+            'created_at' => $historique->created_at ? $historique->created_at->toIso8601String() : '',
+            'updated_at' => $historique->updated_at ? $historique->updated_at->toIso8601String() : '',
+        ] : [
+            'id' => 0,
+            'entreprise_id' => 0,
+            'package_colis_id' => 0,
+            'livraison_id' => 0,
+            'status' => '',
+            'code_validation_utilise' => null,
+            'photo_proof_path' => null,
+            'signature_data' => null,
+            'note_livraison' => null,
+            'motif_annulation' => null,
+            'date_livraison_effective' => null,
+            'latitude' => null,
+            'longitude' => null,
+            'colis_id' => 0,
+            'livreur_id' => 0,
+            'montant_a_encaisse' => 0,
+            'prix_de_vente' => 0,
+            'montant_de_la_livraison' => 0,
+            'created_by' => '',
+            'deleted_at' => null,
+            'created_at' => '',
+            'updated_at' => '',
+        ];
+
+        // Formater LivraisonDetail (similaire à Livraison mais avec plus de détails)
+        $livraisonDetail = $colis->livraison ? [
+            'id' => (int) $colis->livraison->id,
+            'entreprise_id' => (int) ($colis->livraison->entreprise_id ?? 0),
+            'uuid' => (string) ($colis->livraison->uuid ?? ''),
+            'numero_de_livraison' => (string) ($colis->livraison->numero_de_livraison ?? ''),
+            'colis_id' => (int) ($colis->livraison->colis_id ?? 0),
+            'package_colis_id' => (int) ($colis->livraison->package_colis_id ?? 0),
+            'marchand_id' => (int) ($colis->livraison->marchand_id ?? 0),
+            'boutique_id' => (int) ($colis->livraison->boutique_id ?? 0),
+            'adresse_de_livraison' => (string) ($colis->livraison->adresse_de_livraison ?? ''),
+            'status' => (int) ($colis->livraison->status ?? 0),
+            'note_livraison' => $colis->livraison->note_livraison ? (string) $colis->livraison->note_livraison : null,
+            'code_validation' => (string) ($colis->livraison->code_validation ?? ''),
+            'created_by' => (string) ($colis->livraison->created_by ?? ''),
+            'deleted_at' => $colis->livraison->deleted_at ? $colis->livraison->deleted_at->toIso8601String() : null,
+            'created_at' => $colis->livraison->created_at ? $colis->livraison->created_at->toIso8601String() : '',
+            'updated_at' => $colis->livraison->updated_at ? $colis->livraison->updated_at->toIso8601String() : '',
+        ] : [
+            'id' => 0,
+            'entreprise_id' => 0,
+            'uuid' => '',
+            'numero_de_livraison' => '',
+            'colis_id' => 0,
+            'package_colis_id' => 0,
+            'marchand_id' => 0,
+            'boutique_id' => 0,
+            'adresse_de_livraison' => '',
+            'status' => 0,
+            'note_livraison' => null,
+            'code_validation' => '',
+            'created_by' => '',
+            'deleted_at' => null,
+            'created_at' => '',
+            'updated_at' => '',
+        ];
+
+        // Formater TypeColis (via commune_zone)
+        $typeColis = null;
+        if ($communeZone && $communeZone->typeColis) {
+            $typeColis = [
+                'id' => (int) $communeZone->typeColis->id,
+                'libelle' => (string) ($communeZone->typeColis->libelle ?? ''),
+                'created_by' => (string) ($communeZone->typeColis->created_by ?? ''),
+                'deleted_at' => $communeZone->typeColis->deleted_at ? $communeZone->typeColis->deleted_at->toIso8601String() : null,
+                'created_at' => $communeZone->typeColis->created_at ? $communeZone->typeColis->created_at->toIso8601String() : '',
+                'updated_at' => $communeZone->typeColis->updated_at ? $communeZone->typeColis->updated_at->toIso8601String() : '',
+                'laravel_through_key' => (int) ($communeZone->id ?? 0),
+            ];
+        } else {
+            $typeColis = [
+                'id' => 0,
+                'libelle' => '',
+                'created_by' => '',
+                'deleted_at' => null,
+                'created_at' => '',
+                'updated_at' => '',
+                'laravel_through_key' => 0,
+            ];
+        }
+
+        // Formater ConditionnementColis
+        $conditionnementColis = $colis->conditionnementColis ? [
+            'id' => (int) $colis->conditionnementColis->id,
+            'entreprise_id' => (int) ($colis->conditionnementColis->entreprise_id ?? 0),
+            'libelle' => (string) ($colis->conditionnementColis->libelle ?? ''),
+            'created_by' => (int) ($colis->conditionnementColis->created_by ?? 0),
+            'created_at' => $colis->conditionnementColis->created_at ? $colis->conditionnementColis->created_at->toIso8601String() : '',
+            'updated_at' => $colis->conditionnementColis->updated_at ? $colis->conditionnementColis->updated_at->toIso8601String() : '',
+        ] : [
+            'id' => 0,
+            'entreprise_id' => 0,
+            'libelle' => '',
+            'created_by' => 0,
+            'created_at' => '',
+            'updated_at' => '',
+        ];
+
+        // Formater Delai (via commune_zone)
+        $delai = null;
+        if ($communeZone && $communeZone->delai) {
+            $delai = [
+                'id' => (int) $communeZone->delai->id,
+                'entreprise_id' => (int) ($communeZone->delai->entreprise_id ?? 0),
+                'libelle' => (string) ($communeZone->delai->libelle ?? ''),
+                'created_by' => (string) ($communeZone->delai->created_by ?? ''),
+                'deleted_at' => $communeZone->delai->deleted_at ? $communeZone->delai->deleted_at->toIso8601String() : null,
+                'created_at' => $communeZone->delai->created_at ? $communeZone->delai->created_at->toIso8601String() : '',
+                'updated_at' => $communeZone->delai->updated_at ? $communeZone->delai->updated_at->toIso8601String() : '',
+                'laravel_through_key' => (int) ($communeZone->id ?? 0),
+            ];
+        } else {
+            $delai = [
+                'id' => 0,
+                'entreprise_id' => 0,
+                'libelle' => '',
+                'created_by' => '',
+                'deleted_at' => null,
+                'created_at' => '',
+                'updated_at' => '',
+                'laravel_through_key' => 0,
+            ];
+        }
+
+        // Formater Marchand (via commune_zone)
+        $marchand = null;
+        if ($communeZone && $communeZone->marchand) {
+            $marchand = [
+                'id' => (int) $communeZone->marchand->id,
+                'entreprise_id' => (int) ($communeZone->marchand->entreprise_id ?? 0),
+                'first_name' => (string) ($communeZone->marchand->first_name ?? ''),
+                'last_name' => (string) ($communeZone->marchand->last_name ?? ''),
+                'mobile' => (string) ($communeZone->marchand->mobile ?? ''),
+                'email' => (string) ($communeZone->marchand->email ?? ''),
+                'adresse' => (string) ($communeZone->marchand->adresse ?? ''),
+                'status' => (string) ($communeZone->marchand->status ?? ''),
+                'commune_id' => (int) ($communeZone->marchand->commune_id ?? 0),
+                'created_by' => (string) ($communeZone->marchand->created_by ?? ''),
+                'deleted_at' => $communeZone->marchand->deleted_at ? $communeZone->marchand->deleted_at->toIso8601String() : null,
+                'created_at' => $communeZone->marchand->created_at ? $communeZone->marchand->created_at->toIso8601String() : '',
+                'updated_at' => $communeZone->marchand->updated_at ? $communeZone->marchand->updated_at->toIso8601String() : '',
+                'laravel_through_key' => (int) ($communeZone->id ?? 0),
+            ];
+        } else {
+            // Essayer de récupérer depuis packageColis si disponible
+            if ($colis->packageColis && $colis->packageColis->marchand) {
+                $marchandModel = $colis->packageColis->marchand;
+                $marchand = [
+                    'id' => (int) $marchandModel->id,
+                    'entreprise_id' => (int) ($marchandModel->entreprise_id ?? 0),
+                    'first_name' => (string) ($marchandModel->first_name ?? ''),
+                    'last_name' => (string) ($marchandModel->last_name ?? ''),
+                    'mobile' => (string) ($marchandModel->mobile ?? ''),
+                    'email' => (string) ($marchandModel->email ?? ''),
+                    'adresse' => (string) ($marchandModel->adresse ?? ''),
+                    'status' => (string) ($marchandModel->status ?? ''),
+                    'commune_id' => (int) ($marchandModel->commune_id ?? 0),
+                    'created_by' => (string) ($marchandModel->created_by ?? ''),
+                    'deleted_at' => $marchandModel->deleted_at ? $marchandModel->deleted_at->toIso8601String() : null,
+                    'created_at' => $marchandModel->created_at ? $marchandModel->created_at->toIso8601String() : '',
+                    'updated_at' => $marchandModel->updated_at ? $marchandModel->updated_at->toIso8601String() : '',
+                    'laravel_through_key' => (int) ($communeZone ? $communeZone->id : 0),
+                ];
+            } else {
+                $marchand = [
+                    'id' => 0,
+                    'entreprise_id' => 0,
+                    'first_name' => '',
+                    'last_name' => '',
+                    'mobile' => '',
+                    'email' => '',
+                    'adresse' => '',
+                    'status' => '',
+                    'commune_id' => 0,
+                    'created_by' => '',
+                    'deleted_at' => null,
+                    'created_at' => '',
+                    'updated_at' => '',
+                    'laravel_through_key' => 0,
+                ];
+            }
+        }
+
+        // Formater Boutique
+        $boutique = null;
+        if ($colis->boutique) {
+            $boutique = [
+                'id' => (int) $colis->boutique->id,
+                'entreprise_id' => (int) ($colis->boutique->entreprise_id ?? 0),
+                'libelle' => (string) ($colis->boutique->libelle ?? ''),
+                'mobile' => (string) ($colis->boutique->mobile ?? ''),
+                'adresse' => (string) ($colis->boutique->adresse ?? ''),
+                'adresse_gps' => (string) ($colis->boutique->adresse_gps ?? ''),
+                'cover_image' => (string) ($colis->boutique->cover_image ?? ''),
+                'marchand_id' => (int) ($colis->boutique->marchand_id ?? 0),
+                'status' => (string) ($colis->boutique->status ?? ''),
+                'created_by' => (string) ($colis->boutique->created_by ?? ''),
+                'deleted_at' => $colis->boutique->deleted_at ? $colis->boutique->deleted_at->toIso8601String() : null,
+                'created_at' => $colis->boutique->created_at ? $colis->boutique->created_at->toIso8601String() : '',
+                'updated_at' => $colis->boutique->updated_at ? $colis->boutique->updated_at->toIso8601String() : '',
+            ];
+        } else {
+            // Essayer de récupérer depuis packageColis si disponible
+            if ($colis->packageColis && $colis->packageColis->boutique) {
+                $boutiqueModel = $colis->packageColis->boutique;
+                $boutique = [
+                    'id' => (int) $boutiqueModel->id,
+                    'entreprise_id' => (int) ($boutiqueModel->entreprise_id ?? 0),
+                    'libelle' => (string) ($boutiqueModel->libelle ?? ''),
+                    'mobile' => (string) ($boutiqueModel->mobile ?? ''),
+                    'adresse' => (string) ($boutiqueModel->adresse ?? ''),
+                    'adresse_gps' => (string) ($boutiqueModel->adresse_gps ?? ''),
+                    'cover_image' => (string) ($boutiqueModel->cover_image ?? ''),
+                    'marchand_id' => (int) ($boutiqueModel->marchand_id ?? 0),
+                    'status' => (string) ($boutiqueModel->status ?? ''),
+                    'created_by' => (string) ($boutiqueModel->created_by ?? ''),
+                    'deleted_at' => $boutiqueModel->deleted_at ? $boutiqueModel->deleted_at->toIso8601String() : null,
+                    'created_at' => $boutiqueModel->created_at ? $boutiqueModel->created_at->toIso8601String() : '',
+                    'updated_at' => $boutiqueModel->updated_at ? $boutiqueModel->updated_at->toIso8601String() : '',
+                ];
+            } else {
+                $boutique = [
+                    'id' => 0,
+                    'entreprise_id' => 0,
+                    'libelle' => '',
+                    'mobile' => '',
+                    'adresse' => '',
+                    'adresse_gps' => '',
+                    'cover_image' => '',
+                    'marchand_id' => 0,
+                    'status' => '',
+                    'created_by' => '',
+                    'deleted_at' => null,
+                    'created_at' => '',
+                    'updated_at' => '',
+                ];
+            }
+        }
+
+        // Utiliser formatColisForFlutter pour les objets communs
+        $baseColis = $this->formatColisForFlutter($colis);
+
+        // Ajouter les objets spécifiques aux détails
+        return array_merge($baseColis, [
+            'historique_livraison' => $historiqueLivraison,
+            'livraison' => $livraisonDetail,
+            'type_colis' => $typeColis,
+            'conditionnement_colis' => $conditionnementColis,
+            'delai' => $delai,
+            'marchand' => $marchand,
+            'boutique' => $boutique,
+        ]);
     }
 
     /**
@@ -363,7 +957,8 @@ class LivreurDeliveryController extends Controller
             $colis = Colis::with([
                 'commune',
                 'livraison',
-                'packageColis',
+                'packageColis.marchand',
+                'packageColis.boutique',
                 'temp',
                 'modeLivraison',
                 'poids',
@@ -373,7 +968,10 @@ class LivreurDeliveryController extends Controller
                 'livreur',
                 'engin.typeEngin',
                 'marchand',
-                'boutique'
+                'boutique',
+                'commune_zone.typeColis',
+                'commune_zone.delai',
+                'commune_zone.marchand'
             ])
                 ->where('id', $id)
                 ->where('livreur_id', $livreur->id)
@@ -392,12 +990,13 @@ class LivreurDeliveryController extends Controller
                 ->latest()
                 ->first();
 
-            $colis->historique_livraison = $historique;
+            // Formater le colis selon le modèle Flutter
+            $formattedColis = $this->formatColisDetailForFlutter($colis, $historique);
 
             return response()->json([
                 'success' => true,
                 'message' => 'Détails du colis récupérés avec succès',
-                'data' => $colis
+                'data' => $formattedColis
             ]);
 
         } catch (\Exception $e) {
@@ -530,6 +1129,11 @@ class LivreurDeliveryController extends Controller
             }
 
             // Créer ou mettre à jour l'historique de livraison
+            // Convertir les montants en entiers (les colonnes sont de type integer)
+            $montantEncaisse = (int) ($colis->montant_a_encaisse ?? 0);
+            $prixVente = (int) ($colis->prix_de_vente ?? 0);
+            $montantLivraison = (int) round((float) $colis->calculateDeliveryCost());
+
             $historique = Historique_livraison::updateOrCreate(
                 [
                     'colis_id' => $colis->id,
@@ -540,9 +1144,9 @@ class LivreurDeliveryController extends Controller
                     'package_colis_id' => $colis->package_colis_id,
                     'livraison_id' => $livraison->id,
                     'status' => 'en_cours',
-                    'montant_a_encaisse' => $colis->montant_a_encaisse,
-                    'prix_de_vente' => $colis->prix_de_vente,
-                    'montant_de_la_livraison' => $colis->calculateDeliveryCost(),
+                    'montant_a_encaisse' => $montantEncaisse,
+                    'prix_de_vente' => $prixVente,
+                    'montant_de_la_livraison' => $montantLivraison,
                     'created_by' => $livreur->id
                 ]
             );
@@ -615,7 +1219,7 @@ class LivreurDeliveryController extends Controller
      *                 @OA\Property(property="status", type="integer", example=2),
      *                 @OA\Property(property="status_label", type="string", example="Livré"),
      *                 @OA\Property(property="date_livraison_effective", type="string", format="date-time", example="2025-10-13T14:30:00Z"),
-     *                 @OA\Property(property="photo_proof_url", type="string", example="http://192.168.1.11:8000/storage/livraisons/proofs/colis_1_1760357729.jpg")
+     *                 @OA\Property(property="photo_proof_url", type="string", example="http://192.168.1.6:8000/storage/livraisons/proofs/colis_1_1760357729.jpg")
      *             )
      *         )
      *     ),
@@ -681,15 +1285,69 @@ class LivreurDeliveryController extends Controller
                 $photoPath = ImageCompressor::compressUploadedFile($photo, 'livraisons/proofs', $filename, 1024); // 1MB max
             }
 
-            // Mettre à jour le statut du colis
-            $colis->update(['status' => 2]); // Livré
+            // Note: Le statut sera mis à jour après le commit de la transaction
+            // pour éviter les problèmes de cache ou de transaction
 
-            // Mettre à jour l'historique de livraison
+            // Récupérer ou créer la livraison
+            $livraison = $colis->livraison;
+            if (!$livraison) {
+                // Créer la livraison si elle n'existe pas
+                $livraison = Livraison::create([
+                    'entreprise_id' => $colis->entreprise_id,
+                    'uuid' => \Illuminate\Support\Str::uuid(),
+                    'numero_de_livraison' => 'LIV-' . str_pad($colis->id, 6, '0', STR_PAD_LEFT),
+                    'colis_id' => $colis->id,
+                    'package_colis_id' => $colis->package_colis_id,
+                    'marchand_id' => $colis->packageColis->marchand_id ?? null,
+                    'boutique_id' => $colis->packageColis->boutique_id ?? null,
+                    'adresse_de_livraison' => $colis->adresse_client,
+                    'status' => Livraison::STATUS_LIVRE, // 2 = Livré
+                    'code_validation' => $request->code_validation,
+                    'note_livraison' => $request->note_livraison,
+                    'created_by' => $livreur->id
+                ]);
+            } else {
+                // Mettre à jour le statut de la livraison existante
+                $livraison->update([
+                    'status' => Livraison::STATUS_LIVRE, // 2 = Livré
+                    'note_livraison' => $request->note_livraison ?? $livraison->note_livraison
+                ]);
+                $livraison->refresh(); // Rafraîchir le modèle
+            }
+
+            // Récupérer ou créer l'historique de livraison
             $historique = Historique_livraison::where('colis_id', $colis->id)
                 ->where('livreur_id', $livreur->id)
                 ->first();
 
-            if ($historique) {
+            // Si l'historique n'existe pas, le créer
+            if (!$historique) {
+                // Convertir les montants en entiers
+                $montantEncaisse = (int) ($colis->montant_a_encaisse ?? 0);
+                $prixVente = (int) ($colis->prix_de_vente ?? 0);
+                $montantLivraison = (int) round((float) $colis->calculateDeliveryCost());
+
+                $historique = Historique_livraison::create([
+                    'entreprise_id' => $colis->entreprise_id,
+                    'package_colis_id' => $colis->package_colis_id,
+                    'livraison_id' => $livraison ? $livraison->id : null,
+                    'status' => 'livre',
+                    'colis_id' => $colis->id,
+                    'livreur_id' => $livreur->id,
+                    'montant_a_encaisse' => $montantEncaisse,
+                    'prix_de_vente' => $prixVente,
+                    'montant_de_la_livraison' => $montantLivraison,
+                    'created_by' => $livreur->id,
+                    'code_validation_utilise' => $request->code_validation,
+                    'date_livraison_effective' => now(),
+                    'note_livraison' => $request->note_livraison,
+                    'latitude' => $request->latitude,
+                    'longitude' => $request->longitude,
+                    'photo_proof_path' => $photoPath,
+                    'signature_data' => $request->signature_data
+                ]);
+            } else {
+                // Mettre à jour l'historique existant
                 $updateData = [
                     'status' => 'livre',
                     'code_validation_utilise' => $request->code_validation,
@@ -708,16 +1366,45 @@ class LivreurDeliveryController extends Controller
                 }
 
                 $historique->update($updateData);
-                $historique->refresh();
             }
+
+            $historique->refresh();
 
             // Vérifier et créer l'entrée dans balance_marchands si nécessaire
             $this->ensureBalanceMarchandExists($colis);
 
+            // Mettre à jour le statut du colis AVANT le commit pour qu'il soit inclus dans la transaction
+            // Utiliser DB::table() pour forcer la mise à jour sans passer par Eloquent
+            DB::table('colis')->where('id', $colis->id)->update(['status' => 2, 'updated_at' => now()]);
+
             DB::commit();
 
+            // Rafraîchir le colis et ses relations après le commit pour s'assurer que toutes les données sont à jour
+            $colis = Colis::with(['livraison', 'packageColis'])->find($colis->id); // Recharger complètement depuis la base
+
+            // Vérifier que le statut est bien mis à jour
+            if ($colis->status !== 2) {
+                \Log::warning('Statut du colis non mis à jour correctement après commit', [
+                    'colis_id' => $colis->id,
+                    'status_actuel' => $colis->status,
+                    'status_attendu' => 2
+                ]);
+                // Forcer la mise à jour une dernière fois (hors transaction)
+                DB::table('colis')->where('id', $colis->id)->update(['status' => 2, 'updated_at' => now()]);
+                $colis = Colis::find($colis->id);
+            }
+
+            \Log::info('Colis statut mis à jour après commit', [
+                'colis_id' => $colis->id,
+                'status' => $colis->status,
+                'status_expected' => 2,
+                'updated_at' => $colis->updated_at
+            ]);
+
             // Envoyer une notification au marchand
-            $marchand = Marchand::find($colis->marchand_id);
+            // Récupérer le marchand depuis le packageColis ou la livraison
+            $marchandId = $colis->packageColis->marchand_id ?? ($livraison ? $livraison->marchand_id : null);
+            $marchand = $marchandId ? Marchand::find($marchandId) : null;
             if ($marchand && $marchand->fcm_token) {
                 $notificationResult = $this->sendColisDeliveredNotification($marchand, $colis);
 
@@ -748,12 +1435,23 @@ class LivreurDeliveryController extends Controller
                 $admin->notify(new DeliveryCompletedNotification($colis, $livreur));
             }
 
+            // S'assurer que le statut est bien 2 (Livré) dans la réponse
+            // Forcer le statut à 2 car la livraison est complétée
+            $finalStatus = 2; // Statut "Livré"
+
+            \Log::info('Réponse completeDelivery', [
+                'colis_id' => $colis->id,
+                'status_dans_colis' => $colis->status,
+                'status_dans_reponse' => $finalStatus,
+                'status_attendu' => 2
+            ]);
+
             return response()->json([
                 'success' => true,
                 'message' => 'Livraison finalisée avec succès',
                 'data' => [
                     'id' => $colis->id,
-                    'status' => $colis->status,
+                    'status' => $finalStatus, // Statut "Livré" (2)
                     'status_label' => 'Livré',
                     'date_livraison_effective' => $historique->date_livraison_effective,
                     'photo_proof_url' => $photoPath ? Storage::url($photoPath) : null

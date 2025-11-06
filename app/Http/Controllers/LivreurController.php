@@ -30,7 +30,8 @@ class LivreurController extends Controller
                     ->withErrors(['error' => 'Veuillez vous connecter pour accéder à cette page.']);
             }
 
-            $data['livreurs'] = Livreur::with(['engin.typeEngin', 'zoneActivite', 'communes'])
+            $data['livreurs'] = Livreur::where('entreprise_id', $data['user']->entreprise_id)
+            ->with(['engin.typeEngin', 'zoneActivite', 'communes'])
                 ->orderBy('first_name')
                 ->paginate(15);
 
@@ -157,7 +158,8 @@ class LivreurController extends Controller
                 'app_url' => env('MOYOO_LIVREUR_APP_URL', 'https://bit.ly/moyoo-livreur-app'),
                 'entreprise_name' => $user->entreprise ? $user->entreprise->name : 'MOYOO',
                 'user_id' => $user->id,
-                'ip' => $request->ip()
+                'ip' => $request->ip(),
+                'password' => $password
             ]);
 
             $whatsappResult = $this->sendWhatsAppMessageInternal($fullMobile, $message);
@@ -177,22 +179,60 @@ class LivreurController extends Controller
                 ]);
             }
 
+            // Envoyer un email si l'email est renseigné
+            $emailResult = ['success' => false];
+            if ($request->email) {
+                $emailMessage = $this->generateLivreurAccessEmailMessage($livreur, $password, $fullMobile);
+                $emailResult = $this->sendLivreurAccessEmail($livreur, $emailMessage);
+
+                if ($emailResult['success']) {
+                    Log::info('Email envoyé avec succès', [
+                        'livreur_id' => $livreur->id,
+                        'email' => $request->email
+                    ]);
+                } else {
+                    Log::warning('Échec de l\'envoi de l\'email', [
+                        'livreur_id' => $livreur->id,
+                        'email' => $request->email,
+                        'error' => $emailResult['error'] ?? 'Erreur inconnue'
+                    ]);
+                }
+            }
+
             DB::commit();
 
             Log::info('Livreur créé avec succès', [
                 'livreur_id' => $livreur->id,
                 'nom' => $livreur->first_name . ' ' . $livreur->last_name,
                 'mobile' => $fullMobile,
+                'email' => $livreur->email,
                 'password_generated' => true,
                 'whatsapp_sent' => $whatsappResult['success'],
+                'email_sent' => $request->email ? $emailResult['success'] : false,
                 'user_id' => $user->id
             ]);
 
             $successMessage = 'Livreur créé avec succès !';
+            $messagesSent = [];
+
             if ($whatsappResult['success']) {
-                $successMessage .= ' Les accès ont été envoyés par WhatsApp.';
+                $messagesSent[] = 'WhatsApp';
+            }
+
+            if ($request->email && $emailResult['success']) {
+                $messagesSent[] = 'email';
+            }
+
+            if (!empty($messagesSent)) {
+                $successMessage .= ' Les accès ont été envoyés par ' . implode(' et ', $messagesSent) . '.';
             } else {
-                $successMessage .= ' Attention : L\'envoi WhatsApp a échoué.';
+                if (!$whatsappResult['success'] && (!$request->email || !$emailResult['success'])) {
+                    $successMessage .= ' Attention : L\'envoi des accès a échoué.';
+                } elseif (!$whatsappResult['success']) {
+                    $successMessage .= ' Attention : L\'envoi WhatsApp a échoué.';
+                } elseif ($request->email && !$emailResult['success']) {
+                    $successMessage .= ' Attention : L\'envoi email a échoué.';
+                }
             }
 
             return redirect()->route('livreurs.index')
@@ -605,6 +645,177 @@ class LivreurController extends Controller
             'success' => $httpCode >= 200 && $httpCode < 300,
             'http_code' => $httpCode,
             'response' => $responseData,
+        ];
+    }
+
+    /**
+     * Générer le message d'accès pour l'email
+     */
+    private function generateLivreurAccessEmailMessage($livreur, $password, $fullMobile)
+    {
+        $appUrl = env('MOYOO_LIVREUR_APP_URL', 'https://bit.ly/moyoo-livreur-app');
+        $user = Auth::user();
+        $entrepriseName = $user->entreprise ? $user->entreprise->name : 'MOYOO';
+
+        // Version texte
+        $textPart = "Bonjour {$livreur->first_name} {$livreur->last_name},\n\n";
+        $textPart .= "Votre compte livreur MOYOO a été créé avec succès !\n\n";
+        $textPart .= "Vos identifiants de connexion :\n";
+        $textPart .= "Téléphone : {$fullMobile}\n";
+        $textPart .= "Mot de passe : {$password}\n\n";
+        $textPart .= "Téléchargez l'application MOYOO :\n";
+        $textPart .= "{$appUrl}\n\n";
+        $textPart .= "Vous pouvez maintenant vous connecter à l'application MOYOO.\n\n";
+        $textPart .= "Cordialement,\nL'équipe {$entrepriseName}";
+
+        // Version HTML
+        $htmlPart = "
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset='utf-8'>
+            <style>
+                body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+                .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                .header { background-color: #4CAF50; color: white; padding: 20px; text-align: center; border-radius: 5px 5px 0 0; }
+                .content { background-color: #f9f9f9; padding: 30px; border-radius: 0 0 5px 5px; }
+                .credentials { background-color: white; padding: 20px; border-radius: 5px; margin: 20px 0; border-left: 4px solid #4CAF50; }
+                .credential-item { margin: 10px 0; }
+                .credential-label { font-weight: bold; color: #555; }
+                .credential-value { color: #333; font-size: 16px; }
+                .app-link { background-color: #4CAF50; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; display: inline-block; margin: 20px 0; }
+                .footer { text-align: center; margin-top: 30px; color: #777; font-size: 12px; }
+            </style>
+        </head>
+        <body>
+            <div class='container'>
+                <div class='header'>
+                    <h1>Bienvenue sur MOYOO !</h1>
+                </div>
+                <div class='content'>
+                    <p>Bonjour <strong>{$livreur->first_name} {$livreur->last_name}</strong>,</p>
+
+                    <p>Votre compte livreur MOYOO a été créé avec succès !</p>
+
+                    <div class='credentials'>
+                        <h3 style='margin-top: 0; color: #4CAF50;'>Vos identifiants de connexion :</h3>
+                        <div class='credential-item'>
+                            <span class='credential-label'>📱 Téléphone :</span>
+                            <span class='credential-value'>{$fullMobile}</span>
+                        </div>
+                        <div class='credential-item'>
+                            <span class='credential-label'>🔑 Mot de passe :</span>
+                            <span class='credential-value'><strong>{$password}</strong></span>
+                        </div>
+                    </div>
+
+                    <p style='text-align: center;'>
+                        <a href='{$appUrl}' class='app-link' target='_blank'>📲 Télécharger l'application MOYOO</a>
+                    </p>
+
+                    <p>Vous pouvez maintenant vous connecter à l'application MOYOO avec vos identifiants.</p>
+
+                    <p>Cordialement,<br>L'équipe <strong>{$entrepriseName}</strong></p>
+                </div>
+                <div class='footer'>
+                    <p>Cet email a été envoyé automatiquement, merci de ne pas y répondre.</p>
+                </div>
+            </div>
+        </body>
+        </html>";
+
+        return [
+            'text' => $textPart,
+            'html' => $htmlPart
+        ];
+    }
+
+    /**
+     * Envoyer un email avec les accès du livreur via Mailjet
+     */
+    private function sendLivreurAccessEmail($livreur, $emailMessage)
+    {
+        $apiKeyPublic = config('mailjet.api_key_public');
+        $apiKeyPrivate = config('mailjet.api_key_private');
+        $senderEmail = config('mailjet.default_from.email');
+        $senderName = config('mailjet.default_from.name');
+        $apiUrl = config('mailjet.api_url');
+
+        if (!$apiKeyPublic || !$apiKeyPrivate || !$senderEmail) {
+            Log::error('Configuration Mailjet manquante pour l\'envoi d\'email au livreur');
+            return [
+                'success' => false,
+                'error' => 'Configuration Mailjet manquante'
+            ];
+        }
+
+        $subject = 'Bienvenue sur MOYOO - Vos identifiants de connexion';
+        $toName = $livreur->first_name . ' ' . $livreur->last_name;
+        $toEmail = $livreur->email;
+
+        $data = [
+            'Messages' => [
+                [
+                    'From' => [
+                        'Email' => $senderEmail,
+                        'Name' => $senderName
+                    ],
+                    'To' => [
+                        [
+                            'Email' => $toEmail,
+                            'Name' => $toName
+                        ]
+                    ],
+                    'Subject' => $subject,
+                    'TextPart' => $emailMessage['text'],
+                    'HTMLPart' => $emailMessage['html']
+                ]
+            ]
+        ];
+
+        $ch = curl_init();
+
+        curl_setopt_array($ch, [
+            CURLOPT_URL => $apiUrl,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_POST => true,
+            CURLOPT_POSTFIELDS => json_encode($data),
+            CURLOPT_HTTPHEADER => [
+                'Content-Type: application/json',
+                'Authorization: Basic ' . base64_encode($apiKeyPublic . ':' . $apiKeyPrivate)
+            ],
+            CURLOPT_SSL_VERIFYPEER => true,
+            CURLOPT_TIMEOUT => 30
+        ]);
+
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $error = curl_error($ch);
+
+        curl_close($ch);
+
+        if ($error) {
+            Log::error('Erreur cURL Mailjet pour livreur: ' . $error);
+            return [
+                'success' => false,
+                'error' => $error
+            ];
+        }
+
+        if ($httpCode !== 200) {
+            Log::error('Erreur Mailjet pour livreur - Code HTTP: ' . $httpCode . ' - Réponse: ' . $response);
+            return [
+                'success' => false,
+                'error' => 'Erreur HTTP ' . $httpCode,
+                'response' => $response
+            ];
+        }
+
+        $responseData = json_decode($response, true);
+
+        return [
+            'success' => true,
+            'response' => $responseData
         ];
     }
 }

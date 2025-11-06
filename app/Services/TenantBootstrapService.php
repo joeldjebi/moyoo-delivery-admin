@@ -15,6 +15,7 @@ use App\Models\Conditionnement_colis;
 use App\Models\Engin;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Log;
 
 class TenantBootstrapService
 {
@@ -22,21 +23,91 @@ class TenantBootstrapService
 	{
 		$userId = $userId ?? auth()->id() ?? 1;
 
-		DB::transaction(function () use ($entrepriseId, $userId) {
-			$this->seedTypeColis($entrepriseId, $userId);
-			$this->seedTypeEngins($entrepriseId, $userId);
-			$this->seedModeLivraisons($userId, $entrepriseId);
-			$this->seedPoids($entrepriseId, $userId);
-			$this->seedTemps($entrepriseId, $userId);
-			$this->seedDelais($entrepriseId, $userId);
-			$this->seedConditionnements($userId, $entrepriseId);
-			$this->seedEnginsSamples($userId);
-			$this->seedZones($entrepriseId, $userId);
+		Log::info('Bootstrap entreprise démarré', [
+			'entreprise_id' => $entrepriseId,
+			'user_id' => $userId
+		]);
+
+		// Exécuter chaque étape individuellement avec gestion d'erreur
+		// pour s'assurer que les erreurs d'une étape n'empêchent pas les autres
+		$steps = [
+			'TypeColis' => fn() => $this->seedTypeColis($entrepriseId, $userId),
+			'TypeEngins' => fn() => $this->seedTypeEngins($entrepriseId, $userId),
+			'ModeLivraisons' => fn() => $this->seedModeLivraisons($userId, $entrepriseId),
+			'Poids' => fn() => $this->seedPoids($entrepriseId, $userId),
+			'Temps' => fn() => $this->seedTemps($entrepriseId, $userId),
+			'Delais' => fn() => $this->seedDelais($entrepriseId, $userId),
+			'Conditionnements' => fn() => $this->seedConditionnements($userId, $entrepriseId),
+			'EnginsSamples' => fn() => $this->seedEnginsSamples($entrepriseId, $userId),
+			'Zones' => fn() => $this->seedZones($entrepriseId, $userId),
+			'RolePermissions' => fn() => $this->seedRolePermissions($entrepriseId),
+			'SubscriptionPlan' => fn() => $this->seedSubscriptionPlan($entrepriseId),
+			'AssignDefaultPlan' => fn() => $this->assignDefaultPlan($userId),
+		];
+
+		$failedSteps = [];
+		foreach ($steps as $stepName => $stepCallback) {
+			try {
+				Log::info("Bootstrap étape: {$stepName}", ['entreprise_id' => $entrepriseId]);
+				$stepCallback();
+				Log::info("Bootstrap étape réussie: {$stepName}", ['entreprise_id' => $entrepriseId]);
+			} catch (\Exception $e) {
+				Log::error("Bootstrap étape échouée: {$stepName}", [
+					'entreprise_id' => $entrepriseId,
+					'error' => $e->getMessage(),
+					'trace' => $e->getTraceAsString()
+				]);
+				$failedSteps[] = $stepName;
+				// Continuer avec les autres étapes même si celle-ci échoue
+			}
+		}
+
+		// Génération des tarifs en dernier (peut être long et peut échouer sans bloquer)
+		try {
+			Log::info('Bootstrap étape: Tarifs', ['entreprise_id' => $entrepriseId]);
 			$this->seedTarifs($entrepriseId);
-			$this->seedRolePermissions($entrepriseId);
-			$this->seedSubscriptionPlan($entrepriseId);
-			$this->assignDefaultPlan($userId);
-		});
+			Log::info('Bootstrap étape réussie: Tarifs', ['entreprise_id' => $entrepriseId]);
+		} catch (\Exception $e) {
+			Log::error('Bootstrap étape échouée: Tarifs', [
+				'entreprise_id' => $entrepriseId,
+				'error' => $e->getMessage()
+			]);
+			$failedSteps[] = 'Tarifs';
+		}
+
+		// Vérification post-bootstrap
+		$verification = $this->verifyBootstrap($entrepriseId, $userId);
+
+		if (!empty($failedSteps) || !$verification['success']) {
+			Log::warning('Bootstrap terminé avec des avertissements', [
+				'entreprise_id' => $entrepriseId,
+				'failed_steps' => $failedSteps,
+				'verification' => $verification
+			]);
+
+			// Tenter de réparer les données manquantes
+			if (!$verification['success']) {
+				$this->repairMissingData($entrepriseId, $userId, $verification['missing']);
+
+				// Vérifier à nouveau après réparation
+				$verificationAfter = $this->verifyBootstrap($entrepriseId, $userId);
+				if ($verificationAfter['success']) {
+					Log::info('Bootstrap réparé avec succès après réparation', [
+						'entreprise_id' => $entrepriseId
+					]);
+				} else {
+					Log::error('Bootstrap incomplet même après réparation', [
+						'entreprise_id' => $entrepriseId,
+						'still_missing' => $verificationAfter['missing']
+					]);
+				}
+			}
+		} else {
+			Log::info('Bootstrap entreprise terminé avec succès', [
+				'entreprise_id' => $entrepriseId,
+				'user_id' => $userId
+			]);
+		}
 	}
 
 	protected function seedTypeColis(int $entrepriseId, int $userId): void
@@ -190,14 +261,31 @@ class TenantBootstrapService
 		}
 	}
 
-	protected function seedEnginsSamples(int $userId): void
+	protected function seedEnginsSamples(int $entrepriseId, int $userId): void
 	{
-		// Créer quelques engins génériques si la table est vide
-		if (!DB::table('engins')->exists()) {
-			// Récupérer un type engin existant (Moto par défaut)
-			$typeMotoId = DB::table('type_engins')->where('libelle', 'Moto')->value('id');
-			$typeVoitureId = DB::table('type_engins')->where('libelle', 'Voiture')->value('id');
-			$typeCamionnetteId = DB::table('type_engins')->where('libelle', 'Camionnette')->value('id');
+		// Créer quelques engins génériques pour l'entreprise si aucun n'existe
+		$hasEngins = DB::table('engins')
+			->whereIn('type_engin_id', function($query) use ($entrepriseId) {
+				$query->select('id')
+					->from('type_engins')
+					->where('entreprise_id', $entrepriseId);
+			})
+			->exists();
+
+		if (!$hasEngins) {
+			// Récupérer les types d'engins de l'entreprise
+			$typeMotoId = DB::table('type_engins')
+				->where('entreprise_id', $entrepriseId)
+				->where('libelle', 'Moto')
+				->value('id');
+			$typeVoitureId = DB::table('type_engins')
+				->where('entreprise_id', $entrepriseId)
+				->where('libelle', 'Voiture')
+				->value('id');
+			$typeCamionnetteId = DB::table('type_engins')
+				->where('entreprise_id', $entrepriseId)
+				->where('libelle', 'Camionnette')
+				->value('id');
 
 			$rows = [];
 			if ($typeMotoId) {
@@ -310,7 +398,7 @@ class TenantBootstrapService
             $pricingFree = \App\Models\PricingPlan::where('price', 0)->first();
 
             if (!$pricingFree) {
-                \Log::warning('Aucun plan gratuit trouvé dans pricing_plans', [
+                Log::warning('Aucun plan gratuit trouvé dans pricing_plans', [
                     'entreprise_id' => $entrepriseId
                 ]);
             }
@@ -352,14 +440,14 @@ class TenantBootstrapService
                 $payload
             );
 
-            \Log::info('Subscription plan créé/mis à jour pour l\'entreprise', [
+            Log::info('Subscription plan créé/mis à jour pour l\'entreprise', [
                 'entreprise_id' => $entrepriseId,
                 'subscription_plan_id' => $subscriptionPlan->id,
                 'name' => $subscriptionPlan->name,
                 'slug' => $subscriptionPlan->slug
             ]);
         } catch (\Exception $e) {
-            \Log::error('Erreur lors de la création du subscription plan', [
+            Log::error('Erreur lors de la création du subscription plan', [
                 'entreprise_id' => $entrepriseId,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
@@ -381,11 +469,11 @@ class TenantBootstrapService
 				'--force' => true
 			]);
 
-			\Log::info('Tarifs générés pour l\'entreprise', [
+			Log::info('Tarifs générés pour l\'entreprise', [
 				'entreprise_id' => $entrepriseId
 			]);
 		} catch (\Exception $e) {
-			\Log::error('Erreur lors de la génération des tarifs', [
+			Log::error('Erreur lors de la génération des tarifs', [
 				'entreprise_id' => $entrepriseId,
 				'error' => $e->getMessage()
 			]);
@@ -422,17 +510,97 @@ class TenantBootstrapService
 					'subscription_expires_at' => now()->addYear()
 				]);
 
-				\Log::info('Plan gratuit assigné par défaut', [
+				Log::info('Plan gratuit assigné par défaut', [
 					'user_id' => $userId,
 					'plan_id' => $freePlan->id,
 					'plan_name' => $freePlan->name
 				]);
 			}
 		} catch (\Exception $e) {
-			\Log::error('Erreur lors de l\'assignation du plan par défaut', [
+			Log::error('Erreur lors de l\'assignation du plan par défaut', [
 				'user_id' => $userId,
 				'error' => $e->getMessage()
 			]);
+		}
+	}
+
+	/**
+	 * Vérifier que toutes les données nécessaires ont été créées
+	 */
+	public function verifyBootstrap(int $entrepriseId, int $userId): array
+	{
+		$missing = [];
+		$checks = [
+			'type_colis' => fn() => DB::table('type_colis')->where('entreprise_id', $entrepriseId)->exists(),
+			'type_engins' => fn() => DB::table('type_engins')->where('entreprise_id', $entrepriseId)->exists(),
+			'mode_livraisons' => fn() => DB::table('mode_livraisons')->where('entreprise_id', $entrepriseId)->exists(),
+			'poids' => fn() => DB::table('poids')->where('entreprise_id', $entrepriseId)->exists(),
+			'temps' => fn() => DB::table('temps')->where('entreprise_id', $entrepriseId)->exists(),
+			'delais' => fn() => DB::table('delais')->where('entreprise_id', $entrepriseId)->exists(),
+			'conditionnement_colis' => fn() => DB::table('conditionnement_colis')->where('entreprise_id', $entrepriseId)->exists(),
+			'zone_activites' => fn() => DB::table('zone_activites')->where('entreprise_id', $entrepriseId)->exists(),
+			'role_permissions' => fn() => \App\Models\RolePermission::where('entreprise_id', $entrepriseId)->exists(),
+			'subscription_plans' => fn() => \App\Models\SubscriptionPlan::where('entreprise_id', $entrepriseId)->exists(),
+		];
+
+		foreach ($checks as $checkName => $checkCallback) {
+			try {
+				if (!$checkCallback()) {
+					$missing[] = $checkName;
+				}
+			} catch (\Exception $e) {
+				Log::warning("Vérification bootstrap échouée: {$checkName}", [
+					'entreprise_id' => $entrepriseId,
+					'error' => $e->getMessage()
+				]);
+				$missing[] = $checkName;
+			}
+		}
+
+		return [
+			'success' => empty($missing),
+			'missing' => $missing,
+			'total_checks' => count($checks),
+			'passed_checks' => count($checks) - count($missing)
+		];
+	}
+
+	/**
+	 * Réparer les données manquantes après le bootstrap
+	 */
+	public function repairMissingData(int $entrepriseId, int $userId, array $missing): void
+	{
+		Log::info('Réparation des données manquantes', [
+			'entreprise_id' => $entrepriseId,
+			'missing' => $missing
+		]);
+
+		$repairMethods = [
+			'type_colis' => fn() => $this->seedTypeColis($entrepriseId, $userId),
+			'type_engins' => fn() => $this->seedTypeEngins($entrepriseId, $userId),
+			'mode_livraisons' => fn() => $this->seedModeLivraisons($userId, $entrepriseId),
+			'poids' => fn() => $this->seedPoids($entrepriseId, $userId),
+			'temps' => fn() => $this->seedTemps($entrepriseId, $userId),
+			'delais' => fn() => $this->seedDelais($entrepriseId, $userId),
+			'conditionnement_colis' => fn() => $this->seedConditionnements($userId, $entrepriseId),
+			'zone_activites' => fn() => $this->seedZones($entrepriseId, $userId),
+			'role_permissions' => fn() => $this->seedRolePermissions($entrepriseId),
+			'subscription_plans' => fn() => $this->seedSubscriptionPlan($entrepriseId),
+		];
+
+		foreach ($missing as $missingItem) {
+			if (isset($repairMethods[$missingItem])) {
+				try {
+					Log::info("Réparation: {$missingItem}", ['entreprise_id' => $entrepriseId]);
+					$repairMethods[$missingItem]();
+					Log::info("Réparation réussie: {$missingItem}", ['entreprise_id' => $entrepriseId]);
+				} catch (\Exception $e) {
+					Log::error("Réparation échouée: {$missingItem}", [
+						'entreprise_id' => $entrepriseId,
+						'error' => $e->getMessage()
+					]);
+				}
+			}
 		}
 	}
 }

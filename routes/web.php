@@ -390,24 +390,33 @@ Route::get('/api/ramassages/by-boutique/{boutiqueId}', function($boutiqueId) {
         if (!$entrepriseId) {
             // Fallback: chercher une entreprise créée par cet utilisateur
             $entreprise = \App\Models\Entreprise::where('created_by', $user->id)->first();
-            $entrepriseId = $entreprise ? $entreprise->id : 1; // Valeur par défaut
+            if (!$entreprise) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'Aucune entreprise trouvée pour cet utilisateur',
+                    'ramassages' => []
+                ], 404);
+            }
+            $entrepriseId = $entreprise->id;
         }
 
-               $ramassages = \App\Models\Ramassage::with(['marchand', 'boutique'])
-                   ->where('boutique_id', $boutiqueId)
-                   ->where('entreprise_id', $entrepriseId)
-                   ->where('statut', 'termine') // Filtrer uniquement les ramassages terminés
-                   ->whereNotNull('colis_data')
-                   ->where('colis_data', '!=', '')
-                   ->where('colis_data', '!=', '[]')
-                   ->where('colis_data', '!=', 'null')
-                   ->whereNotExists(function ($query) {
-                       $query->select(\DB::raw(1))
-                             ->from('ramassage_colis')
-                             ->whereRaw('ramassage_colis.ramassage_id = ramassages.id');
-                   })
-                   ->orderBy('created_at', 'desc')
-                   ->get();
+        // Récupérer les ramassages terminés pour cette boutique
+        // Note: colis_data est un champ JSON, donc on doit vérifier différemment pour PostgreSQL
+        $ramassages = \App\Models\Ramassage::with(['marchand', 'boutique'])
+            ->where('boutique_id', $boutiqueId)
+            ->where('entreprise_id', $entrepriseId)
+            ->where('statut', 'termine') // Filtrer uniquement les ramassages terminés
+            ->whereNotNull('colis_data')
+            ->whereRaw("colis_data::text != 'null'")
+            ->whereRaw("colis_data::text != '[]'")
+            ->whereRaw("colis_data::text != ''")
+            ->whereNotExists(function ($query) {
+                $query->select(\DB::raw(1))
+                      ->from('ramassage_colis')
+                      ->whereRaw('ramassage_colis.ramassage_id = ramassages.id');
+            })
+            ->orderBy('created_at', 'desc')
+            ->get();
 
         return response()->json([
             'success' => true,
@@ -420,9 +429,16 @@ Route::get('/api/ramassages/by-boutique/{boutiqueId}', function($boutiqueId) {
             ]
         ]);
     } catch (\Exception $e) {
+        \Log::error('Erreur lors de la récupération des ramassages par boutique', [
+            'boutique_id' => $boutiqueId,
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString()
+        ]);
+
         return response()->json([
             'success' => false,
-            'error' => $e->getMessage()
+            'error' => $e->getMessage(),
+            'ramassages' => []
         ], 500);
     }
 })->middleware(['web', 'auth']);

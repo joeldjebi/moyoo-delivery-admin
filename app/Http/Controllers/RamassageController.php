@@ -150,10 +150,11 @@ class RamassageController extends Controller
             'statut' => 'demande',
             'adresse_ramassage' => $request->adresse_ramassage,
             'contact_ramassage' => $request->contact_ramassage,
+            'telephone_contact' => $request->telephone_contact ?? $request->contact_ramassage ?? null,
             'nombre_colis_estime' => $request->nombre_colis_estime,
             'nombre_colis_reel' => count($colisData),
             'notes' => $request->notes,
-            'colis_data' => json_encode($colisData),
+            'colis_data' => $colisData, // Laravel convertira automatiquement en JSON grâce au cast 'array'
             'montant_total' => $montantTotal
         ]);
 
@@ -176,10 +177,6 @@ class RamassageController extends Controller
 
         // Récupérer l'adresse GPS de la boutique
         $adresseGpsBoutique = $ramassage->boutique->adresse_gps ?? '';
-
-        // Précharger les communes pour les planifications
-        $communeIds = $ramassage->planifications->pluck('zone_ramassage')->filter()->unique()->values()->toArray();
-        $communes = Commune::whereIn('id', $communeIds)->get()->keyBy('id');
 
         // Récupérer les livreurs pour la planification
         $entrepriseId = auth()->user()->entreprise_id;
@@ -219,6 +216,86 @@ class RamassageController extends Controller
             $periodes = Temp::whereIn('id', $periodeIds)->get()->keyBy('id');
         }
 
+        // Parser les notes du livreur pour extraire les photos et les notes
+        $photosColis = [];
+        $notesLivreurText = '';
+
+        if ($ramassage->notes_livreur) {
+            $notesLines = explode("\n", $ramassage->notes_livreur);
+            $inPhotosSection = false;
+            $inNotesSection = false;
+            $photoDate = null;
+
+            foreach ($notesLines as $originalLine) {
+                $line = trim($originalLine);
+
+                // Détecter le début de la section photos
+                if (strpos($line, '📸 PHOTOS DES COLIS RAMASSÉS') !== false) {
+                    $inPhotosSection = true;
+                    $inNotesSection = false;
+                    continue;
+                }
+
+                // Détecter la date dans la section photos
+                if ($inPhotosSection && strpos($line, 'Date:') !== false) {
+                    $photoDate = trim(str_replace('Date:', '', $line));
+                    continue;
+                }
+
+                // Détecter le début de la section notes du livreur
+                if (strpos($line, 'Notes livreur:') !== false) {
+                    $inPhotosSection = false;
+                    $inNotesSection = true;
+                    $noteText = trim(str_replace('Notes livreur:', '', $line));
+                    if (!empty($noteText)) {
+                        $notesLivreurText = $noteText;
+                    }
+                    continue;
+                }
+
+                // Si on est dans la section photos, détecter les fichiers
+                if ($inPhotosSection) {
+                    if (strpos($line, '-') === 0 || strpos($line, 'colis_') === 0) {
+                        // C'est un nom de fichier photo
+                        $filename = trim(str_replace('-', '', $line));
+                        // Vérifier si le fichier existe
+                        $filePath = storage_path('app/public/ramassages/photos/' . $filename);
+                        $photosColis[] = [
+                            'filename' => $filename,
+                            'date' => $photoDate,
+                            'url' => asset('storage/ramassages/photos/' . $filename),
+                            'exists' => file_exists($filePath)
+                        ];
+                    }
+                    continue;
+                }
+
+                // Si on est dans la section notes, ajouter les lignes
+                if ($inNotesSection) {
+                    if (!empty($line)) {
+                        $notesLivreurText .= ($notesLivreurText ? "\n" : '') . $line;
+                    }
+                    continue;
+                }
+
+                // Si on n'est ni dans photos ni dans notes, ce sont des notes générales
+                if (!$inPhotosSection && !$inNotesSection && !empty($line)) {
+                    $notesLivreurText .= ($notesLivreurText ? "\n" : '') . $line;
+                }
+            }
+
+            // Si on n'a pas trouvé de notes séparées mais qu'on a des photos, nettoyer
+            if (empty($notesLivreurText) && count($photosColis) > 0) {
+                // Les notes sont probablement dans la section photos
+                $notesLivreurText = '';
+            }
+
+            // Si aucune section n'a été détectée, utiliser tout le texte comme notes
+            if (empty($photosColis) && empty($notesLivreurText)) {
+                $notesLivreurText = $ramassage->notes_livreur;
+            }
+        }
+
         $data = [
             'title' => 'Détails du Ramassage',
             'menu' => 'ramassages',
@@ -233,7 +310,9 @@ class RamassageController extends Controller
             'delais' => $delais,
             'modesLivraison' => $modesLivraison,
             'periodes' => $periodes,
-            'adresseGpsBoutique' => $adresseGpsBoutique
+            'adresseGpsBoutique' => $adresseGpsBoutique,
+            'photosColis' => $photosColis,
+            'notesLivreurText' => trim($notesLivreurText)
         ];
         return view('ramassages.show', $data);
     }
@@ -345,10 +424,11 @@ class RamassageController extends Controller
             'statut' => $request->statut,
             'adresse_ramassage' => $request->adresse_ramassage,
             'contact_ramassage' => $request->contact_ramassage,
+            'telephone_contact' => $request->telephone_contact ?? $request->contact_ramassage ?? null,
             'nombre_colis_estime' => $request->nombre_colis_estime,
             'nombre_colis_reel' => count($colisData),
             'notes' => $request->notes,
-            'colis_data' => json_encode($colisData),
+            'colis_data' => $colisData, // Laravel convertira automatiquement en JSON grâce au cast 'array'
             'montant_total' => $montantTotal
         ]);
 
@@ -647,9 +727,23 @@ class RamassageController extends Controller
                 ]);
             }
 
+            // Normaliser les données pour correspondre au format attendu par le formulaire
+            // Le ramassage stocke 'client' mais le formulaire attend 'nom_client'
+            $normalizedColisData = array_map(function($colis) {
+                // Si 'client' existe mais pas 'nom_client', utiliser 'client' comme 'nom_client'
+                if (isset($colis['client']) && !isset($colis['nom_client'])) {
+                    $colis['nom_client'] = $colis['client'];
+                }
+                // Si 'nom_client' existe mais pas 'client', utiliser 'nom_client' comme 'client'
+                if (isset($colis['nom_client']) && !isset($colis['client'])) {
+                    $colis['client'] = $colis['nom_client'];
+                }
+                return $colis;
+            }, $colisData);
+
             return response()->json([
                 'success' => true,
-                'colisData' => $colisData,
+                'colisData' => $normalizedColisData,
                 'ramassage' => [
                     'id' => $ramassage->id,
                     'code_ramassage' => $ramassage->code_ramassage,

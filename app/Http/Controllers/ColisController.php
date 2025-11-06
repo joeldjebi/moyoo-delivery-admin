@@ -113,6 +113,7 @@ class ColisController extends Controller
             $data['livreurs'] = Livreur::where('status', 'actif')->orderBy('first_name')->get();
             $data['engins'] = Engin::where('status', 'actif')->orderBy('libelle')->get();
 
+
             return view('colis.index', $data);
         } catch (\Exception $e) {
             Log::error('Erreur lors de la récupération des colis: ' . $e->getMessage());

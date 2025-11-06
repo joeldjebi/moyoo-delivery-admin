@@ -724,7 +724,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Nom du client <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" name="colis[${index}][nom_client]" value="${colisData.nom_client || ''}" required>
+                            <input type="text" class="form-control" name="colis[${index}][nom_client]" value="${colisData.nom_client || colisData.client || ''}" required>
                         </div>
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Téléphone du client <span class="text-danger">*</span></label>
@@ -2339,7 +2339,7 @@ function handleLivreurChangeMulti(index, livreurId) {
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Nom du client <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" name="colis[${index}][nom_client]" value="${colisData.nom_client || ''}" required>
+                            <input type="text" class="form-control" name="colis[${index}][nom_client]" value="${colisData.nom_client || colisData.client || ''}" required>
                         </div>
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Téléphone du client <span class="text-danger">*</span></label>

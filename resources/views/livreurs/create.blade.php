@@ -258,7 +258,7 @@
 
                                         <div class="alert alert-info">
                                             <i class="ti ti-info-circle me-2"></i>
-                                            <strong>Mot de passe automatique :</strong> Un mot de passe de 8 chiffres sera généré automatiquement et envoyé par WhatsApp au livreur.
+                                            <strong>Mot de passe automatique :</strong> Un mot de passe de 8 chiffres sera généré automatiquement et envoyé par WhatsApp/Email au livreur.
                                         </div>
                                     </div>
                                 </div>

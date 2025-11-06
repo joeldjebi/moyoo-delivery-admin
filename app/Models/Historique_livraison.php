@@ -21,13 +21,22 @@ class Historique_livraison extends Model
         'montant_a_encaisse',
         'prix_de_vente',
         'montant_de_la_livraison',
-        'created_by'
+        'created_by',
+        'code_validation_utilise',
+        'photo_proof_path',
+        'signature_data',
+        'note_livraison',
+        'motif_annulation',
+        'date_livraison_effective',
+        'latitude',
+        'longitude'
     ];
 
     protected $casts = [
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
-        'deleted_at' => 'datetime'
+        'deleted_at' => 'datetime',
+        'date_livraison_effective' => 'datetime'
     ];
 
     /**
