@@ -260,9 +260,9 @@ app.get('/health', (req, res) => {
 });
 
 // Démarrer le serveur
-server.listen(PORT, '192.168.1.6', () => {
+server.listen(PORT, '192.168.1.8', () => {
     console.log(`🚀 Serveur Socket.IO MOYOO démarré sur le port ${PORT}`);
-    console.log(`📡 URL: http://192.168.1.6:${PORT}`);
+    console.log(`📡 URL: http://192.168.1.8:${PORT}`);
     console.log(`🔧 Transports: websocket, polling`);
     console.log(`🔒 Authentification: JWT`);
     console.log(`⏰ Timestamp: ${new Date().toISOString()}`);

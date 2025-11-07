@@ -2,7 +2,7 @@
 
 # Script de test pour vérifier que l'API met à jour correctement le statut des colis
 
-BASE_URL="http://192.168.1.6:8000"
+BASE_URL="http://192.168.1.8:8000"
 TOKEN="eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwOi8vMTkyLjE2OC4xLjY6ODAwMC9hcGkvbGl2cmV1ci9sb2dpbiIsImlhdCI6MTc2MjQyMTAwNywiZXhwIjoxNzYyNTkzODA3LCJuYmYiOjE3NjI0MjEwMDcsImp0aSI6IjJTM0RyR0pZQVMyUVllcDAiLCJzdWIiOiIxIiwicHJ2IjoiNWZhYWY0NzcxYzNkNThlMzI5MzFhNzQwOGY5MzdiYTkzMzYzYjNjOSIsInR5cGUiOiJsaXZyZXVyIiwiZW50cmVwcmlzZV9pZCI6MSwic3RhdHVzIjoiYWN0aWYifQ.ZYlYbfVbp7kD0q29nQ_vg1dXv_3oLnuW4gUj2yGSskU"
 
 echo "🧪 Test de mise à jour du statut via l'API"

@@ -14,7 +14,7 @@ class SwaggerController extends Controller
      * )
      *
      * @OA\Server(
-     *     url="http://192.168.1.6:8000",
+     *     url="http://192.168.1.8:8000",
      *     description="Serveur de développement MOYOO"
      * )
      *

@@ -13,9 +13,12 @@ class RolePermissionSeeder extends Seeder
      */
     public function run(): void
     {
+        // Récupérer l'entreprise_id depuis la config ou utiliser null pour les permissions globales
+        $entrepriseId = config('seed.entreprise_id', null);
+
         // Permissions pour le rôle Admin
         RolePermission::updateOrCreate(
-            ['role' => 'admin'],
+            ['role' => 'admin', 'entreprise_id' => $entrepriseId],
             ['permissions' => [
                 'users.create',
                 'users.read',
@@ -41,7 +44,7 @@ class RolePermissionSeeder extends Seeder
 
         // Permissions pour le rôle Manager
         RolePermission::updateOrCreate(
-            ['role' => 'manager'],
+            ['role' => 'manager', 'entreprise_id' => $entrepriseId],
             ['permissions' => [
                 'colis.create',
                 'colis.read',
@@ -61,7 +64,7 @@ class RolePermissionSeeder extends Seeder
 
         // Permissions pour le rôle User
         RolePermission::updateOrCreate(
-            ['role' => 'user'],
+            ['role' => 'user', 'entreprise_id' => $entrepriseId],
             ['permissions' => [
                 'colis.create',
                 'colis.read',
