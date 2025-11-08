@@ -17,6 +17,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'permission' => \App\Http\Middleware\PermissionMiddleware::class,
             'jwt.livreur' => \App\Http\Middleware\JwtLivreurMiddleware::class,
             'subscription' => \App\Http\Middleware\CheckSubscription::class,
+            'module' => \App\Http\Middleware\CheckModuleAccess::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

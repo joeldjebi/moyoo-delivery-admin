@@ -65,4 +65,42 @@ class PricingPlan extends Model
     {
         return $this->period === 'month' ? 'mois' : 'année';
     }
+
+    /**
+     * Relation avec les modules
+     */
+    public function modules()
+    {
+        return $this->belongsToMany(Module::class, 'pricing_plan_modules')
+                    ->withPivot('is_enabled', 'limits')
+                    ->withTimestamps();
+    }
+
+    /**
+     * Vérifier si le plan a un module activé
+     */
+    public function hasModule($moduleSlug)
+    {
+        return $this->modules()
+            ->where('slug', $moduleSlug)
+            ->wherePivot('is_enabled', true)
+            ->exists();
+    }
+
+    /**
+     * Obtenir les limites d'un module
+     */
+    public function getModuleLimits($moduleSlug)
+    {
+        $module = $this->modules()
+            ->where('slug', $moduleSlug)
+            ->wherePivot('is_enabled', true)
+            ->first();
+
+        if (!$module) {
+            return null;
+        }
+
+        return json_decode($module->pivot->limits, true);
+    }
 }

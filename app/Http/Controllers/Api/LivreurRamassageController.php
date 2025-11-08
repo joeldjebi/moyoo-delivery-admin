@@ -563,7 +563,7 @@ class LivreurRamassageController extends Controller
      *                     @OA\Items(
      *                         type="object",
      *                         @OA\Property(property="filename", type="string", example="colis_1_1760355000_1.jpg"),
-     *                         @OA\Property(property="url", type="string", example="http://192.168.1.8:8000/storage/ramassages/photos/colis_1_1760355000_1.jpg"),
+     *                         @OA\Property(property="url", type="string", example="http://192.168.1.2:8000/storage/ramassages/photos/colis_1_1760355000_1.jpg"),
      *                         @OA\Property(property="path", type="string", example="ramassages/photos/colis_1_1760355000_1.jpg")
      *                     )
      *                 ),

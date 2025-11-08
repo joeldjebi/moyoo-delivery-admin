@@ -9,9 +9,16 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
+use App\Services\ModuleAccessService;
 
 class MarchandController extends Controller
 {
+    protected $moduleAccessService;
+
+    public function __construct(ModuleAccessService $moduleAccessService)
+    {
+        $this->moduleAccessService = $moduleAccessService;
+    }
     /**
      * Vérifier l'accès à un marchand
      */
@@ -67,14 +74,30 @@ class MarchandController extends Controller
      */
     public function create()
     {
-        $data['title'] = 'Ajouter un Marchand';
-        $data['menu'] = 'create-marchand';
-
-        $data['user'] = Auth::user();
-        if(empty($data['user'])){
+        $user = Auth::user();
+        if(empty($user)){
             return redirect()->route('auth.login')
                 ->withErrors(['error' => 'Veuillez vous connecter pour accéder à cette page.']);
         }
+
+        $entrepriseId = $user->entreprise_id ?? 1;
+
+        // Vérifier l'accès au module
+        if (!$this->moduleAccessService->hasAccess($entrepriseId, 'marchand_management')) {
+            return redirect()->route('subscriptions.index')
+                ->with('error', 'La gestion des marchands n\'est pas disponible dans votre plan actuel.');
+        }
+
+        // Vérifier les limites
+        if (!$this->moduleAccessService->canCreateMarchand($entrepriseId)) {
+            $maxMarchands = $this->moduleAccessService->getModuleLimit($entrepriseId, 'marchand_management', 'max_marchands');
+            return redirect()->route('marchands.index')
+                ->with('error', $maxMarchands ? "Vous avez atteint la limite de {$maxMarchands} marchands. Veuillez passer à un plan supérieur." : "Limite de marchands atteinte.");
+        }
+
+        $data['title'] = 'Ajouter un Marchand';
+        $data['menu'] = 'create-marchand';
+        $data['user'] = $user;
 
         $data['communes'] = Commune::orderBy('libelle')->get();
 
@@ -90,6 +113,21 @@ class MarchandController extends Controller
         if(empty($user)){
             return redirect()->route('auth.login')
                 ->withErrors(['error' => 'Veuillez vous connecter pour accéder à cette page.']);
+        }
+
+        $entrepriseId = $user->entreprise_id ?? 1;
+
+        // Vérifier l'accès au module
+        if (!$this->moduleAccessService->hasAccess($entrepriseId, 'marchand_management')) {
+            return redirect()->route('subscriptions.index')
+                ->with('error', 'La gestion des marchands n\'est pas disponible dans votre plan actuel.');
+        }
+
+        // Vérifier les limites
+        if (!$this->moduleAccessService->canCreateMarchand($entrepriseId)) {
+            $maxMarchands = $this->moduleAccessService->getModuleLimit($entrepriseId, 'marchand_management', 'max_marchands');
+            return redirect()->route('marchands.index')
+                ->with('error', $maxMarchands ? "Vous avez atteint la limite de {$maxMarchands} marchands. Veuillez passer à un plan supérieur." : "Limite de marchands atteinte.");
         }
 
         $request->validate([

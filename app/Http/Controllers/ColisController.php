@@ -24,10 +24,18 @@ use App\Models\Ramassage;
 use App\Models\Temp;
 use App\Traits\SendsFirebaseNotifications;
 use App\Notifications\NewColisNotification;
+use App\Services\ModuleAccessService;
 
 class ColisController extends Controller
 {
     use SendsFirebaseNotifications;
+
+    protected $moduleAccessService;
+
+    public function __construct(ModuleAccessService $moduleAccessService)
+    {
+        $this->moduleAccessService = $moduleAccessService;
+    }
     /**
      * Récupérer l'ID de l'entreprise de l'utilisateur connecté
      */
@@ -128,17 +136,31 @@ class ColisController extends Controller
     public function create()
     {
         try {
-            $data['menu'] = 'colis';
-            $data['title'] = 'Ajouter un Colis';
-
-            $data['user'] = Auth::user();
-            if(empty($data['user'])){
+            $user = Auth::user();
+            if(empty($user)){
                 return redirect()->route('auth.login')
                     ->withErrors(['error' => 'Veuillez vous connecter pour accéder à cette page.']);
             }
 
             // Récupérer l'ID de l'entreprise de l'utilisateur connecté
             $entrepriseId = $this->getEntrepriseId();
+
+            // Vérifier l'accès au module
+            if (!$this->moduleAccessService->hasAccess($entrepriseId, 'colis_management')) {
+                return redirect()->route('subscriptions.index')
+                    ->with('error', 'La gestion des colis n\'est pas disponible dans votre plan actuel.');
+            }
+
+            // Vérifier les limites
+            if (!$this->moduleAccessService->canCreateColis($entrepriseId)) {
+                $maxColis = $this->moduleAccessService->getModuleLimit($entrepriseId, 'colis_management', 'max_per_month');
+                return redirect()->route('colis.index')
+                    ->with('error', $maxColis ? "Vous avez atteint la limite de {$maxColis} colis pour ce mois. Veuillez passer à un plan supérieur." : "Limite de colis atteinte pour ce mois.");
+            }
+
+            $data['menu'] = 'colis';
+            $data['title'] = 'Ajouter un Colis';
+            $data['user'] = $user;
 
             // Récupérer les données nécessaires filtrées par entreprise
             $data['marchands'] = Marchand::where('entreprise_id', $entrepriseId)->orderBy('first_name')->get();
@@ -188,6 +210,19 @@ class ColisController extends Controller
             // Récupérer l'ID de l'entreprise de l'utilisateur connecté
             $entrepriseId = $this->getEntrepriseId();
             Log::info('Entreprise ID récupéré:', ['entreprise_id' => $entrepriseId]);
+
+            // Vérifier l'accès au module
+            if (!$this->moduleAccessService->hasAccess($entrepriseId, 'colis_management')) {
+                return redirect()->route('subscriptions.index')
+                    ->with('error', 'La gestion des colis n\'est pas disponible dans votre plan actuel.');
+            }
+
+            // Vérifier les limites
+            if (!$this->moduleAccessService->canCreateColis($entrepriseId)) {
+                $maxColis = $this->moduleAccessService->getModuleLimit($entrepriseId, 'colis_management', 'max_per_month');
+                return redirect()->route('colis.index')
+                    ->with('error', $maxColis ? "Vous avez atteint la limite de {$maxColis} colis pour ce mois. Veuillez passer à un plan supérieur." : "Limite de colis atteinte pour ce mois.");
+            }
 
             // Validation des données générales
             $request->validate([

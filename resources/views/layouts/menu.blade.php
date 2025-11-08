@@ -40,15 +40,23 @@
 
             <div class="menu-inner-shadow"></div>
 
+            @php
+                use App\Services\ModuleAccessService;
+                $moduleAccessService = app(ModuleAccessService::class);
+                $accessibleModules = $moduleAccessService->getAccessibleModules(auth()->user()->entreprise_id ?? null);
+                $moduleSlugs = $accessibleModules->pluck('slug')->toArray();
+            @endphp
+
             <ul class="menu-inner py-1">
-              <!-- Tableau de bord -->
+              <!-- Tableau de bord (toujours accessible) -->
               <li class="menu-item {{ $menu == 'dashboard' ? 'active' : '' }}">
                 <a href="{{ route('dashboard') }}" class="menu-link">
                   <i class="menu-icon tf-icons ti ti-smart-home"></i>
                   <div data-i18n="Tableau de bord">Tableau de bord</div>
                 </a>
               </li>
-              @if(auth()->user()->hasPermission('colis.read'))
+              <!-- Colis : vérifier module ET permission -->
+              @if(in_array('colis_management', $moduleSlugs) && auth()->user()->hasPermission('colis.read'))
               <li class="menu-item">
                 <a href="javascript:void(0);" class="menu-link menu-toggle">
                   <i class="menu-icon tf-icons ti ti-shopping-cart"></i>
@@ -83,8 +91,8 @@
               </li>
               @endif
 
-              <!-- Marchants & Boutiques -->
-              @if(auth()->user()->hasPermission('marchands.read'))
+              <!-- Marchants & Boutiques : vérifier module ET permission -->
+              @if(in_array('marchand_management', $moduleSlugs) && auth()->user()->hasPermission('marchands.read'))
               <li class="menu-item">
                 <a href="javascript:void(0);" class="menu-link menu-toggle">
                   <i class="menu-icon tf-icons ti ti-layout-sidebar"></i>
@@ -106,8 +114,8 @@
                 </ul>
               </li>
               @endif
-              <!-- Rapports menu start -->
-              @if(auth()->user()->hasPermission('reports.read'))
+              <!-- Rapports menu start : vérifier module ET permission -->
+              @if((in_array('reports_basic', $moduleSlugs) || in_array('reports_advanced', $moduleSlugs)) && auth()->user()->hasPermission('reports.read'))
               <li class="menu-item">
                 <a href="javascript:void(0);" class="menu-link menu-toggle">
                   <i class="menu-icon tf-icons ti ti-chart-bar"></i>
@@ -144,8 +152,8 @@
               @endif
               <!-- Rapports menu end -->
 
-              <!-- Reversements menu start -->
-              @if(auth()->user()->hasPermission('reversements.read'))
+              <!-- Reversements menu start : vérifier module ET permission -->
+              @if(in_array('reversement_management', $moduleSlugs) && auth()->user()->hasPermission('reversements.read'))
               <li class="menu-item">
                 <a href="javascript:void(0);" class="menu-link menu-toggle">
                   <i class="menu-icon tf-icons ti ti-wallet"></i>
@@ -183,18 +191,26 @@
               <li class="menu-header small">
                 <span class="menu-header-text" data-i18n="Apps & Pages">Apps &amp; Pages</span>
               </li>
+              <!-- Livreurs : vérifier module -->
+              @if(in_array('livreur_management', $moduleSlugs))
               <li class="menu-item {{ $menu == 'livreurs' ? 'active' : '' }}">
                 <a href="{{ route('livreurs.index') }}" class="menu-link">
                   <i class="menu-icon tf-icons ti ti-mail"></i>
                   <div data-i18n="Livreurs">Livreurs</div>
                 </a>
               </li>
+              @endif
+              <!-- Tarifs : vérifier module -->
+              @if(in_array('tarif_management', $moduleSlugs))
               <li class="menu-item {{ $menu == 'tarifs' ? 'active' : '' }}">
                 <a href="{{ route('tarifs.index') }}" class="menu-link">
                   <i class="menu-icon tf-icons ti ti-currency-dollar"></i>
                   <div data-i18n="Tarifs de Livraison">Tarifs de Livraison</div>
                 </a>
               </li>
+              @endif
+              <!-- Engins : vérifier module -->
+              @if(in_array('engin_management', $moduleSlugs))
               <li class="menu-item {{ $menu == 'type_engins' ? 'active' : '' }}">
                 <a href="{{ route('type-engins.index') }}" class="menu-link {{ $menu == 'type_engins' ? 'active' : '' }}">
                   <i class="menu-icon tf-icons ti ti-mail"></i>
@@ -207,13 +223,18 @@
                   <div data-i18n="Engins">Engins</div>
                 </a>
               </li>
+              @endif
+              <!-- Délais : vérifier module -->
+              @if(in_array('delai_management', $moduleSlugs))
               <li class="menu-item {{ $menu == 'delais' ? 'active' : '' }}">
                 <a href="{{ route('delais.index') }}" class="menu-link">
                   <i class="menu-icon tf-icons ti ti-calendar"></i>
                   <div data-i18n="Delais">Delais</div>
                 </a>
               </li>
-              @if(auth()->user()->hasPermission('users.read'))
+              @endif
+              <!-- Utilisateurs : vérifier module ET permission -->
+              @if(in_array('user_management', $moduleSlugs) && auth()->user()->hasPermission('users.read'))
               <li class="menu-item {{ $menu == 'users' ? 'active' : '' }}">
                 <a href="{{ route('users.index') }}" class="menu-link">
                   <i class="menu-icon tf-icons ti ti-users"></i>
@@ -221,20 +242,23 @@
                 </a>
               </li>
               @endif
+              <!-- Abonnements : vérifier module -->
+              @if(in_array('subscription_management', $moduleSlugs))
               <li class="menu-item {{ $menu == 'subscriptions' ? 'active' : '' }}">
                 <a href="{{ route('subscriptions.index') }}" class="menu-link">
                   <i class="menu-icon tf-icons ti ti-crown"></i>
                   <div data-i18n="Abonnements">Abonnements</div>
                 </a>
               </li>
+              @endif
 
               <!-- Section Géolocalisation -->
               <li class="menu-header small text-uppercase">
                 <span class="menu-header-text">Géolocalisation</span>
               </li>
 
-
-              @if(auth()->user()->hasActiveSubscription('Premium'))
+              <!-- Géolocalisation : vérifier module premium -->
+              @if(in_array('geolocation_tracking', $moduleSlugs))
               <li class="menu-item {{ $menu == 'location-admin' ? 'active' : '' }}">
                 <a href="{{ route('location.admin-monitor') }}" class="menu-link">
                   <i class="menu-icon tf-icons ti ti-map"></i>
@@ -244,7 +268,8 @@
               </li>
               @endif
 
-              @if(auth()->user()->hasPermission('settings.update'))
+              <!-- Permissions : vérifier module ET permission -->
+              @if(in_array('role_permissions', $moduleSlugs) && auth()->user()->hasPermission('settings.update'))
               <li class="menu-item {{ $menu == 'role-permissions' ? 'active' : '' }}">
                 <a href="{{ route('role-permissions.index') }}" class="menu-link">
                   <i class="menu-icon tf-icons ti ti-shield"></i>
@@ -252,6 +277,8 @@
                 </a>
               </li>
               @endif
+              <!-- Configuration : vérifier module -->
+              @if(in_array('configuration_management', $moduleSlugs))
               <li class="menu-item {{ $menu == 'mode-livraisons' ? 'active' : '' }}">
                 <a href="{{ route('mode-livraisons.index') }}" class="menu-link">
                   <i class="menu-icon tf-icons ti ti-layout-kanban"></i>
@@ -270,6 +297,7 @@
                   <div data-i18n="Type de colis">Type de colis</div>
                 </a>
               </li>
+              @endif
               <li class="menu-header small">
                 <span class="menu-header-text" data-i18n="Parametres">Parametres</span>
               </li>
@@ -295,21 +323,29 @@
 
 
               <!-- Misc -->
+              <!-- Notifications : vérifier module -->
+              @if(in_array('notifications', $moduleSlugs))
               <li class="menu-item {{ $menu == 'notifications' ? 'active' : '' }}">
                 <a href="{{ route('notifications.settings') }}" class="menu-link">
                   <i class="menu-icon tf-icons ti ti-bell"></i>
                   <div data-i18n="Notifications">Notifications</div>
                 </a>
               </li>
+              @endif
               <li class="menu-header small">
                 <span class="menu-header-text" data-i18n="Support & Documentation">Support & Documentation</span>
               </li>
+              <!-- Support : vérifier module -->
+              @if(in_array('support', $moduleSlugs))
               <li class="menu-item">
                 <a href="{{ route('support.index') }}" class="menu-link">
                   <i class="menu-icon tf-icons ti ti-lifebuoy"></i>
                   <div data-i18n="Support">Support</div>
                 </a>
               </li>
+              @endif
+              <!-- Documentation : vérifier module -->
+              @if(in_array('documentation', $moduleSlugs))
               <li class="menu-item">
                 <a
                   href="{{ route('documentation.index') }}"
@@ -318,6 +354,7 @@
                   <div data-i18n="Documentation">Documentation</div>
                 </a>
               </li>
+              @endif
             </ul>
           </aside>
           <!-- / Menu -->

@@ -21,10 +21,18 @@ use App\Models\Temp;
 use App\Traits\SendsFirebaseNotifications;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
+use App\Services\ModuleAccessService;
 
 class RamassageController extends Controller
 {
     use SendsFirebaseNotifications;
+
+    protected $moduleAccessService;
+
+    public function __construct(ModuleAccessService $moduleAccessService)
+    {
+        $this->moduleAccessService = $moduleAccessService;
+    }
     /**
      * Display a listing of the resource.
      */
@@ -55,11 +63,18 @@ class RamassageController extends Controller
      */
     public function create()
     {
-        $entrepriseId = auth()->user()->entreprise_id;
+        $user = auth()->user();
+        $entrepriseId = $user->entreprise_id;
 
         if (!$entrepriseId) {
-            $entreprise = Entreprise::where('created_by', auth()->id())->first();
+            $entreprise = Entreprise::where('created_by', $user->id)->first();
             $entrepriseId = $entreprise ? $entreprise->id : null;
+        }
+
+        // Vérifier l'accès au module
+        if (!$this->moduleAccessService->hasAccess($entrepriseId, 'ramassage_management')) {
+            return redirect()->route('subscriptions.index')
+                ->with('error', 'La gestion des ramassages n\'est pas disponible dans votre plan actuel.');
         }
 
         $marchands = Marchand::where('entreprise_id', $entrepriseId)->get();
@@ -79,6 +94,20 @@ class RamassageController extends Controller
      */
     public function store(Request $request)
     {
+        $user = auth()->user();
+        $entrepriseId = $user->entreprise_id;
+
+        if (!$entrepriseId) {
+            $entreprise = Entreprise::where('created_by', $user->id)->first();
+            $entrepriseId = $entreprise ? $entreprise->id : null;
+        }
+
+        // Vérifier l'accès au module
+        if (!$this->moduleAccessService->hasAccess($entrepriseId, 'ramassage_management')) {
+            return redirect()->route('subscriptions.index')
+                ->with('error', 'La gestion des ramassages n\'est pas disponible dans votre plan actuel.');
+        }
+
         $request->validate([
             'marchand_id' => 'required|exists:marchands,id',
             'boutique_id' => 'required|exists:boutiques,id',

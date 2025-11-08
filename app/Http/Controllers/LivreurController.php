@@ -12,9 +12,16 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
+use App\Services\ModuleAccessService;
 
 class LivreurController extends Controller
 {
+    protected $moduleAccessService;
+
+    public function __construct(ModuleAccessService $moduleAccessService)
+    {
+        $this->moduleAccessService = $moduleAccessService;
+    }
     /**
      * Display a listing of the resource.
      */
@@ -48,14 +55,30 @@ class LivreurController extends Controller
     public function create()
     {
         try {
-            $data['menu'] = 'livreurs';
-            $data['title'] = 'Ajouter un Livreur';
-
-            $data['user'] = Auth::user();
-            if(empty($data['user'])){
+            $user = Auth::user();
+            if(empty($user)){
                 return redirect()->route('auth.login')
                     ->withErrors(['error' => 'Veuillez vous connecter pour accéder à cette page.']);
             }
+
+            $entrepriseId = $user->entreprise_id ?? 1;
+
+            // Vérifier l'accès au module
+            if (!$this->moduleAccessService->hasAccess($entrepriseId, 'livreur_management')) {
+                return redirect()->route('subscriptions.index')
+                    ->with('error', 'La gestion des livreurs n\'est pas disponible dans votre plan actuel.');
+            }
+
+            // Vérifier les limites
+            if (!$this->moduleAccessService->canCreateLivreur($entrepriseId)) {
+                $maxLivreurs = $this->moduleAccessService->getModuleLimit($entrepriseId, 'livreur_management', 'max_livreurs');
+                return redirect()->route('livreurs.index')
+                    ->with('error', $maxLivreurs ? "Vous avez atteint la limite de {$maxLivreurs} livreurs. Veuillez passer à un plan supérieur." : "Limite de livreurs atteinte.");
+            }
+
+            $data['menu'] = 'livreurs';
+            $data['title'] = 'Ajouter un Livreur';
+            $data['user'] = $user;
 
             $data['engins'] = Engin::where('status', 'actif')
                 ->with('typeEngin')
@@ -82,6 +105,21 @@ class LivreurController extends Controller
             if(empty($user)){
                 return redirect()->route('auth.login')
                     ->withErrors(['error' => 'Veuillez vous connecter pour accéder à cette page.']);
+            }
+
+            $entrepriseId = $user->entreprise_id ?? 1;
+
+            // Vérifier l'accès au module
+            if (!$this->moduleAccessService->hasAccess($entrepriseId, 'livreur_management')) {
+                return redirect()->route('subscriptions.index')
+                    ->with('error', 'La gestion des livreurs n\'est pas disponible dans votre plan actuel.');
+            }
+
+            // Vérifier les limites
+            if (!$this->moduleAccessService->canCreateLivreur($entrepriseId)) {
+                $maxLivreurs = $this->moduleAccessService->getModuleLimit($entrepriseId, 'livreur_management', 'max_livreurs');
+                return redirect()->route('livreurs.index')
+                    ->with('error', $maxLivreurs ? "Vous avez atteint la limite de {$maxLivreurs} livreurs. Veuillez passer à un plan supérieur." : "Limite de livreurs atteinte.");
             }
 
             $request->validate([
