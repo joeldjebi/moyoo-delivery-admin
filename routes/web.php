@@ -26,6 +26,10 @@ use App\Http\Controllers\LivraisonController;
 use App\Http\Controllers\HistoriqueLivraisonController;
 use App\Http\Controllers\RamassageController;
 use App\Http\Controllers\LocationController;
+use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\ProductController;
+use App\Http\Controllers\StockController;
+use App\Http\Controllers\StockMovementController;
 
 // Routes d'authentification
 Route::group(['middleware' => ['auth', 'tenant']], function (){
@@ -582,6 +586,25 @@ Route::middleware(['auth'])->group(function () {
     // Routes de validation/annulation (mise à jour)
     Route::post('/reversements/{id}/validate', [App\Http\Controllers\ReversementController::class, 'validateReversement'])->name('reversements.validate')->middleware('permission:reversements.update');
     Route::post('/reversements/{id}/cancel', [App\Http\Controllers\ReversementController::class, 'cancelReversement'])->name('reversements.cancel')->middleware('permission:reversements.update');
+
+    // Routes pour le module de gestion de stock
+    Route::middleware([App\Http\Middleware\CheckModuleAccess::class . ':stock_management'])->group(function () {
+        // Routes pour les catégories
+        Route::resource('categories', CategoryController::class);
+
+        // Routes pour les produits
+        Route::resource('products', ProductController::class);
+
+        // Routes pour les stocks
+        Route::resource('stocks', StockController::class);
+        Route::post('/stocks/{stock}/adjust', [StockController::class, 'adjust'])->name('stocks.adjust');
+        Route::post('/stocks/{stock}/entry', [StockController::class, 'entry'])->name('stocks.entry');
+        Route::post('/stocks/{stock}/exit', [StockController::class, 'exit'])->name('stocks.exit');
+
+        // Routes pour les mouvements de stock
+        Route::resource('stock-movements', StockMovementController::class);
+        Route::get('/stock-movements/product/{product}', [StockMovementController::class, 'byProduct'])->name('stock-movements.by-product');
+    });
 });
 
 // Routes des abonnements

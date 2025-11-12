@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use App\Models\PricingPlan;
 use App\Models\SubscriptionPlan;
 use App\Models\User;
@@ -123,14 +124,52 @@ class SubscriptionController extends Controller
             $result = $subscription;
         }
 
+        // Gérer les modules optionnels achetés
+        if ($paymentData && isset($paymentData['modules']) && is_array($paymentData['modules'])) {
+            foreach ($paymentData['modules'] as $module) {
+                // Vérifier si l'entreprise a déjà ce module
+                $existingModule = DB::table('entreprise_modules')
+                    ->where('entreprise_id', $entrepriseId)
+                    ->where('module_id', $module->id)
+                    ->first();
+
+                if ($existingModule) {
+                    // Mettre à jour le module existant
+                    DB::table('entreprise_modules')
+                        ->where('entreprise_id', $entrepriseId)
+                        ->where('module_id', $module->id)
+                        ->update([
+                            'price_paid' => $module->price,
+                            'currency' => $module->currency,
+                            'purchased_at' => now(),
+                            'is_active' => true,
+                            'updated_at' => now()
+                        ]);
+                } else {
+                    // Créer un nouvel enregistrement
+                    DB::table('entreprise_modules')->insert([
+                        'entreprise_id' => $entrepriseId,
+                        'module_id' => $module->id,
+                        'price_paid' => $module->price,
+                        'currency' => $module->currency,
+                        'purchased_at' => now(),
+                        'expires_at' => null, // Les modules n'expirent pas par défaut
+                        'is_active' => true,
+                        'created_at' => now(),
+                        'updated_at' => now()
+                    ]);
+                }
+            }
+        }
+
         // Créer l'historique de paiement
         if ($paymentData) {
             \App\Models\SubscriptionHistory::create([
                 'entreprise_id' => $entrepriseId,
                 'pricing_plan_id' => $pricingPlanId,
                 'plan_name' => $pricingPlan->name,
-                'price' => $pricingPlan->price,
-                'currency' => $pricingPlan->currency,
+                'price' => $paymentData['amount'] ?? $pricingPlan->price,
+                'currency' => $paymentData['currency'] ?? $pricingPlan->currency,
                 'status' => 'active',
                 'payment_method' => $paymentData['payment_method'] ?? null,
                 'transaction_id' => $paymentData['transaction_id'] ?? null,
@@ -182,10 +221,24 @@ class SubscriptionController extends Controller
         $plan = \App\Models\PricingPlan::findOrFail($planId);
         $user = Auth::user();
 
+        // Récupérer les modules optionnels activés par le Super Admin dans ce plan tarifaire
+        // Les modules doivent être :
+        // 1. Attachés au plan (via pricing_plan_modules)
+        // 2. Activés (is_enabled = true dans le pivot)
+        // 3. Marqués comme optionnels (is_optional = true dans modules)
+        // 4. Actifs (is_active = true dans modules)
+        $optionalModules = $plan->modules()
+            ->wherePivot('is_enabled', true)
+            ->where('is_optional', true)
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->get();
+
         $data['title'] = 'Paiement - ' . $plan->name;
         $data['menu'] = 'subscriptions';
         $data['plan'] = $plan;
         $data['user'] = $user;
+        $data['optionalModules'] = $optionalModules;
 
         return view('subscriptions.payment', $data);
     }
@@ -200,7 +253,9 @@ class SubscriptionController extends Controller
             'payment_method' => 'required|in:mobile_money,card,bank_transfer',
             'phone_number' => 'required_if:payment_method,mobile_money|nullable|string|regex:/^\+225\d{10}$/',
             'transaction_id' => 'nullable|string',
-            'terms' => 'required|accepted'
+            'terms' => 'required|accepted',
+            'modules' => 'nullable|array',
+            'modules.*' => 'exists:modules,id'
         ], [
             'plan_id.required' => 'Le plan d\'abonnement est requis.',
             'plan_id.exists' => 'Le plan sélectionné n\'existe pas.',
@@ -216,6 +271,22 @@ class SubscriptionController extends Controller
         $plan = \App\Models\PricingPlan::findOrFail($request->plan_id);
 
         try {
+            // Calculer le montant total (plan + modules optionnels)
+            $totalAmount = $plan->price;
+            $selectedModules = [];
+
+            if ($request->has('modules') && is_array($request->modules)) {
+                $modules = \App\Models\Module::whereIn('id', $request->modules)
+                    ->where('is_optional', true)
+                    ->where('is_active', true)
+                    ->get();
+
+                foreach ($modules as $module) {
+                    $totalAmount += $module->price;
+                    $selectedModules[] = $module;
+                }
+            }
+
             // Simuler un paiement réussi (en attendant les APIs de paiement)
             $transactionId = 'TXN_' . time() . '_' . rand(1000, 9999);
 
@@ -225,8 +296,9 @@ class SubscriptionController extends Controller
                 'transaction_id' => $transactionId,
                 'phone_number' => $request->phone_number ?? null,
                 'status' => 'success',
-                'amount' => $plan->price,
-                'currency' => $plan->currency
+                'amount' => $totalAmount,
+                'currency' => $plan->currency,
+                'modules' => $selectedModules
             ];
 
             // Créer l'abonnement avec la nouvelle logique d'extension
@@ -240,7 +312,10 @@ class SubscriptionController extends Controller
                 'user_id' => $user->id,
                 'plan_id' => $plan->id,
                 'plan_name' => $plan->name,
-                'amount' => $plan->price,
+                'amount' => $totalAmount,
+                'plan_price' => $plan->price,
+                'modules_price' => $totalAmount - $plan->price,
+                'modules_count' => count($selectedModules),
                 'payment_method' => $request->payment_method,
                 'transaction_id' => $transactionId,
                 'is_extension' => $isExtension,

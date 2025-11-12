@@ -42,9 +42,51 @@
 
             @php
                 use App\Services\ModuleAccessService;
+                use Illuminate\Support\Facades\Log;
+                use Illuminate\Support\Facades\Auth;
+
+                $user = auth()->user();
+
+                // Vérifier que l'utilisateur a une entreprise
+                if (!$user || !$user->entreprise_id) {
+                    \Log::warning('Menu: Utilisateur sans entreprise - Déconnexion', [
+                        'user_id' => $user ? $user->id : null,
+                        'email' => $user ? $user->email : null,
+                        'entreprise_id' => $user ? $user->entreprise_id : null
+                    ]);
+                    Auth::logout();
+                    header('Location: ' . route('login'));
+                    exit;
+                }
+
                 $moduleAccessService = app(ModuleAccessService::class);
-                $accessibleModules = $moduleAccessService->getAccessibleModules(auth()->user()->entreprise_id ?? null);
+                $entrepriseId = $user->entreprise_id;
+                $accessibleModules = $moduleAccessService->getAccessibleModules($entrepriseId);
                 $moduleSlugs = $accessibleModules->pluck('slug')->toArray();
+
+                // Fonction helper pour vérifier l'accès à un module avec toutes les vérifications
+                $hasModuleAccess = function($moduleSlug) use ($moduleAccessService, $entrepriseId, $accessibleModules) {
+                    // Vérifier via hasAccess (vérifie souscription ET activation par admin)
+                    if (!$moduleAccessService->hasAccess($entrepriseId, $moduleSlug)) {
+                        return false;
+                    }
+
+                    // Vérifier que le module est actif dans la base de données
+                    $module = $accessibleModules->firstWhere('slug', $moduleSlug);
+                    if (!$module || !$module->is_active) {
+                        return false;
+                    }
+
+                    return true;
+                };
+
+                // Debug: logger les modules accessibles
+                \Log::info('Menu - Modules accessibles', [
+                    'entreprise_id' => $entrepriseId,
+                    'user_id' => $user->id,
+                    'modules_count' => $accessibleModules->count(),
+                    'module_slugs' => $moduleSlugs
+                ]);
             @endphp
 
             <ul class="menu-inner py-1">
@@ -249,6 +291,44 @@
                   <i class="menu-icon tf-icons ti ti-crown"></i>
                   <div data-i18n="Abonnements">Abonnements</div>
                 </a>
+              </li>
+              @endif
+
+              <!-- Section Gestion de Stock -->
+              @php
+                $hasStockModuleAccess = $hasModuleAccess('stock_management');
+              @endphp
+              @if($hasStockModuleAccess)
+              <li class="menu-header small text-uppercase">
+                <span class="menu-header-text">Gestion de Stock</span>
+              </li>
+              <li class="menu-item {{ $menu == 'stock' ? 'active' : '' }}">
+                <a href="javascript:void(0);" class="menu-link menu-toggle">
+                  <i class="menu-icon tf-icons ti ti-box"></i>
+                  <div data-i18n="Gestion de Stock">Gestion de Stock</div>
+                </a>
+                <ul class="menu-sub">
+                  <li class="menu-item">
+                    <a href="{{ route('categories.index') }}" class="menu-link">
+                      <div data-i18n="Catégories">Catégories</div>
+                    </a>
+                  </li>
+                  <li class="menu-item">
+                    <a href="{{ route('products.index') }}" class="menu-link">
+                      <div data-i18n="Produits">Produits</div>
+                    </a>
+                  </li>
+                  <li class="menu-item">
+                    <a href="{{ route('stocks.index') }}" class="menu-link">
+                      <div data-i18n="Stocks">Stocks</div>
+                    </a>
+                  </li>
+                  <li class="menu-item">
+                    <a href="{{ route('stock-movements.index') }}" class="menu-link">
+                      <div data-i18n="Mouvements">Mouvements de Stock</div>
+                    </a>
+                  </li>
+                </ul>
               </li>
               @endif
 

@@ -99,4 +99,14 @@ class Entreprise extends Model
     {
         return $this->statut == 1 ? 'bg-success' : 'bg-danger';
     }
+
+    /**
+     * Relation avec les modules achetés
+     */
+    public function modules()
+    {
+        return $this->belongsToMany(\App\Models\Module::class, 'entreprise_modules')
+                    ->withPivot('price_paid', 'currency', 'purchased_at', 'expires_at', 'is_active')
+                    ->withTimestamps();
+    }
 }

@@ -76,9 +76,43 @@
             <div class="card-body">
                 <div class="text-center mb-4">
                     <h4 class="text-primary">{{ $plan->name }}</h4>
-                    <div class="display-6 fw-bold text-primary">{{ number_format($plan->price, 0, ',', ' ') }} {{ $plan->currency }}</div>
+                    <div class="display-6 fw-bold text-primary" id="planPrice">{{ number_format($plan->price, 0, ',', ' ') }} {{ $plan->currency }}</div>
                     <div class="text-muted">par mois</div>
                 </div>
+
+                <!-- Modules optionnels -->
+                @if(isset($optionalModules) && $optionalModules->count() > 0)
+                    <hr>
+                    <h6 class="mb-3">Modules optionnels</h6>
+                    @foreach($optionalModules as $module)
+                        <div class="form-check mb-3 p-3 border rounded module-option" data-price="{{ $module->price }}">
+                            <input class="form-check-input module-checkbox"
+                                   type="checkbox"
+                                   name="modules[]"
+                                   value="{{ $module->id }}"
+                                   id="module_{{ $module->id }}"
+                                   data-price="{{ $module->price }}">
+                            <label class="form-check-label w-100" for="module_{{ $module->id }}">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong>{{ $module->name }}</strong>
+                                        @if($module->description)
+                                            <br><small class="text-muted">{{ $module->description }}</small>
+                                        @endif
+                                    </div>
+                                    <div class="text-end">
+                                        <strong class="text-primary">+{{ number_format($module->price, 0, ',', ' ') }} {{ $module->currency }}</strong>
+                                    </div>
+                                </div>
+                            </label>
+                        </div>
+                    @endforeach
+                    <hr>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <strong>Total :</strong>
+                        <strong class="text-primary display-6" id="totalPrice">{{ number_format($plan->price, 0, ',', ' ') }} {{ $plan->currency }}</strong>
+                    </div>
+                @endif
 
                 <p class="text-muted mb-3">{{ $plan->description }}</p>
 
@@ -229,9 +263,9 @@
 
                     <!-- Bouton de paiement -->
                     <div class="d-grid">
-                        <button type="submit" class="btn btn-primary btn-lg">
+                        <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
                             <i class="ti ti-credit-card me-2"></i>
-                            Payer {{ number_format($plan->price, 0, ',', ' ') }} {{ $plan->currency }}
+                            Payer <span id="buttonTotal">{{ number_format($plan->price, 0, ',', ' ') }}</span> {{ $plan->currency }}
                         </button>
                     </div>
                 </form>
@@ -281,6 +315,40 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Initialiser l'affichage
     togglePaymentDetails();
+
+    // Gestion du calcul du total avec les modules optionnels
+    const planPrice = {{ $plan->price }};
+    const currency = '{{ $plan->currency }}';
+    const moduleCheckboxes = document.querySelectorAll('.module-checkbox');
+    const totalPriceElement = document.getElementById('totalPrice');
+    const buttonTotalElement = document.getElementById('buttonTotal');
+
+    function updateTotal() {
+        let total = planPrice;
+
+        moduleCheckboxes.forEach(checkbox => {
+            if (checkbox.checked) {
+                total += parseFloat(checkbox.dataset.price);
+            }
+        });
+
+        // Mettre à jour l'affichage
+        if (totalPriceElement) {
+            totalPriceElement.textContent = new Intl.NumberFormat('fr-FR').format(total) + ' ' + currency;
+        }
+        if (buttonTotalElement) {
+            buttonTotalElement.textContent = new Intl.NumberFormat('fr-FR').format(total);
+        }
+    }
+
+    // Écouter les changements sur les modules
+    if (moduleCheckboxes.length > 0) {
+        moduleCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', updateTotal);
+        });
+        // Initialiser le total
+        updateTotal();
+    }
 
     // Validation du formulaire
     const form = document.getElementById('paymentForm');

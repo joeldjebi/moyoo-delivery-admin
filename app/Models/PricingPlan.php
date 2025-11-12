@@ -103,4 +103,35 @@ class PricingPlan extends Model
 
         return json_decode($module->pivot->limits, true);
     }
+
+    /**
+     * Attacher un module au plan avec configuration
+     */
+    public function attachModule($moduleId, $isEnabled = true, $limits = null)
+    {
+        $this->modules()->syncWithoutDetaching([
+            $moduleId => [
+                'is_enabled' => $isEnabled,
+                'limits' => $limits ? json_encode($limits) : null
+            ]
+        ]);
+    }
+
+    /**
+     * Détacher un module du plan
+     */
+    public function detachModule($moduleId)
+    {
+        $this->modules()->detach($moduleId);
+    }
+
+    /**
+     * Activer/désactiver un module
+     */
+    public function toggleModule($moduleId, $isEnabled = true)
+    {
+        $this->modules()->updateExistingPivot($moduleId, [
+            'is_enabled' => $isEnabled
+        ]);
+    }
 }
