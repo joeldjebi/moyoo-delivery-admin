@@ -1371,7 +1371,19 @@ class LivreurDeliveryController extends Controller
             $historique->refresh();
 
             // Vérifier et créer l'entrée dans balance_marchands si nécessaire
-            $this->ensureBalanceMarchandExists($colis);
+            // Cette opération peut échouer, donc on la fait dans un try-catch séparé
+            // pour ne pas bloquer la finalisation de la livraison
+            try {
+                $this->ensureBalanceMarchandExists($colis);
+            } catch (\Exception $balanceError) {
+                \Log::error('Erreur lors de la mise à jour de la balance marchand', [
+                    'colis_id' => $colis->id,
+                    'error' => $balanceError->getMessage(),
+                    'trace' => $balanceError->getTraceAsString()
+                ]);
+                // On continue quand même la finalisation de la livraison
+                // La balance pourra être mise à jour manuellement si nécessaire
+            }
 
             // Mettre à jour le statut du colis AVANT le commit pour qu'il soit inclus dans la transaction
             // Utiliser DB::table() pour forcer la mise à jour sans passer par Eloquent
@@ -1802,24 +1814,31 @@ class LivreurDeliveryController extends Controller
      */
     private function ensureBalanceMarchandExists($colis)
     {
-        try {
-            // Récupérer les informations depuis la table livraisons
-            $livraison = \App\Models\Livraison::where('colis_id', $colis->id)->first();
-            \Log::info('Livraison trouvée pour le colis', [
-                'livraison' => $livraison
-            ]);
-            if (!$livraison) {
-                \Log::warning('Aucune livraison trouvée pour le colis', [
-                    'colis_id' => $colis->id
-                ]);
-                return;
-            }
-            \Log::info('Livraison trouvée pour le colis', [
-                'livraison_id' => $livraison->id,
+        // Récupérer les informations depuis la table livraisons
+        $livraison = \App\Models\Livraison::where('colis_id', $colis->id)->first();
+        
+        if (!$livraison) {
+            \Log::warning('Aucune livraison trouvée pour le colis', [
                 'colis_id' => $colis->id
             ]);
+            return;
+        }
 
-            // Récupérer ou créer la balance du marchand
+        // Vérifier que les champs nécessaires existent
+        if (!$livraison->entreprise_id || !$livraison->marchand_id || !$livraison->boutique_id) {
+            \Log::warning('Livraison sans informations complètes pour la balance', [
+                'colis_id' => $colis->id,
+                'livraison_id' => $livraison->id,
+                'entreprise_id' => $livraison->entreprise_id,
+                'marchand_id' => $livraison->marchand_id,
+                'boutique_id' => $livraison->boutique_id
+            ]);
+            return;
+        }
+
+        // Récupérer ou créer la balance du marchand
+        // Utiliser une transaction séparée pour éviter de bloquer la transaction principale
+        DB::transaction(function() use ($livraison, $colis) {
             $balance = BalanceMarchand::firstOrCreate(
                 [
                     'entreprise_id' => $livraison->entreprise_id,
@@ -1854,23 +1873,15 @@ class LivreurDeliveryController extends Controller
                     'montant_a_encaisse' => $colis->montant_a_encaisse
                 ]);
             }
+        });
 
-            \Log::info('Entrée balance_marchands mise à jour', [
-                    'colis_id' => $colis->id,
-                    'livraison_id' => $livraison->id,
-                    'balance_id' => $balance->id,
-                    'entreprise_id' => $livraison->entreprise_id,
-                    'marchand_id' => $livraison->marchand_id,
-                    'boutique_id' => $livraison->boutique_id
-                ]);
-
-        } catch (\Exception $e) {
-            \Log::error('Erreur lors de la vérification/création de balance_marchands', [
-                'colis_id' => $colis->id,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-        }
+        \Log::info('Entrée balance_marchands mise à jour', [
+            'colis_id' => $colis->id,
+            'livraison_id' => $livraison->id,
+            'entreprise_id' => $livraison->entreprise_id,
+            'marchand_id' => $livraison->marchand_id,
+            'boutique_id' => $livraison->boutique_id
+        ]);
     }
 
     /**
