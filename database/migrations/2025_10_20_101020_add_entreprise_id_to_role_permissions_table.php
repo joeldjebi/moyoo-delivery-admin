@@ -11,11 +11,23 @@ return new class extends Migration
 	 */
 	public function up(): void
 	{
-		Schema::table('role_permissions', function (Blueprint $table) {
-			$table->bigInteger('entreprise_id')->nullable()->after('role');
-			$table->foreign('entreprise_id')->references('id')->on('entreprises')->onDelete('cascade');
-			$table->index('entreprise_id');
-		});
+		if (!Schema::hasTable('role_permissions')) {
+			return;
+		}
+
+		if (!Schema::hasColumn('role_permissions', 'entreprise_id')) {
+			Schema::table('role_permissions', function (Blueprint $table) {
+				$table->bigInteger('entreprise_id')->nullable()->after('role');
+			});
+
+			// Ajouter la clé étrangère et l'index si la table entreprises existe
+			if (Schema::hasTable('entreprises')) {
+				Schema::table('role_permissions', function (Blueprint $table) {
+					$table->foreign('entreprise_id')->references('id')->on('entreprises')->onDelete('cascade');
+					$table->index('entreprise_id');
+				});
+			}
+		}
 	}
 
 	/**

@@ -11,7 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('stock_movements', function (Blueprint $table) {
+        if (!Schema::hasTable('stock_movements')) {
+            Schema::create('stock_movements', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('product_id');
             $table->bigInteger('entreprise_id');
@@ -36,6 +37,7 @@ return new class extends Migration
             $table->index('type');
             $table->index('created_at');
         });
+        }
     }
 
     /**

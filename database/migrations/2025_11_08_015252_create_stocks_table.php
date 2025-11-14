@@ -11,7 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('stocks', function (Blueprint $table) {
+        // Cette migration est un doublon, on la saute si la table existe déjà
+        if (!Schema::hasTable('stocks')) {
+            Schema::create('stocks', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('product_id');
             $table->bigInteger('entreprise_id');
@@ -29,6 +31,7 @@ return new class extends Migration
             $table->index('entreprise_id');
             $table->index('product_id');
         });
+        }
     }
 
     /**

@@ -222,6 +222,7 @@ Route::get('/api/ramassages/{id}/colis-data', [RamassageController::class, 'getC
 Route::get('/', [App\Http\Controllers\LandingController::class, 'index'])->name('landing.index');
 
 // Route de connexion
+Route::get('/', [AuthController::class, 'showLogin'])->name('login');
 Route::get('/login', [AuthController::class, 'showLogin'])->name('auth.login');
 Route::post('/login', [AuthController::class, 'loginUser'])->name('auth.login.post');
 Route::get('/register', [AuthController::class, 'showRegister'])->name('auth.register');
@@ -570,7 +571,7 @@ Route::get('/api/test-frais', function() {
 });
 
 // Routes pour les reversements
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', App\Http\Middleware\CheckModuleAccess::class . ':reversement_management'])->group(function () {
     // Routes de consultation (lecture)
     Route::get('/reversements', [App\Http\Controllers\ReversementController::class, 'index'])->name('reversements.index')->middleware('permission:reversements.read');
     Route::get('/balances', [App\Http\Controllers\ReversementController::class, 'balances'])->name('balances.index')->middleware('permission:reversements.read');
@@ -630,7 +631,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
 });
 
 // Routes de géolocalisation
-Route::middleware(['auth', 'tenant', 'subscription:Premium'])->group(function () {
+Route::middleware(['auth', 'tenant', 'module:geolocation_tracking'])->group(function () {
     Route::get('/location/admin-monitor', [App\Http\Controllers\LocationController::class, 'adminMonitor'])->name('location.admin-monitor');
 });
 

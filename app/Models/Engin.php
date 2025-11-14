@@ -62,6 +62,11 @@ class Engin extends Model
         return $query->whereNull('deleted_at');
     }
 
+    public function scopeByEntreprise($query, $entrepriseId)
+    {
+        return $query->where('entreprise_id', $entrepriseId);
+    }
+
     /**
      * Accessors
      */

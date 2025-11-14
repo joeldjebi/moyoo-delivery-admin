@@ -11,12 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('role_permissions', function (Blueprint $table) {
-            $table->id();
-            $table->string('role')->unique(); // admin, manager, user
-            $table->json('permissions'); // Array des permissions
-            $table->timestamps();
-        });
+        if (!Schema::hasTable('role_permissions')) {
+            Schema::create('role_permissions', function (Blueprint $table) {
+                $table->id();
+                $table->string('role')->unique(); // admin, manager, user
+                $table->json('permissions'); // Array des permissions
+                $table->timestamps();
+            });
+        }
     }
 
     /**

@@ -370,6 +370,7 @@ class TenantBootstrapService
 				'colis.create','colis.read','colis.update','colis.delete',
 				'livreurs.create','livreurs.read','livreurs.update','livreurs.delete',
 				'marchands.create','marchands.read','marchands.update','marchands.delete',
+				'reversements.create','reversements.read','reversements.update',
 				'reports.read','settings.read','settings.update'
 			],
 			'manager' => [

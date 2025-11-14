@@ -21,6 +21,7 @@ return new class extends Migration
             $hasPermissionId = Schema::hasColumn('role_permissions', 'permission_id');
             $hasRole = Schema::hasColumn('role_permissions', 'role');
             $hasPermissions = Schema::hasColumn('role_permissions', 'permissions');
+            $hasEntrepriseId = Schema::hasColumn('role_permissions', 'entreprise_id');
 
             // Si la table a la structure pivot, la transformer
             if ($hasRoleId && $hasPermissionId && !$hasRole && !$hasPermissions) {
@@ -41,21 +42,40 @@ return new class extends Migration
                 });
 
                 // Ajouter les colonnes attendues (nullable d'abord pour éviter l'erreur)
-                Schema::table('role_permissions', function (Blueprint $table) {
-                    $table->string('role')->nullable()->after('id');
-                    $table->json('permissions')->nullable()->after('role');
-                    $table->bigInteger('entreprise_id')->nullable()->after('role');
+                Schema::table('role_permissions', function (Blueprint $table) use ($hasRole, $hasPermissions, $hasEntrepriseId) {
+                    if (!$hasRole) {
+                        $table->string('role')->nullable()->after('id');
+                    }
+                    if (!$hasPermissions) {
+                        $table->json('permissions')->nullable()->after('role');
+                    }
+                    if (!$hasEntrepriseId) {
+                        $table->bigInteger('entreprise_id')->nullable()->after('role');
+                    }
                 });
 
                 // Maintenant rendre role et permissions NOT NULL (la table est vide)
                 DB::statement('ALTER TABLE role_permissions ALTER COLUMN role SET NOT NULL');
                 DB::statement('ALTER TABLE role_permissions ALTER COLUMN permissions SET NOT NULL');
 
-                // Ajouter les contraintes
-                Schema::table('role_permissions', function (Blueprint $table) {
-                    $table->foreign('entreprise_id')->references('id')->on('entreprises')->onDelete('cascade');
-                    $table->index('entreprise_id');
-                });
+                // Ajouter les contraintes si entreprise_id existe et si la table entreprises existe
+                if ($hasEntrepriseId && Schema::hasTable('entreprises')) {
+                    // Vérifier si la clé étrangère existe déjà
+                    $fkExists = DB::select("
+                        SELECT constraint_name 
+                        FROM information_schema.table_constraints 
+                        WHERE table_name = 'role_permissions' 
+                        AND constraint_type = 'FOREIGN KEY'
+                        AND constraint_name LIKE '%entreprise_id%'
+                    ");
+                    
+                    if (empty($fkExists)) {
+                        Schema::table('role_permissions', function (Blueprint $table) {
+                            $table->foreign('entreprise_id')->references('id')->on('entreprises')->onDelete('cascade');
+                            $table->index('entreprise_id');
+                        });
+                    }
+                }
 
                 // Ajouter la contrainte d'unicité composite
                 try {
@@ -66,7 +86,7 @@ return new class extends Migration
             } else if (!$hasRole && !$hasPermissions) {
                 // La table existe mais n'a pas les bonnes colonnes
                 // Ajouter les colonnes manquantes
-                Schema::table('role_permissions', function (Blueprint $table) use ($hasRole, $hasPermissions, $hasRoleId, $hasPermissionId) {
+                Schema::table('role_permissions', function (Blueprint $table) use ($hasRole, $hasPermissions) {
                     if (!$hasRole) {
                         $table->string('role')->after('id');
                     }
@@ -79,7 +99,7 @@ return new class extends Migration
                 });
 
                 // Ajouter les contraintes si nécessaire
-                if (!Schema::hasColumn('role_permissions', 'entreprise_id')) {
+                if (!Schema::hasColumn('role_permissions', 'entreprise_id') && Schema::hasTable('entreprises')) {
                     Schema::table('role_permissions', function (Blueprint $table) {
                         $table->foreign('entreprise_id')->references('id')->on('entreprises')->onDelete('cascade');
                         $table->index('entreprise_id');

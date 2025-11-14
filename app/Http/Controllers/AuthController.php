@@ -126,11 +126,47 @@ class AuthController extends Controller
 
         if (Auth::attempt($credentials, $request->boolean('remember'))) {
             $user = Auth::user();
+
+            // Vérifier le statut de l'entreprise
+            // Essayer d'abord avec entreprise_id, puis avec created_by
+            $entreprise = null;
+            if ($user->entreprise_id) {
+                $entreprise = Entreprise::find($user->entreprise_id);
+            }
+
+            // Si pas d'entreprise via entreprise_id, essayer avec created_by
+            if (!$entreprise) {
+                $entreprise = Entreprise::getEntrepriseByUser($user->id);
+            }
+
+            // Si l'utilisateur a une entreprise, vérifier son statut
+            if ($entreprise) {
+                // Vérifier si l'entreprise est active (statut = 1)
+                if ((int)$entreprise->statut !== 1) {
+                    // Déconnecter l'utilisateur
+                    Auth::logout();
+                    $request->session()->invalidate();
+                    $request->session()->regenerateToken();
+
+                    // Incrémenter le compteur de tentatives
+                    RateLimiter::hit($key, 300);
+
+                    Log::warning('Tentative de connexion bloquée - Entreprise inactive', [
+                        'email' => $request->email,
+                        'entreprise_id' => $entreprise->id,
+                        'statut' => $entreprise->statut
+                    ]);
+
+                    throw ValidationException::withMessages([
+                        'email' => ['Votre compte entreprise est inactif. Veuillez contacter l\'administrateur pour plus d\'informations.'],
+                    ]);
+                }
+            }
+
             $request->session()->regenerate();
             RateLimiter::clear($key);
 
             // Redirection si les informations d'entreprise doivent être mises à jour
-            $entreprise = Entreprise::getEntrepriseByUser($user->id);
             if ($entreprise && (int)($entreprise->not_update) === 0) {
                 return redirect()->intended(route('entreprise.index'));
             }
@@ -717,26 +753,30 @@ class AuthController extends Controller
                 ]);
             }
 
-            // Accorder tous les droits au nouvel utilisateur (rôle admin + permissions du rôle admin)
+            // Accorder TOUS les droits au nouvel utilisateur (première création)
             try {
-                $adminPermissions = \App\Models\RolePermission::where('entreprise_id', $entreprise->id)
-                    ->where('role', 'admin')
-                    ->value('permissions') ?: [];
+                // Récupérer toutes les permissions disponibles dans le système
+                $allAvailablePermissions = \App\Models\User::getAllAvailablePermissions();
+                $allPermissions = array_keys($allAvailablePermissions);
 
+                // Attribuer toutes les permissions au nouvel utilisateur
                 $user->update([
                     'role' => 'admin',
                     'user_type' => 'entreprise_admin',
-                    'permissions' => $adminPermissions,
+                    'permissions' => $allPermissions, // Toutes les permissions disponibles
                 ]);
 
-                Log::info('Permissions admin attribuées au nouvel utilisateur', [
+                Log::info('Toutes les permissions attribuées au nouvel utilisateur (première création)', [
                     'user_id' => $user->id,
-                    'entreprise_id' => $entreprise->id
+                    'entreprise_id' => $entreprise->id,
+                    'permissions_count' => count($allPermissions),
+                    'permissions' => $allPermissions
                 ]);
             } catch (\Throwable $e) {
-                Log::warning('Attribution des permissions admin échouée', [
+                Log::warning('Attribution des permissions au nouvel utilisateur échouée', [
                     'user_id' => $user->id,
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
                 ]);
             }
 

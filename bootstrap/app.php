@@ -18,6 +18,12 @@ return Application::configure(basePath: dirname(__DIR__))
             'jwt.livreur' => \App\Http\Middleware\JwtLivreurMiddleware::class,
             'subscription' => \App\Http\Middleware\CheckSubscription::class,
             'module' => \App\Http\Middleware\CheckModuleAccess::class,
+            'entreprise.status' => \App\Http\Middleware\CheckEntrepriseStatus::class,
+        ]);
+        
+        // Appliquer le middleware CheckEntrepriseStatus à toutes les routes web authentifiées
+        $middleware->web(append: [
+            \App\Http\Middleware\CheckEntrepriseStatus::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

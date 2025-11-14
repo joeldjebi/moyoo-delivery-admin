@@ -36,7 +36,17 @@ class ModuleAccessService
                 return false;
             }
 
-            // Vérifier d'abord si le module a été acheté directement (modules optionnels)
+            // Si le module est non optionnel, il est accessible par défaut
+            if (!$module->is_optional) {
+                Log::debug('ModuleAccessService: Module non optionnel - Accès autorisé par défaut', [
+                    'entreprise_id' => $entrepriseId,
+                    'module_slug' => $moduleSlug,
+                    'has_access' => true
+                ]);
+                return true;
+            }
+
+            // Pour les modules optionnels, vérifier s'ils ont été achetés directement
             if ($module->is_optional) {
                 // Vérifier dans la table entreprise_modules
                 $hasPurchasedModule = DB::table('entreprise_modules')

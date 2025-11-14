@@ -36,6 +36,9 @@ class RolePermissionSeeder extends Seeder
                 'marchands.read',
                 'marchands.update',
                 'marchands.delete',
+                'reversements.create',
+                'reversements.read',
+                'reversements.update',
                 'reports.read',
                 'settings.read',
                 'settings.update'

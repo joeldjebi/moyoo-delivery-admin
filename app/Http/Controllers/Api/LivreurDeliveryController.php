@@ -1219,7 +1219,7 @@ class LivreurDeliveryController extends Controller
      *                 @OA\Property(property="status", type="integer", example=2),
      *                 @OA\Property(property="status_label", type="string", example="Livré"),
      *                 @OA\Property(property="date_livraison_effective", type="string", format="date-time", example="2025-10-13T14:30:00Z"),
-     *                 @OA\Property(property="photo_proof_url", type="string", example="http://192.168.1.2:8000/storage/livraisons/proofs/colis_1_1760357729.jpg")
+     *                 @OA\Property(property="photo_proof_url", type="string", example="http://192.168.1.15:8000/storage/livraisons/proofs/colis_1_1760357729.jpg")
      *             )
      *         )
      *     ),
@@ -1374,7 +1374,7 @@ class LivreurDeliveryController extends Controller
             // Cette opération peut échouer, donc on la fait dans un try-catch séparé
             // pour ne pas bloquer la finalisation de la livraison
             try {
-                $this->ensureBalanceMarchandExists($colis);
+                $this->ensureBalanceMarchandExists($colis, $livreur->id);
             } catch (\Exception $balanceError) {
                 \Log::error('Erreur lors de la mise à jour de la balance marchand', [
                     'colis_id' => $colis->id,
@@ -1812,33 +1812,53 @@ class LivreurDeliveryController extends Controller
     /**
      * Vérifier et créer l'entrée dans balance_marchands si nécessaire
      */
-    private function ensureBalanceMarchandExists($colis)
+    private function ensureBalanceMarchandExists($colis, $userId = null)
     {
-        // Récupérer les informations depuis la table livraisons
-        $livraison = \App\Models\Livraison::where('colis_id', $colis->id)->first();
-        
-        if (!$livraison) {
-            \Log::warning('Aucune livraison trouvée pour le colis', [
-                'colis_id' => $colis->id
-            ]);
-            return;
-        }
+        try {
+            // Récupérer les informations depuis la table livraisons
+            $livraison = \App\Models\Livraison::where('colis_id', $colis->id)->first();
 
-        // Vérifier que les champs nécessaires existent
-        if (!$livraison->entreprise_id || !$livraison->marchand_id || !$livraison->boutique_id) {
-            \Log::warning('Livraison sans informations complètes pour la balance', [
+            if (!$livraison) {
+                \Log::warning('Aucune livraison trouvée pour le colis', [
+                    'colis_id' => $colis->id
+                ]);
+                return;
+            }
+
+            // Vérifier que les champs nécessaires existent
+            if (!$livraison->entreprise_id || !$livraison->marchand_id || !$livraison->boutique_id) {
+                \Log::warning('Livraison sans informations complètes pour la balance', [
+                    'colis_id' => $colis->id,
+                    'livraison_id' => $livraison->id,
+                    'entreprise_id' => $livraison->entreprise_id,
+                    'marchand_id' => $livraison->marchand_id,
+                    'boutique_id' => $livraison->boutique_id
+                ]);
+                return;
+            }
+
+            // Récupérer le montant à encaisser
+            $montantEncaisse = $colis->montant_a_encaisse ?? 0;
+
+            if ($montantEncaisse <= 0) {
+                \Log::warning('Montant à encaisser nul ou vide', [
+                    'colis_id' => $colis->id,
+                    'montant_a_encaisse' => $colis->montant_a_encaisse
+                ]);
+                return;
+            }
+
+            \Log::info('Début de la mise à jour de la balance marchand', [
                 'colis_id' => $colis->id,
                 'livraison_id' => $livraison->id,
                 'entreprise_id' => $livraison->entreprise_id,
                 'marchand_id' => $livraison->marchand_id,
-                'boutique_id' => $livraison->boutique_id
+                'boutique_id' => $livraison->boutique_id,
+                'montant_encaisse' => $montantEncaisse
             ]);
-            return;
-        }
 
-        // Récupérer ou créer la balance du marchand
-        // Utiliser une transaction séparée pour éviter de bloquer la transaction principale
-        DB::transaction(function() use ($livraison, $colis) {
+            // Récupérer ou créer la balance du marchand
+            // Ne pas utiliser de transaction séparée car on est déjà dans une transaction principale
             $balance = BalanceMarchand::firstOrCreate(
                 [
                     'entreprise_id' => $livraison->entreprise_id,
@@ -1853,35 +1873,87 @@ class LivreurDeliveryController extends Controller
                 ]
             );
 
+            // Rafraîchir le modèle pour s'assurer d'avoir les bonnes valeurs
+            $balance->refresh();
+
+            \Log::info('Balance récupérée ou créée', [
+                'balance_id' => $balance->id,
+                'balance_avant' => $balance->balance_actuelle,
+                'montant_encaisse_avant' => $balance->montant_encaisse
+            ]);
+
             // Ajouter le montant encaissé du colis
-            $montantEncaisse = $colis->montant_a_encaisse ?? 0;
+            $balanceAvant = $balance->balance_actuelle;
+            $montantEncaisseAvant = $balance->montant_encaisse;
 
-            if ($montantEncaisse > 0) {
-                $balance->addEncaissement($montantEncaisse, $colis->id);
+            // Mettre à jour la balance
+            $balance->montant_encaisse = (float)$balance->montant_encaisse + (float)$montantEncaisse;
+            $balance->balance_actuelle = (float)$balance->balance_actuelle + (float)$montantEncaisse;
+            $balance->derniere_mise_a_jour = now();
 
-                \Log::info('Balance marchand mise à jour après livraison', [
-                    'colis_id' => $colis->id,
-                    'livraison_id' => $livraison->id,
-                    'marchand_id' => $livraison->marchand_id,
-                    'boutique_id' => $livraison->boutique_id,
-                    'montant_encaisse' => $montantEncaisse,
-                    'nouvelle_balance' => $balance->balance_actuelle
-                ]);
-            } else {
-                \Log::warning('Montant à encaisser nul ou vide', [
-                    'colis_id' => $colis->id,
-                    'montant_a_encaisse' => $colis->montant_a_encaisse
-                ]);
+            $saved = $balance->save();
+
+            if (!$saved) {
+                throw new \Exception('Échec de la sauvegarde de la balance');
             }
-        });
 
-        \Log::info('Entrée balance_marchands mise à jour', [
-            'colis_id' => $colis->id,
-            'livraison_id' => $livraison->id,
-            'entreprise_id' => $livraison->entreprise_id,
-            'marchand_id' => $livraison->marchand_id,
-            'boutique_id' => $livraison->boutique_id
-        ]);
+            // Rafraîchir pour vérifier que les données sont bien sauvegardées
+            $balance->refresh();
+
+            \Log::info('Balance sauvegardée avec succès', [
+                'balance_id' => $balance->id,
+                'balance_avant' => $balanceAvant,
+                'balance_apres' => $balance->balance_actuelle,
+                'montant_encaisse_avant' => $montantEncaisseAvant,
+                'montant_encaisse_apres' => $balance->montant_encaisse,
+                'montant_ajoute' => $montantEncaisse
+            ]);
+
+            // Créer l'entrée dans l'historique
+            try {
+                \App\Models\HistoriqueBalance::create([
+                    'balance_marchand_id' => $balance->id,
+                    'entreprise_id' => $balance->entreprise_id,
+                    'type_operation' => 'encaissement',
+                    'montant' => $montantEncaisse,
+                    'balance_avant' => $balanceAvant,
+                    'balance_apres' => $balance->balance_actuelle,
+                    'description' => 'Encaissement après livraison réussie',
+                    'reference' => $colis->id,
+                    'created_by' => $userId
+                ]);
+
+                \Log::info('Historique de balance créé avec succès', [
+                    'balance_id' => $balance->id,
+                    'colis_id' => $colis->id
+                ]);
+            } catch (\Exception $histError) {
+                \Log::warning('Erreur lors de la création de l\'historique (non bloquant)', [
+                    'balance_id' => $balance->id,
+                    'colis_id' => $colis->id,
+                    'error' => $histError->getMessage()
+                ]);
+                // On continue même si l'historique échoue
+            }
+
+            \Log::info('Balance marchand mise à jour avec succès après livraison', [
+                'colis_id' => $colis->id,
+                'livraison_id' => $livraison->id,
+                'marchand_id' => $livraison->marchand_id,
+                'boutique_id' => $livraison->boutique_id,
+                'montant_encaisse' => $montantEncaisse,
+                'nouvelle_balance' => $balance->balance_actuelle,
+                'balance_id' => $balance->id
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Erreur lors de la mise à jour de la balance marchand', [
+                'colis_id' => $colis->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            throw $e; // Re-lancer l'exception pour qu'elle soit capturée par le try-catch parent
+        }
     }
 
     /**

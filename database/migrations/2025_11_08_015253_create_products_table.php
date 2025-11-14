@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // Cette migration est un doublon, on la saute si la table existe déjà
         if (!Schema::hasTable('products')) {
             Schema::create('products', function (Blueprint $table) {
             $table->id();

@@ -8,23 +8,14 @@ use Illuminate\Support\Facades\DB;
 class RolePermission extends Model
 {
     protected $fillable = [
-        'role_id',
-        'permission_id',
+        'role',
+        'permissions',
         'entreprise_id'
     ];
 
-    /**
-     * Obtenir le role_id à partir du nom du rôle
-     */
-    protected static function getRoleIdByName($roleName)
-    {
-        $role = DB::table('roles')
-            ->where('name', $roleName)
-            ->orWhere('slug', $roleName)
-            ->first();
-
-        return $role ? $role->id : null;
-    }
+    protected $casts = [
+        'permissions' => 'array'
+    ];
 
     /**
      * Obtenir les permissions pour un rôle donné
@@ -33,15 +24,15 @@ class RolePermission extends Model
     {
         $entrepriseId = $entrepriseId ?? (auth()->user()->entreprise_id ?? null);
 
-        // Obtenir le role_id à partir du nom du rôle
-        $roleId = self::getRoleIdByName($role);
+        // Normaliser le nom du rôle (peut être un nom ou un slug)
+        $roleName = is_numeric($role) ? self::getRoleNameById($role) : $role;
 
-        if (!$roleId) {
+        if (!$roleName) {
             return [];
         }
 
         // Chercher d'abord avec l'entreprise_id spécifié
-        $query = self::where('role_id', $roleId);
+        $query = self::where('role', $roleName);
         if ($entrepriseId) {
             $query->where('entreprise_id', $entrepriseId);
         } else {
@@ -49,65 +40,59 @@ class RolePermission extends Model
             $query->whereNull('entreprise_id');
         }
 
-        $rolePermissions = $query->pluck('permission_id')->toArray();
+        $rolePermission = $query->first();
 
         // Si rien trouvé avec l'entreprise_id spécifié, chercher les permissions globales
-        if (empty($rolePermissions) && $entrepriseId) {
-            $rolePermissions = self::where('role_id', $roleId)
+        if (!$rolePermission && $entrepriseId) {
+            $rolePermission = self::where('role', $roleName)
                 ->whereNull('entreprise_id')
-                ->pluck('permission_id')
-                ->toArray();
+                ->first();
         }
 
-        // Récupérer les noms des permissions
-        if (empty($rolePermissions)) {
+        if (!$rolePermission || empty($rolePermission->permissions)) {
             return [];
         }
 
-        $permissions = DB::table('permissions')
-            ->whereIn('id', $rolePermissions)
-            ->get()
-            ->map(function ($permission) {
-                return $permission->name ?? ($permission->resource . '.' . $permission->action);
-            })
-            ->toArray();
+        // Les permissions sont stockées en JSON, les retourner directement
+        return is_array($rolePermission->permissions)
+            ? $rolePermission->permissions
+            : json_decode($rolePermission->permissions, true) ?? [];
+    }
 
-        return $permissions;
+    /**
+     * Obtenir le nom du rôle à partir de son ID
+     */
+    protected static function getRoleNameById($roleId)
+    {
+        $role = DB::table('roles')->where('id', $roleId)->first();
+        return $role ? ($role->name ?? $role->slug) : null;
     }
 
     /**
      * Mettre à jour les permissions pour un rôle
      */
-    public static function updatePermissionsForRole($role, $permissions)
+    public static function updatePermissionsForRole($role, $permissions, $entrepriseId = null)
     {
-        // Obtenir le role_id à partir du nom du rôle
-        $roleId = self::getRoleIdByName($role);
+        // Normaliser le nom du rôle
+        $roleName = is_numeric($role) ? self::getRoleNameById($role) : $role;
 
-        if (!$roleId) {
+        if (!$roleName) {
             throw new \Exception("Le rôle '{$role}' n'existe pas");
         }
 
-        // Si $permissions est un array de noms, convertir en IDs
-        if (is_array($permissions) && !empty($permissions) && !is_numeric($permissions[0])) {
-            $permissionIds = DB::table('permissions')
-                ->whereIn('name', $permissions)
-                ->pluck('id')
-                ->toArray();
-        } else {
-            $permissionIds = $permissions;
+        // S'assurer que $permissions est un tableau
+        if (!is_array($permissions)) {
+            $permissions = [$permissions];
         }
 
-        // Supprimer les permissions existantes pour ce rôle
-        self::where('role_id', $roleId)->delete();
+        // Chercher ou créer l'entrée pour ce rôle et cette entreprise
+        $rolePermission = self::firstOrNew([
+            'role' => $roleName,
+            'entreprise_id' => $entrepriseId
+        ]);
 
-        // Ajouter les nouvelles permissions
-        foreach ($permissionIds as $permissionId) {
-            self::create([
-                'role_id' => $roleId,
-                'permission_id' => $permissionId,
-                'entreprise_id' => null
-            ]);
-        }
+        $rolePermission->permissions = $permissions;
+        $rolePermission->save();
 
         return true;
     }
@@ -115,28 +100,44 @@ class RolePermission extends Model
     /**
      * Obtenir tous les rôles avec leurs permissions
      */
-    public static function getAllRolePermissions()
+    public static function getAllRolePermissions($entrepriseId = null)
     {
         $result = [];
 
+        // Récupérer tous les role_permissions
+        $query = self::query();
+        if ($entrepriseId) {
+            // D'abord récupérer les permissions spécifiques à l'entreprise
+            $entreprisePermissions = self::where('entreprise_id', $entrepriseId)->get();
+
+            // Ensuite récupérer les permissions globales pour les rôles qui n'ont pas de permissions spécifiques
+            $rolesWithEnterprisePermissions = $entreprisePermissions->pluck('role')->toArray();
+            $globalPermissions = self::whereNull('entreprise_id')
+                ->whereNotIn('role', $rolesWithEnterprisePermissions)
+                ->get();
+
+            $rolePermissions = $entreprisePermissions->merge($globalPermissions);
+        } else {
+            $rolePermissions = self::whereNull('entreprise_id')->get();
+        }
+
+        foreach ($rolePermissions as $rolePermission) {
+            $roleName = $rolePermission->role;
+            $permissions = is_array($rolePermission->permissions)
+                ? $rolePermission->permissions
+                : json_decode($rolePermission->permissions, true) ?? [];
+
+            // Prioriser les permissions spécifiques à l'entreprise
+            // Si le rôle existe déjà (permission globale), la remplacer par la permission spécifique
+            if (!isset($result[$roleName]) || $rolePermission->entreprise_id !== null) {
+                $result[$roleName] = $permissions;
+            }
+        }
+
+        // S'assurer que tous les rôles de la table roles sont présents
         $roles = DB::table('roles')->get();
-
         foreach ($roles as $role) {
-            $permissionIds = self::where('role_id', $role->id)
-                ->pluck('permission_id')
-                ->toArray();
-
-            if (!empty($permissionIds)) {
-                $permissions = DB::table('permissions')
-                    ->whereIn('id', $permissionIds)
-                    ->get()
-                    ->map(function ($permission) {
-                        return $permission->name ?? ($permission->resource . '.' . $permission->action);
-                    })
-                    ->toArray();
-
-                $result[$role->name] = $permissions;
-            } else {
+            if (!isset($result[$role->name])) {
                 $result[$role->name] = [];
             }
         }

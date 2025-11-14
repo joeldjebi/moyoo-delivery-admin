@@ -64,6 +64,14 @@
                 $accessibleModules = $moduleAccessService->getAccessibleModules($entrepriseId);
                 $moduleSlugs = $accessibleModules->pluck('slug')->toArray();
 
+                // Ajouter automatiquement les modules non optionnels et actifs qui ne sont pas déjà dans la liste
+                $baseModules = \App\Models\Module::where('is_active', true)
+                    ->where('is_optional', false)
+                    ->pluck('slug')
+                    ->toArray();
+
+                $moduleSlugs = array_unique(array_merge($moduleSlugs, $baseModules));
+
                 // Fonction helper pour vérifier l'accès à un module avec toutes les vérifications
                 $hasModuleAccess = function($moduleSlug) use ($moduleAccessService, $entrepriseId, $accessibleModules) {
                     // Vérifier via hasAccess (vérifie souscription ET activation par admin)
@@ -195,7 +203,19 @@
               <!-- Rapports menu end -->
 
               <!-- Reversements menu start : vérifier module ET permission -->
-              @if(in_array('reversement_management', $moduleSlugs) && auth()->user()->hasPermission('reversements.read'))
+              @php
+                  // Le module reversement_management est un module de base (non optionnel)
+                  // Il devrait être dans $moduleSlugs, mais on vérifie aussi directement si nécessaire
+                  $hasReversementModule = in_array('reversement_management', $moduleSlugs);
+                  if (!$hasReversementModule) {
+                      $reversementModule = \App\Models\Module::where('slug', 'reversement_management')
+                          ->where('is_active', true)
+                          ->where('is_optional', false)
+                          ->first();
+                      $hasReversementModule = $reversementModule !== null;
+                  }
+              @endphp
+              @if($hasReversementModule && auth()->user()->hasPermission('reversements.read'))
               <li class="menu-item">
                 <a href="javascript:void(0);" class="menu-link menu-toggle">
                   <i class="menu-icon tf-icons ti ti-wallet"></i>
