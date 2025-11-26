@@ -73,7 +73,6 @@ class EnginController extends Controller
         try {
             $request->validate([
                 'libelle' => 'required|string|max:255|regex:/^[a-zA-ZÀ-ÿ\s\-\'\.]+$/u',
-                'matricule' => 'required|string|max:255|unique:engins,matricule,NULL,id,deleted_at,NULL',
                 'marque' => 'required|string|max:255|regex:/^[a-zA-ZÀ-ÿ\s\-\'\.]+$/u',
                 'modele' => 'required|string|max:255|regex:/^[a-zA-ZÀ-ÿ\s\-\'\.0-9]+$/u',
                 'couleur' => 'required|string|in:Blanc,Noir,Rouge,Bleu,Vert,Jaune,Orange,Violet,Rose,Gris,Marron,Beige,Argent,Or',
@@ -84,8 +83,6 @@ class EnginController extends Controller
             ], [
                 'libelle.required' => 'Le libellé est obligatoire.',
                 'libelle.regex' => 'Le libellé ne peut contenir que des lettres, espaces, tirets, apostrophes et points.',
-                'matricule.required' => 'Le matricule est obligatoire.',
-                'matricule.unique' => 'Ce matricule existe déjà.',
                 'marque.required' => 'La marque est obligatoire.',
                 'marque.regex' => 'La marque ne peut contenir que des lettres, espaces, tirets, apostrophes et points.',
                 'modele.required' => 'Le modèle est obligatoire.',
@@ -106,7 +103,6 @@ class EnginController extends Controller
 
             $engin = Engin::create([
                 'libelle' => $request->libelle,
-                'matricule' => $request->matricule,
                 'marque' => $request->marque,
                 'modele' => $request->modele,
                 'couleur' => $request->couleur,
@@ -121,8 +117,7 @@ class EnginController extends Controller
                 'user_id' => $user->id,
                 'user_email' => $user->email,
                 'engin_id' => $engin->id,
-                'libelle' => $engin->libelle,
-                'matricule' => $engin->matricule
+                'libelle' => $engin->libelle
             ]);
 
             DB::commit();
@@ -145,6 +140,89 @@ class EnginController extends Controller
             return redirect()->back()
                 ->with('error', 'Une erreur est survenue lors de la création de l\'engin.')
                 ->withInput();
+        }
+    }
+
+    /**
+     * Store a newly created engin via API (AJAX)
+     */
+    public function storeApi(Request $request)
+    {
+        if (!Auth::check()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Veuillez vous connecter pour accéder à cette page.'
+            ], 401);
+        }
+
+        $user = Auth::user();
+
+        try {
+            $request->validate([
+                'libelle' => 'required|string|max:255|regex:/^[a-zA-ZÀ-ÿ\s\-\'\.]+$/u',
+                'marque' => 'required|string|max:255|regex:/^[a-zA-ZÀ-ÿ\s\-\'\.]+$/u',
+                'modele' => 'required|string|max:255|regex:/^[a-zA-ZÀ-ÿ\s\-\'\.0-9]+$/u',
+                'couleur' => 'required|string|in:Blanc,Noir,Rouge,Bleu,Vert,Jaune,Orange,Violet,Rose,Gris,Marron,Beige,Argent,Or',
+                'immatriculation' => 'required|string|max:255|unique:engins,immatriculation,NULL,id,deleted_at,NULL',
+                'etat' => 'required|string|in:neuf,occasion,endommage',
+                'status' => 'required|string|in:actif,inactif,maintenance',
+                'type_engin_id' => 'required|exists:type_engins,id'
+            ]);
+
+            DB::beginTransaction();
+
+            $engin = Engin::create([
+                'libelle' => $request->libelle,
+                'marque' => $request->marque,
+                'modele' => $request->modele,
+                'couleur' => $request->couleur,
+                'immatriculation' => $request->immatriculation,
+                'etat' => $request->etat,
+                'status' => $request->status,
+                'type_engin_id' => $request->type_engin_id,
+                'entreprise_id' => $user->entreprise_id,
+                'created_by' => $user->id
+            ]);
+
+            $engin->load('typeEngin');
+
+            Log::info('Engin créé via API', [
+                'user_id' => $user->id,
+                'engin_id' => $engin->id,
+                'libelle' => $engin->libelle
+            ]);
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'L\'engin a été créé avec succès.',
+                'engin' => [
+                    'id' => $engin->id,
+                    'libelle' => $engin->libelle,
+                    'type_engin' => $engin->typeEngin ? $engin->typeEngin->libelle : null,
+                    'display' => $engin->libelle . ($engin->typeEngin ? ' - ' . $engin->typeEngin->libelle : '')
+                ]
+            ]);
+
+        } catch (ValidationException $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreurs de validation',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Erreur lors de la création de l\'engin via API', [
+                'user_id' => $user->id,
+                'error' => $e->getMessage()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Une erreur est survenue lors de la création de l\'engin : ' . $e->getMessage()
+            ], 500);
         }
     }
 
@@ -207,7 +285,6 @@ class EnginController extends Controller
         try {
             $request->validate([
                 'libelle' => 'required|string|max:255|regex:/^[a-zA-ZÀ-ÿ\s\-\'\.]+$/u',
-                'matricule' => 'required|string|max:255|unique:engins,matricule,' . $engin->id . ',id,deleted_at,NULL',
                 'marque' => 'required|string|max:255|regex:/^[a-zA-ZÀ-ÿ\s\-\'\.]+$/u',
                 'modele' => 'required|string|max:255|regex:/^[a-zA-ZÀ-ÿ\s\-\'\.0-9]+$/u',
                 'couleur' => 'required|string|in:Blanc,Noir,Rouge,Bleu,Vert,Jaune,Orange,Violet,Rose,Gris,Marron,Beige,Argent,Or',
@@ -218,8 +295,6 @@ class EnginController extends Controller
             ], [
                 'libelle.required' => 'Le libellé est obligatoire.',
                 'libelle.regex' => 'Le libellé ne peut contenir que des lettres, espaces, tirets, apostrophes et points.',
-                'matricule.required' => 'Le matricule est obligatoire.',
-                'matricule.unique' => 'Ce matricule existe déjà.',
                 'marque.required' => 'La marque est obligatoire.',
                 'marque.regex' => 'La marque ne peut contenir que des lettres, espaces, tirets, apostrophes et points.',
                 'modele.required' => 'Le modèle est obligatoire.',
@@ -240,7 +315,6 @@ class EnginController extends Controller
 
             $engin->update([
                 'libelle' => $request->libelle,
-                'matricule' => $request->matricule,
                 'marque' => $request->marque,
                 'modele' => $request->modele,
                 'couleur' => $request->couleur,
@@ -254,8 +328,7 @@ class EnginController extends Controller
                 'user_id' => $user->id,
                 'user_email' => $user->email,
                 'engin_id' => $engin->id,
-                'libelle' => $engin->libelle,
-                'matricule' => $engin->matricule
+                'libelle' => $engin->libelle
             ]);
 
             DB::commit();
@@ -304,8 +377,7 @@ class EnginController extends Controller
 
             $enginData = [
                 'id' => $engin->id,
-                'libelle' => $engin->libelle,
-                'matricule' => $engin->matricule
+                'libelle' => $engin->libelle
             ];
 
             $engin->delete();
@@ -353,7 +425,6 @@ class EnginController extends Controller
             ->active()
             ->where(function($q) use ($query) {
                 $q->where('libelle', 'like', "%{$query}%")
-                  ->orWhere('matricule', 'like', "%{$query}%")
                   ->orWhere('marque', 'like', "%{$query}%")
                   ->orWhere('modele', 'like', "%{$query}%")
                   ->orWhere('immatriculation', 'like', "%{$query}%");

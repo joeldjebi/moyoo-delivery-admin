@@ -7,11 +7,12 @@
     },
     "servers": [
         {
-            "url": "http://192.168.1.8:8000",
-            "description": "Serveur de développement MOYOO"
+            "url": "https://zayden-temporal-anton.ngrok-free.dev",
+            "description": "Serveur ngrok (Production)"
         },
         {
-            "url": "http://192.168.1.8:8000"
+            "url": "http://127.0.0.1:8000",
+            "description": "Serveur localhost (Développement local)"
         }
     ],
     "paths": {
@@ -1407,7 +1408,7 @@
                                                 },
                                                 "photo": {
                                                     "type": "string",
-                                                    "example": "http://192.168.1.8:8000/storage/livreurs/photo.jpg"
+                                                    "example": "http://192.168.1.15:8000/storage/livreurs/photo.jpg"
                                                 }
                                             },
                                             "type": "object"
@@ -2439,7 +2440,7 @@
                                                 },
                                                 "photo_proof_url": {
                                                     "type": "string",
-                                                    "example": "http://192.168.1.8:8000/storage/livraisons/proofs/colis_1_1760357729.jpg"
+                                                    "example": "http://192.168.1.15:8000/storage/livraisons/proofs/colis_1_1760357729.jpg"
                                                 }
                                             },
                                             "type": "object"
@@ -4976,7 +4977,7 @@
                                                             },
                                                             "url": {
                                                                 "type": "string",
-                                                                "example": "http://192.168.1.8:8000/storage/ramassages/photos/colis_1_1760355000_1.jpg"
+                                                                "example": "http://192.168.1.15:8000/storage/ramassages/photos/colis_1_1760355000_1.jpg"
                                                             },
                                                             "path": {
                                                                 "type": "string",

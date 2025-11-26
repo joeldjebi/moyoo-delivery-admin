@@ -170,12 +170,18 @@ class ColisController extends Controller
                 ->where('entreprise_id', $entrepriseId)
                 ->with('engin.typeEngin')
                 ->orderBy('last_name')->get();
-            $data['type_colis'] = Type_colis::orderBy('libelle')->get();
-            $data['conditionnement_colis'] = Conditionnement_colis::orderBy('libelle')->get();
-            $data['poids'] = Poid::where('entreprise_id', $entrepriseId)->orderBy('libelle')->get();
-            $data['mode_livraisons'] = Mode_livraison::where('entreprise_id', $entrepriseId)->orderBy('libelle')->get();
-            $data['delais'] = Delais::where('entreprise_id', $entrepriseId)->orderBy('libelle')->get();
-            $data['temps'] = Temp::where('entreprise_id', $entrepriseId)->orderBy('libelle')->get();
+            $data['type_colis'] = Type_colis::where('entreprise_id', $entrepriseId)
+            ->orderBy('libelle')->get();
+            $data['conditionnement_colis'] = Conditionnement_colis::where('entreprise_id', $entrepriseId)
+            ->orderBy('libelle')->get();
+            $data['poids'] = Poid::where('entreprise_id', $entrepriseId)
+            ->orderBy('libelle')->get();
+            $data['mode_livraisons'] = Mode_livraison::where('entreprise_id', $entrepriseId)
+            ->orderBy('libelle')->get();
+            $data['delais'] = Delais::where('entreprise_id', $entrepriseId)
+            ->orderBy('libelle')->get();
+            $data['temps'] = Temp::where('entreprise_id', $entrepriseId)
+            ->orderBy('libelle')->get();
             $data['communes'] = Commune::orderBy('libelle')->get();
             // Les ramassages seront chargés dynamiquement par boutique via AJAX
             $data['ramassages'] = collect();
@@ -1739,7 +1745,9 @@ class ColisController extends Controller
     {
         try {
             $data['menu'] = 'colis';
+            $entrepriseId = $this->getEntrepriseId();
             $data['packages'] = PackageColis::with(['marchand', 'boutique', 'livreur', 'engin', 'createdBy', 'colis'])
+                ->where('entreprise_id', $entrepriseId)
                 ->orderBy('created_at', 'desc')
                 ->paginate(20);
 

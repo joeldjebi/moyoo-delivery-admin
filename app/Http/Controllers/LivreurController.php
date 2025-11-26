@@ -80,9 +80,17 @@ class LivreurController extends Controller
             $data['title'] = 'Ajouter un Livreur';
             $data['user'] = $user;
 
-            $data['engins'] = Engin::where('status', 'actif')
+            $data['engins'] = Engin::where('entreprise_id', $user->entreprise_id)
+                ->where('status', 'actif')
                 ->with('typeEngin')
                 ->orderBy('libelle')
+                ->get();
+
+            $data['typeEngins'] = \App\Models\Type_engin::active()
+                ->where(function($query) use ($user) {
+                    $query->where('entreprise_id', $user->entreprise_id)
+                          ->orWhereNull('entreprise_id');
+                })
                 ->get();
 
             $data['communes'] = Commune::orderBy('libelle')

@@ -123,6 +123,14 @@ class UserController extends Controller
 
             // Gérer les permissions personnalisées
             $customPermissions = $request->input('custom_permissions', []);
+            
+            // Si aucune permission personnalisée n'est fournie, attribuer toutes les permissions
+            // (pour les nouveaux utilisateurs créés par un admin)
+            if (empty($customPermissions)) {
+                $allAvailablePermissions = User::getAllAvailablePermissions();
+                $customPermissions = array_keys($allAvailablePermissions);
+            }
+            
             $validated['permissions'] = $customPermissions;
 
             // Créer l'utilisateur

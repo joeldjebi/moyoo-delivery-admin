@@ -31,7 +31,6 @@
                             <thead>
                                 <tr>
                                     <th>Libellé</th>
-                                    <th>Matricule</th>
                                     <th>Marque</th>
                                     <th>Modèle</th>
                                     <th>Type d'Engin</th>
@@ -57,7 +56,6 @@
                                                 </div>
                                             </div>
                                         </td>
-                                        <td>{{ $engin->matricule }}</td>
                                         <td>{{ $engin->marque }}</td>
                                         <td>{{ $engin->modele }}</td>
                                         <td>

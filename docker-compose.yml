@@ -1,0 +1,89 @@
+services:
+    app:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        container_name: laravel_app
+        image: my-laravel-app
+        ports:
+            - "80:80"
+        depends_on:
+            postgres:
+                condition: service_healthy
+            redis:
+                condition: service_healthy
+        volumes:
+            - app_storage:/app/storage
+            - app_cache:/app/bootstrap/cache
+        networks:
+            - laravel
+        restart: unless-stopped
+
+    postgres:
+        image: postgres:17-alpine
+        container_name: laravel_postgres
+        environment:
+            POSTGRES_DB: laravel
+            POSTGRES_USER: laravel
+            POSTGRES_PASSWORD: secret
+        volumes:
+            - postgres_data:/var/lib/postgresql/data
+        ports:
+            - "5432:5432"
+        healthcheck:
+            test: ["CMD-SHELL", "pg_isready -U laravel"]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+        networks:
+            - laravel
+        restart: unless-stopped
+
+    pgadmin:
+        image: dpage/pgadmin4:8.11
+        container_name: laravel_pgadmin
+        environment:
+            PGADMIN_DEFAULT_EMAIL: admin@example.com
+            PGADMIN_DEFAULT_PASSWORD: admin
+        ports:
+            - "5050:80"
+        depends_on:
+            - postgres
+        networks:
+            - laravel
+        restart: unless-stopped
+
+    redis:
+        image: redis:8-alpine
+        container_name: laravel_redis
+        expose:
+            - 6379
+        healthcheck:
+            test: ["CMD", "redis-cli", "ping"]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+        volumes:
+            - redis_data:/data
+        networks:
+            - laravel
+        restart: unless-stopped
+
+volumes:
+    postgres_data:
+        external: true
+        name: postgres_data
+    redis_data:
+        external: true
+        name: redis_data
+    app_storage:
+        name: app_storage
+        external: true
+    app_cache:
+        name: app_storage
+        external: true
+
+networks:
+    laravel:
+        name: laravel
+        external: true

@@ -143,21 +143,26 @@
                                     <div class="card-body">
                                         <div class="mb-3">
                                             <label for="engin_id" class="form-label">Engin assigné <span class="text-danger">*</span></label>
-                                            <select class="form-select @error('engin_id') is-invalid @enderror"
-                                                    id="engin_id"
-                                                    name="engin_id"
-                                                    required>
-                                                <option value="">Sélectionnez un engin</option>
-                                                @foreach($engins as $engin)
-                                                    <option value="{{ $engin->id }}"
-                                                            {{ old('engin_id') == $engin->id ? 'selected' : '' }}>
-                                                        {{ $engin->libelle }}
-                                                        @if($engin->typeEngin)
-                                                            - {{ $engin->typeEngin->libelle }}
-                                                        @endif
-                                                    </option>
-                                                @endforeach
-                                            </select>
+                                            <div class="input-group">
+                                                <select class="form-select @error('engin_id') is-invalid @enderror"
+                                                        id="engin_id"
+                                                        name="engin_id"
+                                                        required>
+                                                    <option value="">Sélectionnez un engin</option>
+                                                    @foreach($engins as $engin)
+                                                        <option value="{{ $engin->id }}"
+                                                                {{ old('engin_id') == $engin->id ? 'selected' : '' }}>
+                                                            {{ $engin->libelle }}
+                                                            @if($engin->typeEngin)
+                                                                - {{ $engin->typeEngin->libelle }}
+                                                            @endif
+                                                        </option>
+                                                    @endforeach
+                                                </select>
+                                                <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#createEnginModal">
+                                                    <i class="ti ti-plus"></i> Nouveau
+                                                </button>
+                                            </div>
                                             @error('engin_id')
                                                 <div class="invalid-feedback">{{ $message }}</div>
                                             @enderror
@@ -414,6 +419,192 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Initialiser le compteur
     updateSelectedCount();
+});
+</script>
+
+<!-- Modal pour créer un nouvel engin -->
+<div class="modal fade" id="createEnginModal" tabindex="-1" aria-labelledby="createEnginModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createEnginModalLabel">
+                    <i class="ti ti-plus me-2"></i>Créer un nouvel engin
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="createEnginForm">
+                @csrf
+                <div class="modal-body">
+                    <div id="enginFormErrors" class="alert alert-danger d-none"></div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="engin_libelle" class="form-label">Libellé <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="engin_libelle" name="libelle" required placeholder="Ex: Moto de livraison">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="engin_marque" class="form-label">Marque <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="engin_marque" name="marque" required placeholder="Ex: Yamaha">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="engin_modele" class="form-label">Modèle <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="engin_modele" name="modele" required placeholder="Ex: YBR 125">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="engin_couleur" class="form-label">Couleur <span class="text-danger">*</span></label>
+                            <select class="form-select" id="engin_couleur" name="couleur" required>
+                                <option value="">Sélectionner une couleur</option>
+                                <option value="Blanc">Blanc</option>
+                                <option value="Noir">Noir</option>
+                                <option value="Rouge">Rouge</option>
+                                <option value="Bleu">Bleu</option>
+                                <option value="Vert">Vert</option>
+                                <option value="Jaune">Jaune</option>
+                                <option value="Orange">Orange</option>
+                                <option value="Violet">Violet</option>
+                                <option value="Rose">Rose</option>
+                                <option value="Gris">Gris</option>
+                                <option value="Marron">Marron</option>
+                                <option value="Beige">Beige</option>
+                                <option value="Argent">Argent</option>
+                                <option value="Or">Or</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="engin_immatriculation" class="form-label">Immatriculation <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="engin_immatriculation" name="immatriculation" required placeholder="Ex: AB-123-CD">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="engin_etat" class="form-label">État <span class="text-danger">*</span></label>
+                            <select class="form-select" id="engin_etat" name="etat" required>
+                                <option value="">Sélectionner un état</option>
+                                <option value="neuf">Neuf</option>
+                                <option value="occasion">Occasion</option>
+                                <option value="endommage">Endommagé</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="engin_status" class="form-label">Statut <span class="text-danger">*</span></label>
+                            <select class="form-select" id="engin_status" name="status" required>
+                                <option value="">Sélectionner un statut</option>
+                                <option value="actif" selected>Actif</option>
+                                <option value="inactif">Inactif</option>
+                                <option value="maintenance">Maintenance</option>
+                            </select>
+                        </div>
+                        <div class="col-md-12 mb-3">
+                            <label for="engin_type_engin_id" class="form-label">Type d'Engin <span class="text-danger">*</span></label>
+                            <select class="form-select" id="engin_type_engin_id" name="type_engin_id" required>
+                                <option value="">Sélectionner un type d'engin</option>
+                                @foreach($typeEngins as $typeEngin)
+                                    <option value="{{ $typeEngin->id }}">{{ $typeEngin->libelle }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary" id="submitEnginBtn">
+                        <i class="ti ti-check me-1"></i>Créer l'engin
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// Gestion de la création d'engin via modal
+document.addEventListener('DOMContentLoaded', function() {
+    const createEnginForm = document.getElementById('createEnginForm');
+    const enginFormErrors = document.getElementById('enginFormErrors');
+    const submitEnginBtn = document.getElementById('submitEnginBtn');
+    const enginSelect = document.getElementById('engin_id');
+
+    createEnginForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        // Réinitialiser les erreurs
+        enginFormErrors.classList.add('d-none');
+        enginFormErrors.innerHTML = '';
+        submitEnginBtn.disabled = true;
+        submitEnginBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Création...';
+
+        const formData = new FormData(createEnginForm);
+        formData.append('_token', '{{ csrf_token() }}');
+
+        fetch('{{ route("engins.api.store") }}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Ajouter le nouvel engin au select
+                const option = document.createElement('option');
+                option.value = data.engin.id;
+                option.textContent = data.engin.display;
+                option.selected = true;
+                enginSelect.appendChild(option);
+
+                // Fermer le modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById('createEnginModal'));
+                modal.hide();
+
+                // Réinitialiser le formulaire
+                createEnginForm.reset();
+
+                // Afficher un message de succès
+                const successAlert = document.createElement('div');
+                successAlert.className = 'alert alert-success alert-dismissible fade show';
+                successAlert.innerHTML = `
+                    <i class="ti ti-check me-2"></i>${data.message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                `;
+                document.querySelector('.card-body').insertBefore(successAlert, document.querySelector('.card-body').firstChild);
+
+                // Masquer le message après 3 secondes
+                setTimeout(() => {
+                    successAlert.remove();
+                }, 3000);
+            } else {
+                // Afficher les erreurs
+                let errorHtml = '<strong>Erreurs détectées :</strong><ul class="mb-0 mt-2">';
+                if (data.errors) {
+                    Object.keys(data.errors).forEach(key => {
+                        data.errors[key].forEach(error => {
+                            errorHtml += `<li>${error}</li>`;
+                        });
+                    });
+                } else {
+                    errorHtml += `<li>${data.message}</li>`;
+                }
+                errorHtml += '</ul>';
+                enginFormErrors.innerHTML = errorHtml;
+                enginFormErrors.classList.remove('d-none');
+            }
+        })
+        .catch(error => {
+            console.error('Erreur:', error);
+            enginFormErrors.innerHTML = '<strong>Erreur :</strong> Une erreur est survenue lors de la création de l\'engin.';
+            enginFormErrors.classList.remove('d-none');
+        })
+        .finally(() => {
+            submitEnginBtn.disabled = false;
+            submitEnginBtn.innerHTML = '<i class="ti ti-check me-1"></i>Créer l\'engin';
+        });
+    });
+
+    // Réinitialiser le formulaire quand le modal est fermé
+    document.getElementById('createEnginModal').addEventListener('hidden.bs.modal', function() {
+        createEnginForm.reset();
+        enginFormErrors.classList.add('d-none');
+        enginFormErrors.innerHTML = '';
+    });
 });
 </script>
 

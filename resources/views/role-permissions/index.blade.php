@@ -110,35 +110,22 @@ document.addEventListener('DOMContentLoaded', function() {
 
     forms.forEach(form => {
         form.addEventListener('submit', function(e) {
-            e.preventDefault();
-
             const formData = new FormData(this);
             const role = formData.get('role');
+            const permissions = formData.getAll('permissions[]');
+
+            // Debug: afficher les données dans la console
+            console.log('Soumission du formulaire:', {
+                role: role,
+                permissions: permissions,
+                count: permissions.length
+            });
 
             // Confirmation avant mise à jour
-            if (confirm(`Êtes-vous sûr de vouloir mettre à jour les permissions du rôle "${role}" ?`)) {
-                this.submit();
+            if (!confirm(`Êtes-vous sûr de vouloir mettre à jour les permissions du rôle "${role}" ?`)) {
+                e.preventDefault();
+                return false;
             }
-        });
-    });
-
-    // Ajouter des événements pour les checkboxes
-    const checkboxes = document.querySelectorAll('input[type="checkbox"][name="permissions[]"]');
-
-    checkboxes.forEach(checkbox => {
-        checkbox.addEventListener('change', function() {
-            const role = this.name.split('_')[0];
-            const form = this.closest('form');
-            const submitBtn = form.querySelector('button[type="submit"]');
-
-            // Activer le bouton de soumission si des changements sont détectés
-            const hasChanges = Array.from(form.querySelectorAll('input[type="checkbox"]'))
-                .some(cb => cb.checked !== cb.defaultChecked);
-
-            submitBtn.disabled = !hasChanges;
-            submitBtn.textContent = hasChanges ?
-                'Mettre à jour les permissions' :
-                'Aucun changement';
         });
     });
 });

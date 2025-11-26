@@ -196,6 +196,9 @@ class User extends Authenticatable implements JWTSubject
                     'marchands.read',
                     'marchands.update',
                     'marchands.delete',
+                    'reversements.create',
+                    'reversements.read',
+                    'reversements.update',
                     'reports.read',
                     'settings.read',
                     'settings.update'
@@ -255,6 +258,9 @@ class User extends Authenticatable implements JWTSubject
             'marchands.read' => 'Voir les marchands',
             'marchands.update' => 'Modifier les marchands',
             'marchands.delete' => 'Supprimer les marchands',
+            'reversements.create' => 'Créer des reversements',
+            'reversements.read' => 'Voir les reversements',
+            'reversements.update' => 'Modifier les reversements',
             'reports.read' => 'Voir les rapports',
             'settings.read' => 'Voir les paramètres',
             'settings.update' => 'Modifier les paramètres'

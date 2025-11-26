@@ -256,7 +256,6 @@ class CreateTestScenario extends Command
             $enginId = DB::table('engins')->insertGetId([
                 'type_engin_id' => $typeEnginId,
                 'libelle' => 'Moto Test',
-                'matricule' => 'MAT-TEST-' . time(),
                 'marque' => 'Honda',
                 'modele' => 'CG125',
                 'couleur' => 'Noir',

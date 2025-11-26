@@ -20,10 +20,6 @@
                                     <p class="form-control-plaintext">{{ $engin->libelle }}</p>
                                 </div>
                                 <div class="col-md-6 mb-3">
-                                    <label class="form-label fw-semibold">Matricule</label>
-                                    <p class="form-control-plaintext">{{ $engin->matricule }}</p>
-                                </div>
-                                <div class="col-md-6 mb-3">
                                     <label class="form-label fw-semibold">Marque</label>
                                     <p class="form-control-plaintext">{{ $engin->marque }}</p>
                                 </div>
@@ -119,7 +115,6 @@
                                         </div>
                                         <div>
                                             <h6 class="mb-0">{{ $engin->libelle }}</h6>
-                                            <small class="text-muted">{{ $engin->matricule }}</small>
                                         </div>
                                     </div>
                                     <div class="mb-3">

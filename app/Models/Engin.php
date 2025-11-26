@@ -14,7 +14,6 @@ class Engin extends Model
     protected $fillable = [
         'entreprise_id',
         'libelle',
-        'matricule',
         'marque',
         'modele',
         'couleur',

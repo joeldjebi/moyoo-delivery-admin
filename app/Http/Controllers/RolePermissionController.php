@@ -25,8 +25,9 @@ class RolePermissionController extends Controller
         // Récupérer toutes les permissions disponibles
         $data['availablePermissions'] = User::getAllAvailablePermissions();
 
-        // Récupérer les permissions actuelles des rôles
-        $data['rolePermissions'] = RolePermission::getAllRolePermissions();
+        // Récupérer les permissions actuelles des rôles pour l'entreprise de l'utilisateur
+        $entrepriseId = Auth::user()->entreprise_id ?? null;
+        $data['rolePermissions'] = RolePermission::getAllRolePermissions($entrepriseId);
 
         // Rôles disponibles
         $data['roles'] = ['admin', 'manager', 'user'];
@@ -52,9 +53,18 @@ class RolePermissionController extends Controller
 
         $role = $request->role;
         $permissions = $request->permissions ?? [];
+        $entrepriseId = Auth::user()->entreprise_id ?? null;
+
+        // Debug: logger les données reçues
+        \Log::info('Mise à jour des permissions', [
+            'role' => $role,
+            'permissions' => $permissions,
+            'entreprise_id' => $entrepriseId,
+            'count' => count($permissions)
+        ]);
 
         // Mettre à jour les permissions du rôle
-        RolePermission::updatePermissionsForRole($role, $permissions);
+        RolePermission::updatePermissionsForRole($role, $permissions, $entrepriseId);
 
         return redirect()->route('role-permissions.index')
             ->with('success', "Les permissions du rôle '{$role}' ont été mises à jour avec succès.");

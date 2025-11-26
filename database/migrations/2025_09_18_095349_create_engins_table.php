@@ -14,7 +14,6 @@ return new class extends Migration
         Schema::create('engins', function (Blueprint $table) {
             $table->id();
             $table->string('libelle');
-            $table->string('matricule');
             $table->string('marque');
             $table->string('modele');
             $table->string('couleur');

@@ -36,15 +36,6 @@
                                 @enderror
                             </div>
 
-                            <div class="col-md-6 mb-3">
-                                <label for="matricule" class="form-label">Matricule <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control @error('matricule') is-invalid @enderror"
-                                       id="matricule" name="matricule" value="{{ old('matricule') }}"
-                                       placeholder="Ex: ENG001" required>
-                                @error('matricule')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
 
                             <div class="col-md-6 mb-3">
                                 <label for="marque" class="form-label">Marque <span class="text-danger">*</span></label>

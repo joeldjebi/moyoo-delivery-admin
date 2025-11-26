@@ -263,4 +263,84 @@ class EntrepriseController extends Controller
             return back()->with('error', 'Erreur lors de la régénération des tarifs : ' . $e->getMessage());
         }
     }
+
+    /**
+     * Upload du logo de l'entreprise
+     */
+    public function uploadLogo(Request $request)
+    {
+        try {
+            $entreprise = Entreprise::getEntrepriseByUser(Auth::id());
+
+            if (!$entreprise) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Entreprise non trouvée'
+                ], 404);
+            }
+
+            // Gérer la suppression du logo
+            if ($request->has('_method') && $request->input('_method') === 'DELETE') {
+                // Supprimer le logo existant
+                if ($entreprise->logo && Storage::disk('public')->exists($entreprise->logo)) {
+                    Storage::disk('public')->delete($entreprise->logo);
+                }
+
+                $entreprise->update([
+                    'logo' => null
+                ]);
+
+                Log::info('Logo de l\'entreprise supprimé', [
+                    'entreprise_id' => $entreprise->id,
+                    'user_id' => Auth::id()
+                ]);
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Logo supprimé avec succès'
+                ]);
+            }
+
+            // Upload du nouveau logo
+            $request->validate([
+                'logo' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:2048'
+            ]);
+
+            // Supprimer l'ancien logo s'il existe
+            if ($entreprise->logo && Storage::disk('public')->exists($entreprise->logo)) {
+                Storage::disk('public')->delete($entreprise->logo);
+            }
+
+            // Upload du nouveau logo
+            $logoPath = $request->file('logo')->store('logos', 'public');
+
+            // Mettre à jour l'entreprise
+            $entreprise->update([
+                'logo' => $logoPath
+            ]);
+
+            Log::info('Logo de l\'entreprise mis à jour', [
+                'entreprise_id' => $entreprise->id,
+                'user_id' => Auth::id(),
+                'logo_path' => $logoPath
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Logo mis à jour avec succès',
+                'logo_url' => asset('storage/' . $logoPath)
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Erreur lors de l\'upload du logo', [
+                'error' => $e->getMessage(),
+                'user_id' => Auth::id()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de l\'upload du logo : ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }

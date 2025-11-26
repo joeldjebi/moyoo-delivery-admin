@@ -261,7 +261,7 @@
                                     </div>
                                     <div>
                                         <h6 class="mb-0">{{ $colis->engin->libelle }}</h6>
-                                        <small class="text-muted">{{ $colis->engin->matricule }}</small>
+                                        <small class="text-muted">{{ $colis->engin->immatriculation ?? '' }}</small>
                                     </div>
                                 </div>
                             @else
@@ -438,7 +438,7 @@
                         <select class="form-select" id="modal_engin_id" name="engin_id">
                             <option value="">Sélectionner un engin</option>
                             @foreach($engins ?? [] as $engin)
-                                <option value="{{ $engin->id }}">{{ $engin->libelle }} - {{ $engin->matricule }}</option>
+                                <option value="{{ $engin->id }}">{{ $engin->libelle }}</option>
                             @endforeach
                         </select>
                     </div>

@@ -292,7 +292,6 @@ class TenantBootstrapService
 				$rows[] = [
 					'type_engin_id' => $typeMotoId,
 					'libelle' => 'Moto A',
-					'matricule' => 'MAT-001',
 					'marque' => 'Honda',
 					'modele' => 'CG125',
 					'couleur' => 'Noir',
@@ -308,7 +307,6 @@ class TenantBootstrapService
 				$rows[] = [
 					'type_engin_id' => $typeVoitureId,
 					'libelle' => 'Voiture A',
-					'matricule' => 'MAT-002',
 					'marque' => 'Toyota',
 					'modele' => 'Yaris',
 					'couleur' => 'Blanc',
@@ -324,7 +322,6 @@ class TenantBootstrapService
 				$rows[] = [
 					'type_engin_id' => $typeCamionnetteId,
 					'libelle' => 'Camionnette A',
-					'matricule' => 'MAT-003',
 					'marque' => 'Renault',
 					'modele' => 'Kangoo',
 					'couleur' => 'Blanc',

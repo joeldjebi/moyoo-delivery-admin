@@ -14,8 +14,13 @@ class SwaggerController extends Controller
      * )
      *
      * @OA\Server(
-     *     url="http://192.168.1.2:8000",
-     *     description="Serveur de développement MOYOO"
+     *     url="https://zayden-temporal-anton.ngrok-free.dev",
+     *     description="Serveur ngrok (Production)"
+     * )
+     *
+     * @OA\Server(
+     *     url="http://127.0.0.1:8000",
+     *     description="Serveur localhost (Développement local)"
      * )
      *
      * @OA\SecurityScheme(

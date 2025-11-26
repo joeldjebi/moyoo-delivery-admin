@@ -2212,7 +2212,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     enginSelect.innerHTML = '';
                     const option = document.createElement('option');
                     option.value = livreur.engin.id;
-                    option.textContent = `${livreur.engin.libelle} - ${livreur.engin.matricule}${livreur.engin.type_engin ? ' (' + livreur.engin.type_engin.libelle + ')' : ''}`;
+                    option.textContent = `${livreur.engin.libelle}${livreur.engin.type_engin ? ' (' + livreur.engin.type_engin.libelle + ')' : ''}`;
                     enginSelect.appendChild(option);
 
                     // Activer le dropdown
@@ -2252,7 +2252,7 @@ function handleLivreurChangeMulti(index, livreurId) {
             enginSelect.innerHTML = '';
             const option = document.createElement('option');
             option.value = livreur.engin.id;
-            option.textContent = `${livreur.engin.libelle} - ${livreur.engin.matricule}${livreur.engin.type_engin ? ' (' + livreur.engin.type_engin.libelle + ')' : ''}`;
+            option.textContent = `${livreur.engin.libelle}${livreur.engin.type_engin ? ' (' + livreur.engin.type_engin.libelle + ')' : ''}`;
             enginSelect.appendChild(option);
 
             // Activer le dropdown

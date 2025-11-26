@@ -436,7 +436,7 @@ class LivreurAuthController extends Controller
      *                 @OA\Property(property="mobile", type="string", example="1234567890"),
      *                 @OA\Property(property="email", type="string", example="jean.dupont@example.com"),
      *                 @OA\Property(property="adresse", type="string", example="123 Rue de la Paix"),
-     *                 @OA\Property(property="photo", type="string", example="http://192.168.1.2:8000/storage/livreurs/photo.jpg")
+     *                 @OA\Property(property="photo", type="string", example="http://192.168.1.15:8000/storage/livreurs/photo.jpg")
      *             )
      *         )
      *     ),

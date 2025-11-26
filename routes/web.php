@@ -104,6 +104,7 @@ Route::get('/api/ramassages/{id}/colis-data', [RamassageController::class, 'getC
     // Routes pour les engins
     Route::resource('engins', EnginController::class)->middleware('permission:livreurs.read');
     Route::get('/engins-search', [EnginController::class, 'search'])->name('engins.search')->middleware('permission:livreurs.read');
+    Route::post('/engins/api/store', [EnginController::class, 'storeApi'])->name('engins.api.store')->middleware('permission:livreurs.create');
     Route::get('/engins/{engin}/edit', [EnginController::class, 'edit'])->name('engins.edit')->middleware('permission:livreurs.update');
     Route::put('/engins/{engin}', [EnginController::class, 'update'])->name('engins.update')->middleware('permission:livreurs.update');
     Route::delete('/engins/{engin}', [EnginController::class, 'destroy'])->name('engins.destroy')->middleware('permission:livreurs.delete');
@@ -193,6 +194,7 @@ Route::get('/api/ramassages/{id}/colis-data', [RamassageController::class, 'getC
     Route::put('/entreprise', [EntrepriseController::class, 'update'])->name('entreprise.update')->middleware('permission:settings.update');
     Route::put('/entreprise/toggle-status', [EntrepriseController::class, 'toggleStatus'])->name('entreprise.toggle-status')->middleware('permission:settings.update');
     Route::post('/entreprise/regenerate-tarifs', [EntrepriseController::class, 'regenerateTarifs'])->name('entreprise.regenerate-tarifs')->middleware('permission:settings.update');
+    Route::post('/entreprise/upload-logo', [EntrepriseController::class, 'uploadLogo'])->name('entreprise.upload-logo')->middleware('permission:settings.update');
 
     // Routes pour la gestion du profil utilisateur
     Route::get('/profile', [AuthController::class, 'showProfile'])->name('auth.profile');

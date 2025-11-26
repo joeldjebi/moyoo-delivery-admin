@@ -138,7 +138,7 @@
                                     <option value="">Sélectionnez d'abord un livreur</option>
                                     @if($colis->engin)
                                         <option value="{{ $colis->engin->id }}" selected>
-                                            {{ $colis->engin->libelle }} - {{ $colis->engin->matricule }}{{ $colis->engin->typeEngin ? ' (' . $colis->engin->typeEngin->libelle . ')' : '' }}
+                                            {{ $colis->engin->libelle }}{{ $colis->engin->typeEngin ? ' (' . $colis->engin->typeEngin->libelle . ')' : '' }}
                                         </option>
                                     @endif
                                 </select>
@@ -610,7 +610,7 @@ function showBoutiquesConfiguration() {
                         <select class="form-select" name="boutiques[${index}][engin_id]" onchange="recalculateAllCostsMulti(${index})">
                             <option value="">Sélectionner un engin</option>
                             @foreach($engins ?? [] as $engin)
-                                <option value="{{ $engin->id }}">{{ $engin->libelle }} - {{ $engin->matricule }}</option>
+                                <option value="{{ $engin->id }}">{{ $engin->libelle }}</option>
                             @endforeach
                         </select>
                     </div>
@@ -1595,7 +1595,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 enginSelect.innerHTML = '';
                 const option = document.createElement('option');
                 option.value = data.engin.id;
-                option.textContent = `${data.engin.libelle} - ${data.engin.matricule}${data.engin.type_engin ? ' (' + data.engin.type_engin.libelle + ')' : ''}`;
+                option.textContent = `${data.engin.libelle}${data.engin.type_engin ? ' (' + data.engin.type_engin.libelle + ')' : ''}`;
                 option.selected = true;
                 enginSelect.appendChild(option);
 
@@ -1646,7 +1646,7 @@ document.addEventListener('DOMContentLoaded', function() {
             select.innerHTML = '';
             const option = document.createElement('option');
             option.value = engin.id;
-            option.textContent = `${engin.libelle} - ${engin.matricule}${engin.type_engin ? ' (' + engin.type_engin.libelle + ')' : ''}`;
+            option.textContent = `${engin.libelle}${engin.type_engin ? ' (' + engin.type_engin.libelle + ')' : ''}`;
             option.selected = true;
             select.appendChild(option);
         });

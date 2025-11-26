@@ -23,19 +23,8 @@ class LocationController extends Controller
         $user = Auth::user();
         $entrepriseId = $user->entreprise_id;
 
-        // Vérification supplémentaire de l'abonnement Premium
-        if (!$user->subscription_plan_id ||
-            $user->subscription_status !== 'active' ||
-            ($user->subscription_expires_at && $user->subscription_expires_at->isPast())) {
-            return redirect()->route('subscription.required')
-                ->with('error', 'Un abonnement actif est requis pour accéder au moniteur admin.');
-        }
-
-        $subscriptionPlan = \App\Models\SubscriptionPlan::find($user->subscription_plan_id);
-        if (!$subscriptionPlan || $subscriptionPlan->name !== 'Premium') {
-            return redirect()->route('subscription.upgrade')
-                ->with('error', 'Le plan Premium est requis pour accéder au moniteur admin.');
-        }
+        // La vérification d'accès au module est déjà effectuée par le middleware 'module:geolocation_tracking'
+        // Plus besoin de vérifier l'abonnement ici
 
         // SEULEMENT les livreurs avec des missions actives (livraisons ou ramassages)
         $livreursWithActiveMissions = Livreur::where('entreprise_id', $entrepriseId)
@@ -61,6 +50,7 @@ class LocationController extends Controller
         // Debug: Log des livreurs trouvés
         \Log::info('Livreurs avec missions actives trouvés:', [
             'count' => $livreursWithActiveMissions->count(),
+            'entreprise_id' => $entrepriseId,
             'livreurs' => $livreursWithActiveMissions->map(function($livreur) {
                 return [
                     'id' => $livreur->id,
@@ -68,7 +58,9 @@ class LocationController extends Controller
                     'has_location' => $livreur->lastLocation ? true : false,
                     'location_status' => $livreur->locationStatus ? $livreur->locationStatus->status : 'none',
                     'colis_count' => $livreur->colis->count(),
-                    'ramassages_count' => $livreur->ramassages->count()
+                    'ramassages_count' => $livreur->ramassages->count(),
+                    'has_colis' => $livreur->colis->count() > 0,
+                    'has_ramassages' => $livreur->ramassages->count() > 0
                 ];
             })
         ]);
@@ -108,6 +100,7 @@ class LocationController extends Controller
             ->orderBy('timestamp', 'desc')
             ->get();
 
-        return view('location.admin-monitor', compact('menu', 'livreursWithActiveMissions', 'stats', 'recentLocations', 'user'));
+        return view('location.admin-monitor',
+        compact('menu', 'livreursWithActiveMissions', 'stats', 'recentLocations', 'user'));
     }
 }

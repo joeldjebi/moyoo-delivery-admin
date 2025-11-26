@@ -101,22 +101,58 @@
                         </table>
                     </div>
                     <div class="col-md-4 text-center" id="entreprise-logo" data-intro="Ajoutez ou mettez à jour votre logo pour une meilleure identité visuelle." data-step="6">
-                        @if($entreprise->logo)
+                        <form id="logo-upload-form" enctype="multipart/form-data">
+                            @csrf
                             <div class="mb-3">
-                                <img src="{{ asset('storage/' . $entreprise->logo) }}"
-                                        alt="Logo de {{ $entreprise->name }}"
-                                        class="img-fluid rounded shadow"
-                                        style="max-width: 200px; max-height: 200px;">
-                            </div>
-                        @else
-                            <div class="mb-3">
-                                <div class="bg-light rounded d-flex align-items-center justify-content-center shadow"
-                                        style="width: 200px; height: 200px; margin: 0 auto;">
-                                    <i class="bx bx-building text-muted" style="font-size: 4rem;"></i>
+                                <div id="logo-preview-container">
+                                    @if($entreprise->logo)
+                                        <img src="{{ asset('storage/' . $entreprise->logo) }}"
+                                                alt="Logo de {{ $entreprise->name }}"
+                                                id="logo-preview"
+                                                class="img-fluid rounded shadow"
+                                                style="max-width: 200px; max-height: 200px; cursor: pointer;"
+                                                onclick="document.getElementById('logo-input').click()">
+                                    @else
+                                        <div class="bg-light rounded d-flex align-items-center justify-content-center shadow"
+                                                id="logo-placeholder"
+                                                style="width: 200px; height: 200px; margin: 0 auto; cursor: pointer;"
+                                                onclick="document.getElementById('logo-input').click()">
+                                            <i class="bx bx-building text-muted" style="font-size: 4rem;"></i>
+                                        </div>
+                                        <small class="text-muted d-block mt-2">Aucun logo</small>
+                                    @endif
                                 </div>
-                                <small class="text-muted">Aucun logo</small>
+                                <input type="file"
+                                       id="logo-input"
+                                       name="logo"
+                                       accept="image/jpeg,image/png,image/jpg,image/gif,image/webp"
+                                       style="display: none;"
+                                       onchange="previewLogo(this)">
+                                <div class="mt-2">
+                                    <button type="button"
+                                            class="btn btn-sm btn-primary"
+                                            onclick="document.getElementById('logo-input').click()">
+                                        <i class="bx bx-upload"></i> {{ $entreprise->logo ? 'Changer le logo' : 'Ajouter un logo' }}
+                                    </button>
+                                    @if($entreprise->logo)
+                                        <button type="button"
+                                                class="btn btn-sm btn-danger"
+                                                onclick="removeLogo()">
+                                            <i class="bx bx-trash"></i> Supprimer
+                                        </button>
+                                    @endif
+                                </div>
+                                <div id="logo-upload-progress" class="mt-2" style="display: none;">
+                                    <div class="progress" style="height: 5px;">
+                                        <div class="progress-bar progress-bar-striped progress-bar-animated"
+                                             role="progressbar"
+                                             style="width: 0%"></div>
+                                    </div>
+                                    <small class="text-muted">Upload en cours...</small>
+                                </div>
+                                <div id="logo-upload-message" class="mt-2"></div>
                             </div>
-                        @endif
+                        </form>
                     </div>
                 </div>
             </div>
@@ -249,5 +285,143 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 800);
     }
 });
+
+// Fonction pour prévisualiser le logo avant upload
+function previewLogo(input) {
+    if (input.files && input.files[0]) {
+        var reader = new FileReader();
+
+        reader.onload = function(e) {
+            var container = document.getElementById('logo-preview-container');
+            var placeholder = document.getElementById('logo-placeholder');
+
+            // Supprimer le placeholder s'il existe
+            if (placeholder) {
+                placeholder.remove();
+            }
+
+            // Créer ou mettre à jour l'image de prévisualisation
+            var img = document.getElementById('logo-preview');
+            if (!img) {
+                img = document.createElement('img');
+                img.id = 'logo-preview';
+                img.className = 'img-fluid rounded shadow';
+                img.style.cssText = 'max-width: 200px; max-height: 200px; cursor: pointer;';
+                img.onclick = function() { document.getElementById('logo-input').click(); };
+                container.innerHTML = '';
+                container.appendChild(img);
+            }
+
+            img.src = e.target.result;
+
+            // Upload automatique après prévisualisation
+            uploadLogo(input.files[0]);
+        };
+
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+// Fonction pour uploader le logo
+function uploadLogo(file) {
+    var formData = new FormData();
+    formData.append('logo', file);
+    formData.append('_token', '{{ csrf_token() }}');
+
+    var progressDiv = document.getElementById('logo-upload-progress');
+    var progressBar = progressDiv.querySelector('.progress-bar');
+    var messageDiv = document.getElementById('logo-upload-message');
+
+    // Afficher la barre de progression
+    progressDiv.style.display = 'block';
+    progressBar.style.width = '0%';
+    messageDiv.innerHTML = '';
+
+    var xhr = new XMLHttpRequest();
+
+    xhr.upload.addEventListener('progress', function(e) {
+        if (e.lengthComputable) {
+            var percentComplete = (e.loaded / e.total) * 100;
+            progressBar.style.width = percentComplete + '%';
+        }
+    });
+
+    xhr.addEventListener('load', function() {
+        progressDiv.style.display = 'none';
+
+        if (xhr.status === 200) {
+            var response = JSON.parse(xhr.responseText);
+            if (response.success) {
+                // Mettre à jour l'image avec l'URL du serveur
+                var img = document.getElementById('logo-preview');
+                if (img) {
+                    img.src = response.logo_url;
+                }
+
+                // Afficher un message de succès
+                messageDiv.innerHTML = '<div class="alert alert-success alert-dismissible fade show" role="alert">' +
+                    '<small>' + response.message + '</small>' +
+                    '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>' +
+                    '</div>';
+
+                // Masquer le message après 3 secondes
+                setTimeout(function() {
+                    messageDiv.innerHTML = '';
+                }, 3000);
+
+                // Recharger la page après 1 seconde pour mettre à jour l'interface
+                setTimeout(function() {
+                    window.location.reload();
+                }, 1000);
+            } else {
+                messageDiv.innerHTML = '<div class="alert alert-danger alert-dismissible fade show" role="alert">' +
+                    '<small>' + response.message + '</small>' +
+                    '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>' +
+                    '</div>';
+            }
+        } else {
+            messageDiv.innerHTML = '<div class="alert alert-danger alert-dismissible fade show" role="alert">' +
+                '<small>Erreur lors de l\'upload du logo</small>' +
+                '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>' +
+                '</div>';
+        }
+    });
+
+    xhr.addEventListener('error', function() {
+        progressDiv.style.display = 'none';
+        messageDiv.innerHTML = '<div class="alert alert-danger alert-dismissible fade show" role="alert">' +
+            '<small>Erreur de connexion lors de l\'upload</small>' +
+            '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>' +
+            '</div>';
+    });
+
+    xhr.open('POST', '{{ route("entreprise.upload-logo") }}');
+    xhr.send(formData);
+}
+
+// Fonction pour supprimer le logo
+function removeLogo() {
+    if (!confirm('Êtes-vous sûr de vouloir supprimer le logo ?')) {
+        return;
+    }
+
+    var formData = new FormData();
+    formData.append('_token', '{{ csrf_token() }}');
+    formData.append('_method', 'DELETE');
+
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', '{{ route("entreprise.upload-logo") }}');
+    xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+
+    xhr.addEventListener('load', function() {
+        if (xhr.status === 200) {
+            window.location.reload();
+        } else {
+            alert('Erreur lors de la suppression du logo');
+        }
+    });
+
+    xhr.send(formData);
+}
 </script>
 @include('layouts.footer')

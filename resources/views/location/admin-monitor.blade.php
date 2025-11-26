@@ -51,22 +51,33 @@
                     <!-- Sélecteur de livreur -->
                     <div class="mb-3">
                         <h6><i class="fas fa-user"></i> Sélectionner un Livreur</h6>
+                        @if(isset($livreursWithActiveMissions) && $livreursWithActiveMissions->count() > 0)
                         <select id="livreur-selector" class="form-select">
                             <option value="">Tous les livreurs</option>
                             @foreach($livreursWithActiveMissions as $livreur)
+                            @php
+                                $hasColis = $livreur->colis && $livreur->colis->count() > 0;
+                                $hasRamassages = $livreur->ramassages && $livreur->ramassages->count() > 0;
+                            @endphp
                             <option value="{{ $livreur->id }}"
                                     data-lat="{{ $livreur->lastLocation ? $livreur->lastLocation->latitude : 5.316667 }}"
                                     data-lng="{{ $livreur->lastLocation ? $livreur->lastLocation->longitude : -4.033333 }}"
-                                    data-mission-type="{{ $livreur->colis->count() > 0 ? 'livraison' : ($livreur->ramassages->count() > 0 ? 'ramassage' : 'mission') }}">
+                                    data-mission-type="{{ $hasColis ? 'livraison' : ($hasRamassages ? 'ramassage' : 'mission') }}">
                                 {{ $livreur->first_name }} {{ $livreur->last_name }}
-                                @if($livreur->colis->count() > 0)
+                                @if($hasColis)
                                     (Livraison)
-                                @elseif($livreur->ramassages->count() > 0)
+                                @elseif($hasRamassages)
                                     (Ramassage)
                                 @endif
                             </option>
                             @endforeach
                         </select>
+                        @else
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i> Aucun livreur avec mission active trouvé.
+                            <br><small>Total livreurs: {{ isset($stats) ? $stats['total_livreurs'] : 0 }}</small>
+                        </div>
+                        @endif
                     </div>
 
                     <!-- Filtres par type de mission -->
@@ -296,7 +307,7 @@ let selectedLivreurId = null;
 let currentFilter = 'all';
 
 // Configuration Socket.IO
-const SOCKET_URL = 'http://192.168.1.2:3000';
+const SOCKET_URL = 'http://192.168.1.15:3000';
 
 // Initialisation de la carte et Socket.IO
 window.addEventListener('load', function() {
@@ -445,16 +456,34 @@ function initMap() {
         // Données initiales des livreurs (TOUS les livreurs en mission, même sans position)
         var initialLivreurs = [
             @foreach($livreursWithActiveMissions as $livreur)
+            @php
+                // Déterminer le statut basé sur la dernière position et locationStatus
+                $hasRecentLocation = $livreur->lastLocation && $livreur->lastLocation->timestamp && $livreur->lastLocation->timestamp->diffInMinutes(now()) <= 15;
+                $statusFromLocationStatus = $livreur->locationStatus ? $livreur->locationStatus->status : null;
+
+                // Si le livreur a une position récente (moins de 15 minutes), il est considéré comme "En ligne"
+                if ($hasRecentLocation) {
+                    $statut = 'En ligne';
+                    $couleur = 'green';
+                } elseif ($statusFromLocationStatus) {
+                    $statut = ucfirst($statusFromLocationStatus);
+                    $couleur = ($statusFromLocationStatus == 'active' || $statusFromLocationStatus == 'en_cours') ? 'green' :
+                              (($statusFromLocationStatus == 'paused' || $statusFromLocationStatus == 'en_pause') ? 'orange' : 'red');
+                } else {
+                    $statut = 'Hors ligne';
+                    $couleur = 'red';
+                }
+            @endphp
             {
                 id: {{ $livreur->id }},
                 nom: "{{ $livreur->first_name }} {{ $livreur->last_name }}",
                 @if($livreur->lastLocation)
                 position: [{{ $livreur->lastLocation->latitude }}, {{ $livreur->lastLocation->longitude }}],
-                statut: "{{ $livreur->locationStatus ? ucfirst($livreur->locationStatus->status) : 'Hors ligne' }}",
-                couleur: "{{ $livreur->locationStatus && $livreur->locationStatus->status == 'en_cours' ? 'green' : ($livreur->locationStatus && $livreur->locationStatus->status == 'en_pause' ? 'orange' : 'red') }}",
+                statut: "{{ $statut }}",
+                couleur: "{{ $couleur }}",
                 zone: "{{ $livreur->lastLocation->timestamp->format('H:i:s') }}",
-                accuracy: {{ $livreur->lastLocation->accuracy }},
-                speed: {{ $livreur->lastLocation->speed }},
+                accuracy: {{ $livreur->lastLocation->accuracy ?? 0 }},
+                speed: {{ $livreur->lastLocation->speed ?? 0 }},
                 hasLocation: true
                 @else
                 position: [5.316667, -4.033333], // Position par défaut (Abidjan)
