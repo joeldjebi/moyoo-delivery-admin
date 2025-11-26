@@ -17,6 +17,8 @@ services:
             - app_cache:/app/bootstrap/cache
         networks:
             - laravel
+        env_file:
+            - .env
         restart: unless-stopped
 
     postgres:
@@ -28,8 +30,8 @@ services:
             POSTGRES_PASSWORD: root
         volumes:
             - postgres_data:/var/lib/postgresql/data
-        ports:
-            - "5432:5432"
+        expose:
+            - 5432
         healthcheck:
             test: ["CMD-SHELL", "pg_isready -U postgres"]
             interval: 10s
