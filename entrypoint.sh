@@ -17,7 +17,7 @@ done
 
 # Exécuter les migrations
 echo "Exécution des migrations..."
-php /app/artisan migrate --force
+# php /app/artisan migrate --force
 
 # Exécuter les seeders (optionnel)
 # php /app/artisan db:seed
