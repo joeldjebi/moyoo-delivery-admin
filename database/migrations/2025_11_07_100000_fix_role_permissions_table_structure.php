@@ -14,6 +14,8 @@ return new class extends Migration
     {
         // Vérifier si la table existe et quelle est sa structure actuelle
         $tableExists = Schema::hasTable('role_permissions');
+        $driver = DB::getDriverName();
+        $dbName = DB::getDatabaseName();
 
         if ($tableExists) {
             // Vérifier si la table a la structure pivot (role_id, permission_id)
@@ -30,15 +32,46 @@ return new class extends Migration
 
                 // Supprimer les contraintes existantes
                 try {
-                    DB::statement('ALTER TABLE role_permissions DROP CONSTRAINT IF EXISTS role_permissions_role_id_foreign');
-                    DB::statement('ALTER TABLE role_permissions DROP CONSTRAINT IF EXISTS role_permissions_permission_id_foreign');
+                    if ($driver === 'mysql') {
+                        // MySQL: récupérer les noms réels des FKs sur role_id/permission_id puis les supprimer
+                        $fks = DB::select(
+                            'SELECT CONSTRAINT_NAME AS fk
+                             FROM information_schema.KEY_COLUMN_USAGE
+                             WHERE TABLE_SCHEMA = ?
+                               AND TABLE_NAME = ?
+                               AND COLUMN_NAME IN ("role_id", "permission_id")
+                               AND REFERENCED_TABLE_NAME IS NOT NULL',
+                            [$dbName, 'role_permissions']
+                        );
+                        foreach ($fks as $row) {
+                            try {
+                                DB::statement('ALTER TABLE `role_permissions` DROP FOREIGN KEY `' . $row->fk . '`');
+                            } catch (\Throwable $e) {
+                            }
+                        }
+
+                        // Supprimer l'index unique pivot si présent (souvent requis par la FK)
+                        try {
+                            DB::statement('ALTER TABLE `role_permissions` DROP INDEX `role_permissions_role_id_permission_id_unique`');
+                        } catch (\Throwable $e) {
+                        }
+                    } else {
+                        // PostgreSQL (ou autres): tenter l'ancien comportement
+                        DB::statement('ALTER TABLE role_permissions DROP CONSTRAINT IF EXISTS role_permissions_role_id_foreign');
+                        DB::statement('ALTER TABLE role_permissions DROP CONSTRAINT IF EXISTS role_permissions_permission_id_foreign');
+                    }
                 } catch (\Exception $e) {
                     // Ignorer si les contraintes n'existent pas
                 }
 
                 // Supprimer les colonnes pivot
                 Schema::table('role_permissions', function (Blueprint $table) {
-                    $table->dropColumn(['role_id', 'permission_id']);
+                    $cols = [];
+                    if (Schema::hasColumn('role_permissions', 'role_id')) { $cols[] = 'role_id'; }
+                    if (Schema::hasColumn('role_permissions', 'permission_id')) { $cols[] = 'permission_id'; }
+                    if (!empty($cols)) {
+                        $table->dropColumn($cols);
+                    }
                 });
 
                 // Ajouter les colonnes attendues (nullable d'abord pour éviter l'erreur)
@@ -50,29 +83,42 @@ return new class extends Migration
                         $table->json('permissions')->nullable()->after('role');
                     }
                     if (!$hasEntrepriseId) {
-                        $table->bigInteger('entreprise_id')->nullable()->after('role');
+                        // `entreprises.id` est `$table->id()` => BIGINT UNSIGNED
+                        $table->unsignedBigInteger('entreprise_id')->nullable()->after('role');
                     }
                 });
 
                 // Maintenant rendre role et permissions NOT NULL (la table est vide)
-                DB::statement('ALTER TABLE role_permissions ALTER COLUMN role SET NOT NULL');
-                DB::statement('ALTER TABLE role_permissions ALTER COLUMN permissions SET NOT NULL');
+                try {
+                    if ($driver === 'mysql') {
+                        DB::statement('ALTER TABLE `role_permissions` MODIFY `role` VARCHAR(255) NOT NULL');
+                        DB::statement('ALTER TABLE `role_permissions` MODIFY `permissions` JSON NOT NULL');
+                    } else {
+                        DB::statement('ALTER TABLE role_permissions ALTER COLUMN role SET NOT NULL');
+                        DB::statement('ALTER TABLE role_permissions ALTER COLUMN permissions SET NOT NULL');
+                    }
+                } catch (\Throwable $e) {
+                }
 
                 // Ajouter les contraintes si entreprise_id existe et si la table entreprises existe
-                if ($hasEntrepriseId && Schema::hasTable('entreprises')) {
+                if (Schema::hasColumn('role_permissions', 'entreprise_id') && Schema::hasTable('entreprises')) {
                     // Vérifier si la clé étrangère existe déjà
                     $fkExists = DB::select("
-                        SELECT constraint_name 
-                        FROM information_schema.table_constraints 
-                        WHERE table_name = 'role_permissions' 
+                        SELECT constraint_name
+                        FROM information_schema.table_constraints
+                        WHERE table_name = 'role_permissions'
                         AND constraint_type = 'FOREIGN KEY'
                         AND constraint_name LIKE '%entreprise_id%'
                     ");
-                    
+
                     if (empty($fkExists)) {
                         Schema::table('role_permissions', function (Blueprint $table) {
-                            $table->foreign('entreprise_id')->references('id')->on('entreprises')->onDelete('cascade');
-                            $table->index('entreprise_id');
+                            try {
+                                $table->foreign('entreprise_id')->references('id')->on('entreprises')->onDelete('cascade');
+                            } catch (\Throwable $e) {}
+                            try {
+                                $table->index('entreprise_id');
+                            } catch (\Throwable $e) {}
                         });
                     }
                 }
@@ -94,15 +140,19 @@ return new class extends Migration
                         $table->json('permissions')->after('role');
                     }
                     if (!Schema::hasColumn('role_permissions', 'entreprise_id')) {
-                        $table->bigInteger('entreprise_id')->nullable()->after('role');
+                        $table->unsignedBigInteger('entreprise_id')->nullable()->after('role');
                     }
                 });
 
                 // Ajouter les contraintes si nécessaire
-                if (!Schema::hasColumn('role_permissions', 'entreprise_id') && Schema::hasTable('entreprises')) {
+                if (Schema::hasColumn('role_permissions', 'entreprise_id') && Schema::hasTable('entreprises')) {
                     Schema::table('role_permissions', function (Blueprint $table) {
-                        $table->foreign('entreprise_id')->references('id')->on('entreprises')->onDelete('cascade');
-                        $table->index('entreprise_id');
+                        try {
+                            $table->foreign('entreprise_id')->references('id')->on('entreprises')->onDelete('cascade');
+                        } catch (\Throwable $e) {}
+                        try {
+                            $table->index('entreprise_id');
+                        } catch (\Throwable $e) {}
                     });
                 }
             }
@@ -112,11 +162,11 @@ return new class extends Migration
                 $table->id();
                 $table->string('role');
                 $table->json('permissions');
-                $table->bigInteger('entreprise_id')->nullable();
+                $table->unsignedBigInteger('entreprise_id')->nullable();
                 $table->timestamps();
 
-                $table->foreign('entreprise_id')->references('id')->on('entreprises')->onDelete('cascade');
-                $table->index('entreprise_id');
+                try { $table->foreign('entreprise_id')->references('id')->on('entreprises')->onDelete('cascade'); } catch (\Throwable $e) {}
+                try { $table->index('entreprise_id'); } catch (\Throwable $e) {}
                 $table->unique(['role', 'entreprise_id'], 'role_permissions_role_entreprise_unique');
             });
         }

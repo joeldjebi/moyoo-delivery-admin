@@ -12,9 +12,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('colis', function (Blueprint $table) {
-            $table->bigInteger('entreprise_id')->nullable()->after('id');
-        });
+        // Si la migration a déjà été exécutée partiellement (échec au moment d'ajouter la FK),
+        // on évite de recréer la colonne et on passe directement à l'alignement du type / FK.
+        if (!Schema::hasColumn('colis', 'entreprise_id')) {
+            Schema::table('colis', function (Blueprint $table) {
+                // `entreprises.id` est un unsignedBigInteger (`$table->id()`),
+                // donc la colonne FK doit être aussi unsigned.
+                $table->unsignedBigInteger('entreprise_id')->nullable()->after('id');
+            });
+        }
 
         // Mettre à jour les données existantes avec l'ID de l'entreprise
         $entreprise = DB::table('entreprises')->first();
@@ -24,7 +30,7 @@ return new class extends Migration
 
         // Maintenant rendre la colonne non nullable et ajouter la clé étrangère
         Schema::table('colis', function (Blueprint $table) {
-            $table->bigInteger('entreprise_id')->nullable(false)->change();
+            $table->unsignedBigInteger('entreprise_id')->nullable(false)->change();
             $table->foreign('entreprise_id')->references('id')->on('entreprises')->onDelete('cascade');
         });
     }

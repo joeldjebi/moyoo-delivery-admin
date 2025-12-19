@@ -231,6 +231,8 @@ class AuthController extends Controller
         try {
             // Préparer les données utilisateur
             $userData = [
+                // Certaines BDD ont un champ `users.name` en NOT NULL
+                'name' => trim($request->first_name . ' ' . $request->last_name),
                 'first_name' => trim($request->first_name),
                 'last_name' => trim($request->last_name),
                 'email' => strtolower(trim($request->email)),
@@ -597,6 +599,12 @@ class AuthController extends Controller
 
             // Créer l'utilisateur avec les données stockées
             $userData = $verification->user_data;
+            // Garantir `name` si la colonne existe et est NOT NULL
+            if (empty($userData['name'] ?? null)) {
+                $fn = trim((string)($userData['first_name'] ?? ''));
+                $ln = trim((string)($userData['last_name'] ?? ''));
+                $userData['name'] = trim($fn . ' ' . $ln);
+            }
             Log::info('Données utilisateur préparées pour la création', [
                 'email' => $userData['email'],
                 'first_name' => $userData['first_name'],
@@ -834,10 +842,11 @@ class AuthController extends Controller
 
         $email = $request->email;
 
-        // Vérifier s'il y a une vérification en cours
+        // Récupérer la dernière vérification non encore validée (même si expirée),
+        // afin de permettre le renvoi après expiration.
         $verification = EmailVerification::where('email', $email)
-            ->notExpired()
             ->notVerified()
+            ->latest('id')
             ->first();
 
         if (!$verification) {
@@ -846,6 +855,11 @@ class AuthController extends Controller
         }
 
         try {
+            if (empty($verification->user_data) || empty($verification->user_data['first_name'] ?? null)) {
+                return redirect()->route('auth.register')
+                    ->withErrors(['error' => 'Impossible de renvoyer le code. Veuillez recommencer l\'inscription.']);
+            }
+
             // Générer un nouvel OTP
             $verification->update([
                 'otp' => EmailVerification::generateOTP(),

@@ -11,12 +11,16 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // Cette migration est un doublon, on la saute si la table existe déjà
-        if (!Schema::hasTable('stock_movements')) {
-            Schema::create('stock_movements', function (Blueprint $table) {
+        // Migration rejouable : si la table existe déjà, on ne tente pas de la recréer.
+        if (Schema::hasTable('stock_movements')) {
+            return;
+        }
+
+        Schema::create('stock_movements', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('product_id');
-            $table->bigInteger('entreprise_id');
+            // `entreprises.id` est `$table->id()` => BIGINT UNSIGNED (sinon FK 1215)
+            $table->unsignedBigInteger('entreprise_id');
             $table->unsignedBigInteger('stock_id')->nullable();
             $table->enum('type', ['entree', 'sortie', 'ajustement', 'transfert']); // Type de mouvement
             $table->integer('quantity'); // Quantité (positive pour entrée, négative pour sortie)
@@ -29,16 +33,16 @@ return new class extends Migration
             $table->integer('quantity_after')->default(0); // Quantité après le mouvement
             $table->timestamps();
 
-            $table->foreign('product_id')->references('id')->on('products')->onDelete('cascade');
-            $table->foreign('stock_id')->references('id')->on('stocks')->onDelete('set null');
-            $table->foreign('entreprise_id')->references('id')->on('entreprises')->onDelete('cascade');
-            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
+            // FKs en mode safe (ordre de migration / contraintes déjà existantes)
+            try { $table->foreign('product_id')->references('id')->on('products')->onDelete('cascade'); } catch (\Throwable $e) {}
+            try { $table->foreign('stock_id')->references('id')->on('stocks')->onDelete('set null'); } catch (\Throwable $e) {}
+            try { $table->foreign('entreprise_id')->references('id')->on('entreprises')->onDelete('cascade'); } catch (\Throwable $e) {}
+            try { $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade'); } catch (\Throwable $e) {}
             $table->index('entreprise_id');
             $table->index('product_id');
             $table->index('type');
             $table->index('created_at');
         });
-        }
     }
 
     /**

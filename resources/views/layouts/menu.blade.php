@@ -46,34 +46,56 @@
                 use Illuminate\Support\Facades\Auth;
 
                 $user = auth()->user();
+                $entrepriseId = $user?->entreprise_id;
+                $hasEntreprise = (bool) $entrepriseId;
 
-                // Vérifier que l'utilisateur a une entreprise
-                if (!$user || !$user->entreprise_id) {
-                    \Log::warning('Menu: Utilisateur sans entreprise - Déconnexion', [
-                        'user_id' => $user ? $user->id : null,
-                        'email' => $user ? $user->email : null,
-                        'entreprise_id' => $user ? $user->entreprise_id : null
+                /**
+                 * IMPORTANT:
+                 * Ne jamais faire de logout/redirect (header/exit) dans une vue Blade.
+                 * Le menu peut être inclus sur des pages publiques (inscription / OTP).
+                 * On se contente donc de logger et d'afficher un menu minimal.
+                 */
+                if ($user && !$hasEntreprise) {
+                    \Log::warning('Menu: Utilisateur sans entreprise - Menu minimal', [
+                        'user_id' => $user->id ?? null,
+                        'email' => $user->email ?? null,
+                        'entreprise_id' => $entrepriseId
                     ]);
-                    Auth::logout();
-                    header('Location: ' . route('login'));
-                    exit;
                 }
 
                 $moduleAccessService = app(ModuleAccessService::class);
-                $entrepriseId = $user->entreprise_id;
-                $accessibleModules = $moduleAccessService->getAccessibleModules($entrepriseId);
-                $moduleSlugs = $accessibleModules->pluck('slug')->toArray();
 
-                // Ajouter automatiquement les modules non optionnels et actifs qui ne sont pas déjà dans la liste
-                $baseModules = \App\Models\Module::where('is_active', true)
-                    ->where('is_optional', false)
-                    ->pluck('slug')
-                    ->toArray();
+                // Si l'utilisateur est admin, il a accès à tous les modules actifs
+                if ($user && $hasEntreprise && $user->role === 'admin') {
+                    $accessibleModules = \App\Models\Module::where('is_active', true)->get();
+                    $moduleSlugs = $accessibleModules->pluck('slug')->toArray();
+                } elseif ($user && $hasEntreprise) {
+                    $accessibleModules = $moduleAccessService->getAccessibleModules($entrepriseId);
+                    $moduleSlugs = $accessibleModules->pluck('slug')->toArray();
 
-                $moduleSlugs = array_unique(array_merge($moduleSlugs, $baseModules));
+                    // Ajouter automatiquement les modules non optionnels et actifs qui ne sont pas déjà dans la liste
+                    $baseModules = \App\Models\Module::where('is_active', true)
+                        ->where('is_optional', false)
+                        ->pluck('slug')
+                        ->toArray();
+
+                    $moduleSlugs = array_unique(array_merge($moduleSlugs, $baseModules));
+                } else {
+                    $accessibleModules = collect();
+                    $moduleSlugs = [];
+                }
 
                 // Fonction helper pour vérifier l'accès à un module avec toutes les vérifications
-                $hasModuleAccess = function($moduleSlug) use ($moduleAccessService, $entrepriseId, $accessibleModules) {
+                $hasModuleAccess = function($moduleSlug) use ($user, $moduleAccessService, $entrepriseId, $accessibleModules) {
+                    if (!$user || !$entrepriseId) {
+                        return false;
+                    }
+                    // Si l'utilisateur est admin, il a accès à tous les modules actifs
+                    if ($user->role === 'admin') {
+                        $module = \App\Models\Module::where('slug', $moduleSlug)->where('is_active', true)->first();
+                        return $module !== null;
+                    }
+
                     // Vérifier via hasAccess (vérifie souscription ET activation par admin)
                     if (!$moduleAccessService->hasAccess($entrepriseId, $moduleSlug)) {
                         return false;
@@ -89,15 +111,31 @@
                 };
 
                 // Debug: logger les modules accessibles
-                \Log::info('Menu - Modules accessibles', [
-                    'entreprise_id' => $entrepriseId,
-                    'user_id' => $user->id,
-                    'modules_count' => $accessibleModules->count(),
-                    'module_slugs' => $moduleSlugs
-                ]);
+                if ($user && $hasEntreprise) {
+                    \Log::info('Menu - Modules accessibles', [
+                        'entreprise_id' => $entrepriseId,
+                        'user_id' => $user->id,
+                        'modules_count' => $accessibleModules->count(),
+                        'module_slugs' => $moduleSlugs
+                    ]);
+                }
             @endphp
 
             <ul class="menu-inner py-1">
+              @if(!$user || !$hasEntreprise)
+                <li class="menu-item">
+                  <a href="{{ route('login') }}" class="menu-link">
+                    <i class="menu-icon tf-icons ti ti-login"></i>
+                    <div data-i18n="Connexion">Connexion</div>
+                  </a>
+                </li>
+                <li class="menu-item">
+                  <a href="{{ route('auth.register') }}" class="menu-link">
+                    <i class="menu-icon tf-icons ti ti-user-plus"></i>
+                    <div data-i18n="Inscription">Inscription</div>
+                  </a>
+                </li>
+              @else
               <!-- Tableau de bord (toujours accessible) -->
               <li class="menu-item {{ $menu == 'dashboard' ? 'active' : '' }}">
                 <a href="{{ route('dashboard') }}" class="menu-link">
@@ -106,7 +144,7 @@
                 </a>
               </li>
               <!-- Colis : vérifier module ET permission -->
-              @if(in_array('colis_management', $moduleSlugs) && auth()->user()->hasPermission('colis.read'))
+              @if(in_array('colis_management', $moduleSlugs) && $user && $user->hasPermission('colis.read'))
               <li class="menu-item">
                 <a href="javascript:void(0);" class="menu-link menu-toggle">
                   <i class="menu-icon tf-icons ti ti-shopping-cart"></i>
@@ -118,14 +156,14 @@
                       <div data-i18n="Liste des colis">Liste des colis</div>
                     </a>
                   </li>
-                  @if(auth()->user()->hasPermission('colis.create'))
+                  @if($user && $user->hasPermission('colis.create'))
                   <li class="menu-item">
                     <a href="{{ route('colis.create') }}" class="menu-link">
                       <div data-i18n="Ajouter un colis">Ajouter un colis</div>
                     </a>
                   </li>
                   @endif
-                  @if(auth()->user()->hasPermission('colis.update'))
+                  @if($user && $user->hasPermission('colis.update'))
                   <li class="menu-item">
                     <a href="{{ route('colis.packages') }}" class="menu-link">
                       <div data-i18n="Liste des packages de colis">Liste des packages de colis</div>
@@ -142,7 +180,7 @@
               @endif
 
               <!-- Marchants & Boutiques : vérifier module ET permission -->
-              @if(in_array('marchand_management', $moduleSlugs) && auth()->user()->hasPermission('marchands.read'))
+              @if(in_array('marchand_management', $moduleSlugs) && $user && $user->hasPermission('marchands.read'))
               <li class="menu-item">
                 <a href="javascript:void(0);" class="menu-link menu-toggle">
                   <i class="menu-icon tf-icons ti ti-layout-sidebar"></i>
@@ -165,7 +203,7 @@
               </li>
               @endif
               <!-- Rapports menu start : vérifier module ET permission -->
-              @if((in_array('reports_basic', $moduleSlugs) || in_array('reports_advanced', $moduleSlugs)) && auth()->user()->hasPermission('reports.read'))
+              @if((in_array('reports_basic', $moduleSlugs) || in_array('reports_advanced', $moduleSlugs)) && $user && $user->hasPermission('reports.read'))
               <li class="menu-item">
                 <a href="javascript:void(0);" class="menu-link menu-toggle">
                   <i class="menu-icon tf-icons ti ti-chart-bar"></i>
@@ -215,7 +253,7 @@
                       $hasReversementModule = $reversementModule !== null;
                   }
               @endphp
-              @if($hasReversementModule && auth()->user()->hasPermission('reversements.read'))
+              @if($hasReversementModule && $user && $user->hasPermission('reversements.read'))
               <li class="menu-item">
                 <a href="javascript:void(0);" class="menu-link menu-toggle">
                   <i class="menu-icon tf-icons ti ti-wallet"></i>
@@ -227,7 +265,7 @@
                       <div data-i18n="Liste des Reversements">Liste des Reversements</div>
                     </a>
                   </li>
-                  @if(auth()->user()->hasPermission('reversements.create'))
+                  @if($user && $user->hasPermission('reversements.create'))
                   <li class="menu-item">
                     <a href="{{ route('reversements.create') }}" class="menu-link">
                       <div data-i18n="Nouveau Reversement">Nouveau Reversement</div>
@@ -296,7 +334,7 @@
               </li>
               @endif
               <!-- Utilisateurs : vérifier module ET permission -->
-              @if(in_array('user_management', $moduleSlugs) && auth()->user()->hasPermission('users.read'))
+              @if(in_array('user_management', $moduleSlugs) && $user && $user->hasPermission('users.read'))
               <li class="menu-item {{ $menu == 'users' ? 'active' : '' }}">
                 <a href="{{ route('users.index') }}" class="menu-link">
                   <i class="menu-icon tf-icons ti ti-users"></i>
@@ -369,7 +407,7 @@
               @endif
 
               <!-- Permissions : vérifier module ET permission -->
-              @if(in_array('role_permissions', $moduleSlugs) && auth()->user()->hasPermission('settings.update'))
+              @if(in_array('role_permissions', $moduleSlugs) && $user && $user->hasPermission('settings.update'))
               <li class="menu-item {{ $menu == 'role-permissions' ? 'active' : '' }}">
                 <a href="{{ route('role-permissions.index') }}" class="menu-link">
                   <i class="menu-icon tf-icons ti ti-shield"></i>
@@ -454,6 +492,7 @@
                   <div data-i18n="Documentation">Documentation</div>
                 </a>
               </li>
+              @endif
               @endif
             </ul>
           </aside>

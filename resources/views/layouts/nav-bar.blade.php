@@ -1,5 +1,8 @@
 <nav class="layout-navbar container-xxl navbar navbar-expand-xl navbar-detached align-items-center bg-navbar-theme"
 id="layout-navbar">
+@php
+  $user = auth()->user();
+@endphp
 <div class="layout-menu-toggle navbar-nav align-items-xl-center me-3 me-xl-0 d-xl-none">
   <a class="nav-item nav-link px-0 me-xl-4" href="javascript:void(0)">
     <i class="ti ti-menu-2 ti-md"></i>
@@ -83,6 +86,7 @@ id="layout-navbar">
     <!-- / Style Switcher-->
 
     <!-- Notification -->
+    @if($user)
     <li class="nav-item dropdown-notifications navbar-dropdown dropdown me-3 me-xl-2">
       <a
         class="nav-link btn btn-text-secondary btn-icon rounded-pill dropdown-toggle hide-arrow"
@@ -127,6 +131,7 @@ id="layout-navbar">
       </ul>
     </li>
     <!--/ Notification -->
+    @endif
 
     <!-- Script pour les notifications en temps réel -->
     <script>
@@ -365,6 +370,7 @@ id="layout-navbar">
     </script>
 
     <!-- User -->
+    @if($user)
     <li class="nav-item navbar-dropdown dropdown-user dropdown">
       <a
         class="nav-link dropdown-toggle hide-arrow p-0"
@@ -372,7 +378,7 @@ id="layout-navbar">
         data-bs-toggle="dropdown">
         <div class="avatar avatar-online">
           <span class="avatar-initial rounded bg-label-primary">
-            {{ strtoupper(substr(auth()->user()->first_name, 0, 1) . substr(auth()->user()->last_name, 0, 1)) }}
+            {{ strtoupper(substr($user->first_name, 0, 1) . substr($user->last_name, 0, 1)) }}
           </span>
         </div>
       </a>
@@ -383,18 +389,18 @@ id="layout-navbar">
               <div class="flex-shrink-0 me-2">
                 <div class="avatar avatar-online">
                   <span class="avatar-initial rounded bg-label-primary">
-                    {{ strtoupper(substr(auth()->user()->first_name, 0, 1) . substr(auth()->user()->last_name, 0, 1)) }}
+                    {{ strtoupper(substr($user->first_name, 0, 1) . substr($user->last_name, 0, 1)) }}
                   </span>
                 </div>
               </div>
               <div class="flex-grow-1">
-                <h6 class="mb-0">{{ auth()->user()->first_name }} {{ auth()->user()->last_name }}</h6>
+                <h6 class="mb-0">{{ $user->first_name }} {{ $user->last_name }}</h6>
                 <small class="text-muted">
-                  @if(auth()->user()->isSuperAdmin())
+                  @if($user->isSuperAdmin())
                     Super Admin
-                  @elseif(auth()->user()->isEntrepriseAdmin())
+                  @elseif($user->isEntrepriseAdmin())
                     Admin Entreprise
-                  @elseif(auth()->user()->isManager())
+                  @elseif($user->isManager())
                     Manager
                   @else
                     Utilisateur
@@ -455,6 +461,14 @@ id="layout-navbar">
       </ul>
     </li>
     <!--/ User -->
+    @else
+      <li class="nav-item me-2">
+        <a class="btn btn-outline-primary btn-sm" href="{{ route('login') }}">Connexion</a>
+      </li>
+      <li class="nav-item">
+        <a class="btn btn-primary btn-sm" href="{{ route('auth.register') }}">Inscription</a>
+      </li>
+    @endif
   </ul>
 </div>
 

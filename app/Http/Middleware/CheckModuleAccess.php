@@ -35,6 +35,11 @@ class CheckModuleAccess
             return $next($request);
         }
 
+        // Les utilisateurs avec le rôle 'admin' ont accès à tous les modules
+        if ($user->role === 'admin') {
+            return $next($request);
+        }
+
         if (!$this->moduleAccessService->hasAccess($user->entreprise_id, $moduleSlug)) {
             return redirect()->route('subscriptions.index')
                 ->with('error', 'Ce module n\'est pas disponible dans votre plan actuel. Veuillez passer à un plan supérieur pour accéder à cette fonctionnalité.');

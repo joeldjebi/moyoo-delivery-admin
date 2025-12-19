@@ -11,6 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // Migration rejouable : si la table existe déjà (DB partiellement migrée / import),
+        // on ne tente pas de la recréer.
+        if (Schema::hasTable('frais_livraisons')) {
+            return;
+        }
+
         Schema::create('frais_livraisons', function (Blueprint $table) {
             $table->id();
             $table->string('libelle');
@@ -22,13 +28,20 @@ return new class extends Migration
             $table->boolean('actif')->default(true);
             $table->date('date_debut');
             $table->date('date_fin')->nullable();
-            $table->bigInteger('entreprise_id');
+            // `entreprises.id` est `$table->id()` => unsignedBigInteger
+            $table->unsignedBigInteger('entreprise_id');
             $table->unsignedBigInteger('created_by');
             $table->timestamps();
             $table->softDeletes();
 
-            $table->foreign('entreprise_id')->references('id')->on('entreprises')->onDelete('cascade');
-            $table->foreign('created_by')->references('id')->on('users')->onDelete('cascade');
+            // FKs: si les tables cibles n'existent pas encore dans certains environnements,
+            // on évite de faire échouer le migrate.
+            try {
+                $table->foreign('entreprise_id')->references('id')->on('entreprises')->onDelete('cascade');
+            } catch (\Throwable $e) {}
+            try {
+                $table->foreign('created_by')->references('id')->on('users')->onDelete('cascade');
+            } catch (\Throwable $e) {}
 
             $table->index(['entreprise_id', 'actif']);
             $table->index(['type_frais', 'zone_applicable']);

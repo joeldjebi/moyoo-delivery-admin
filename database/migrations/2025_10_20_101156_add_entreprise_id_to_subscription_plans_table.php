@@ -12,41 +12,50 @@ return new class extends Migration
 	 */
 	public function up(): void
 	{
-		Schema::table('subscription_plans', function (Blueprint $table) {
-			if (!Schema::hasColumn('subscription_plans', 'entreprise_id')) {
-				$table->bigInteger('entreprise_id')->nullable()->after('slug');
-			}
-		});
+		if (!Schema::hasTable('subscription_plans')) {
+			return;
+		}
 
-		// Vérifier et ajouter la foreign key si elle n'existe pas
-		if (Schema::hasColumn('subscription_plans', 'entreprise_id')) {
-			$constraintExists = DB::selectOne("
-				SELECT 1
-				FROM pg_constraint
-				WHERE conrelid = 'subscription_plans'::regclass
-				AND contype = 'f'
-				AND conname = 'subscription_plans_entreprise_id_foreign'
-			");
+		// Migration rejouable + compatible MySQL/PGSQL :
+		// - pas de requêtes `pg_constraint` / `pg_indexes` sous MySQL
+		// - on tente d'ajouter FK/Index en mode "safe" (try/catch)
+		if (!Schema::hasColumn('subscription_plans', 'entreprise_id')) {
+			Schema::table('subscription_plans', function (Blueprint $table) {
+				// `entreprises.id` est `$table->id()` => unsignedBigInteger (sinon FK 1215)
+				$table->unsignedBigInteger('entreprise_id')->nullable()->after('slug');
+			});
+		}
 
-			if (!$constraintExists) {
-				Schema::table('subscription_plans', function (Blueprint $table) {
-					$table->foreign('entreprise_id')->references('id')->on('entreprises')->onDelete('cascade');
-				});
-			}
+		// Aligner le type côté MySQL même si DBAL n'est pas installé.
+		try {
+			DB::statement('ALTER TABLE `subscription_plans` MODIFY `entreprise_id` BIGINT UNSIGNED NULL');
+		} catch (\Throwable $e) {
+		}
 
-			// Vérifier si l'index existe
-			$indexExists = DB::selectOne("
-				SELECT 1
-				FROM pg_indexes
-				WHERE tablename = 'subscription_plans'
-				AND indexname = 'subscription_plans_entreprise_id_index'
-			");
+		// Nettoyer les valeurs orphelines avant d'ajouter la FK
+		try {
+			DB::statement('
+				UPDATE `subscription_plans` sp
+				LEFT JOIN `entreprises` e ON sp.`entreprise_id` = e.`id`
+				SET sp.`entreprise_id` = NULL
+				WHERE sp.`entreprise_id` IS NOT NULL AND e.`id` IS NULL
+			');
+		} catch (\Throwable $e) {
+		}
 
-			if (!$indexExists) {
-				Schema::table('subscription_plans', function (Blueprint $table) {
+		if (Schema::hasColumn('subscription_plans', 'entreprise_id') && Schema::hasTable('entreprises')) {
+			Schema::table('subscription_plans', function (Blueprint $table) {
+				try {
+					$table->foreign('entreprise_id')
+						->references('id')
+						->on('entreprises')
+						->onDelete('cascade');
+				} catch (\Throwable $e) {}
+
+				try {
 					$table->index('entreprise_id');
-				});
-			}
+				} catch (\Throwable $e) {}
+			});
 		}
 	}
 
@@ -56,9 +65,11 @@ return new class extends Migration
 	public function down(): void
 	{
 		Schema::table('subscription_plans', function (Blueprint $table) {
-			$table->dropForeign(['entreprise_id']);
-			$table->dropIndex(['entreprise_id']);
-			$table->dropColumn('entreprise_id');
+			try { $table->dropForeign(['entreprise_id']); } catch (\Throwable $e) {}
+			try { $table->dropIndex(['entreprise_id']); } catch (\Throwable $e) {}
+			if (Schema::hasColumn('subscription_plans', 'entreprise_id')) {
+				$table->dropColumn('entreprise_id');
+			}
 		});
 	}
 };

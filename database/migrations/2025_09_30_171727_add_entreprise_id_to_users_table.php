@@ -11,24 +11,56 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            // Ajouter seulement les colonnes qui n'existent pas
-            if (!Schema::hasColumn('users', 'entreprise_id')) {
-                $table->foreignId('entreprise_id')->nullable()->after('id')->constrained('entreprises')->nullOnDelete();
-            }
-            if (!Schema::hasColumn('users', 'user_type')) {
-                $table->enum('user_type', ['super_admin', 'entreprise_admin', 'entreprise_user'])->default('entreprise_user')->after('role');
-            }
-            if (!Schema::hasColumn('users', 'permissions')) {
-                $table->json('permissions')->nullable()->after('user_type');
-            }
-        });
+        // IMPORTANT: certains environnements ont une table `users` sans colonne `role`,
+        // donc les `after('role')` peuvent faire échouer la migration.
+        // On ajoute les colonnes de manière idempotente avec un `after(...)` seulement si la colonne cible existe.
+
+        if (!Schema::hasColumn('users', 'entreprise_id')) {
+            Schema::table('users', function (Blueprint $table) {
+                $table->foreignId('entreprise_id')
+                    ->nullable()
+                    ->after('id')
+                    ->constrained('entreprises')
+                    ->nullOnDelete();
+            });
+        }
+
+        if (!Schema::hasColumn('users', 'user_type')) {
+            $after = Schema::hasColumn('users', 'role')
+                ? 'role'
+                : (Schema::hasColumn('users', 'status') ? 'status' : (Schema::hasColumn('users', 'email') ? 'email' : null));
+
+            Schema::table('users', function (Blueprint $table) use ($after) {
+                $col = $table->enum('user_type', ['super_admin', 'entreprise_admin', 'entreprise_user'])
+                    ->default('entreprise_user');
+                if ($after) {
+                    $col->after($after);
+                }
+            });
+        }
+
+        if (!Schema::hasColumn('users', 'permissions')) {
+            $after = Schema::hasColumn('users', 'user_type')
+                ? 'user_type'
+                : (Schema::hasColumn('users', 'role') ? 'role' : (Schema::hasColumn('users', 'email') ? 'email' : null));
+
+            Schema::table('users', function (Blueprint $table) use ($after) {
+                $col = $table->json('permissions')->nullable();
+                if ($after) {
+                    $col->after($after);
+                }
+            });
+        }
 
         // Ajouter l'index si nécessaire
         Schema::table('users', function (Blueprint $table) {
             // Ajout d'index simple si la méthode hasIndex n'est pas disponible
             if (Schema::hasColumn('users', 'entreprise_id') && Schema::hasColumn('users', 'user_type')) {
-                $table->index(['entreprise_id', 'user_type']);
+                try {
+                    $table->index(['entreprise_id', 'user_type']);
+                } catch (\Throwable $e) {
+                    // index déjà existant ou non supporté, ignorer
+                }
             }
         });
     }

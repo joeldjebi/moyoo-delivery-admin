@@ -11,24 +11,31 @@ return new class extends Migration
      */
     public function up(): void
     {
-        if (!Schema::hasTable('categories')) {
-            Schema::create('categories', function (Blueprint $table) {
+        // Migration rejouable : si la table existe déjà, on ne tente pas de la recréer.
+        if (Schema::hasTable('categories')) {
+            return;
+        }
+
+        Schema::create('categories', function (Blueprint $table) {
             $table->id();
             $table->string('name');
             $table->string('slug')->unique();
             $table->text('description')->nullable();
             $table->string('icon')->nullable();
-            $table->bigInteger('entreprise_id');
+            // `entreprises.id` est `$table->id()` => BIGINT UNSIGNED (sinon FK 1215)
+            $table->unsignedBigInteger('entreprise_id');
             $table->boolean('is_active')->default(true);
             $table->integer('sort_order')->default(0);
             $table->timestamps();
             $table->softDeletes();
 
-            $table->foreign('entreprise_id')->references('id')->on('entreprises')->onDelete('cascade');
+            // FKs/Index en mode safe (ordre de migration / contraintes déjà existantes)
+            try {
+                $table->foreign('entreprise_id')->references('id')->on('entreprises')->onDelete('cascade');
+            } catch (\Throwable $e) {}
             $table->index('entreprise_id');
             $table->index('slug');
         });
-        }
     }
 
     /**

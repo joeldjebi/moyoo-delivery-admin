@@ -11,12 +11,16 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // Cette migration est un doublon, on la saute si la table existe déjà
-        if (!Schema::hasTable('stocks')) {
-            Schema::create('stocks', function (Blueprint $table) {
+        // Migration rejouable : si la table existe déjà, on ne tente pas de la recréer.
+        if (Schema::hasTable('stocks')) {
+            return;
+        }
+
+        Schema::create('stocks', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('product_id');
-            $table->bigInteger('entreprise_id');
+            // `entreprises.id` est `$table->id()` => BIGINT UNSIGNED (sinon FK 1215)
+            $table->unsignedBigInteger('entreprise_id');
             $table->integer('quantity')->default(0); // Quantité en stock
             $table->integer('min_quantity')->default(0); // Seuil minimum d'alerte
             $table->integer('max_quantity')->nullable(); // Seuil maximum
@@ -25,13 +29,17 @@ return new class extends Migration
             $table->timestamps();
             $table->softDeletes();
 
-            $table->foreign('product_id')->references('id')->on('products')->onDelete('cascade');
-            $table->foreign('entreprise_id')->references('id')->on('entreprises')->onDelete('cascade');
+            // FKs en mode safe (ordre de migration / contraintes déjà existantes)
+            try {
+                $table->foreign('product_id')->references('id')->on('products')->onDelete('cascade');
+            } catch (\Throwable $e) {}
+            try {
+                $table->foreign('entreprise_id')->references('id')->on('entreprises')->onDelete('cascade');
+            } catch (\Throwable $e) {}
             $table->unique(['product_id', 'entreprise_id', 'location'], 'stock_unique');
             $table->index('entreprise_id');
             $table->index('product_id');
         });
-        }
     }
 
     /**

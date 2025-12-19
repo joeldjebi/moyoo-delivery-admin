@@ -28,6 +28,11 @@ class PermissionMiddleware
             return $next($request);
         }
 
+        // Les utilisateurs avec le rôle 'admin' ont accès à tout
+        if ($user->role === 'admin') {
+            return $next($request);
+        }
+
         // Vérifier la permission spécifique
         if (!$user->hasPermission($permission)) {
             throw new AuthorizationException("Vous n'avez pas les permissions pour accéder à cette ressource.");

@@ -11,14 +11,20 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // Migration rejouable : si la table existe déjà, on ne tente pas de la recréer.
+        if (Schema::hasTable('historique_balance')) {
+            return;
+        }
+
         Schema::create('historique_balance', function (Blueprint $table) {
             $table->id();
-            
+
             // Relations
             $table->unsignedBigInteger('balance_marchand_id');
-            $table->bigInteger('entreprise_id')->nullable();
+            // `entreprises.id` est `$table->id()` => BIGINT UNSIGNED (sinon FK 1215)
+            $table->unsignedBigInteger('entreprise_id')->nullable();
             $table->unsignedBigInteger('created_by')->nullable();
-            
+
             // Informations de l'opération
             $table->string('type_operation', 50); // encaissement, reversement, ajustement
             $table->decimal('montant', 15, 2);
@@ -26,18 +32,25 @@ return new class extends Migration
             $table->decimal('balance_apres', 15, 2);
             $table->text('description')->nullable();
             $table->string('reference')->nullable(); // ID du colis ou reversement
-            
+
             $table->timestamps();
-            
+
             // Clés étrangères
-            $table->foreign('balance_marchand_id')->references('id')->on('balance_marchands')->onDelete('cascade');
+            // FKs en mode safe (ordre de migration / contraintes déjà existantes)
+            try {
+                $table->foreign('balance_marchand_id')->references('id')->on('balance_marchands')->onDelete('cascade');
+            } catch (\Throwable $e) {}
             if (Schema::hasTable('entreprises')) {
-                $table->foreign('entreprise_id')->references('id')->on('entreprises')->onDelete('cascade');
+                try {
+                    $table->foreign('entreprise_id')->references('id')->on('entreprises')->onDelete('cascade');
+                } catch (\Throwable $e) {}
             }
             if (Schema::hasTable('users')) {
-                $table->foreign('created_by')->references('id')->on('users')->onDelete('set null');
+                try {
+                    $table->foreign('created_by')->references('id')->on('users')->onDelete('set null');
+                } catch (\Throwable $e) {}
             }
-            
+
             // Index pour les recherches
             $table->index('balance_marchand_id');
             $table->index('entreprise_id');

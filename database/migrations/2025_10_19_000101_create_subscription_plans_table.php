@@ -11,11 +11,18 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // Migration rejouable : si la table existe déjà (DB partiellement migrée / import),
+        // on ne tente pas de la recréer.
+        if (Schema::hasTable('subscription_plans')) {
+            return;
+        }
+
         Schema::create('subscription_plans', function (Blueprint $table) {
             $table->id();
             $table->string('name'); // Free, Premium
             $table->string('slug')->unique(); // free, premium
-            $table->bigInteger('entreprise_id')->nullable();
+            // `entreprises.id` est `$table->id()` => unsignedBigInteger (sinon FK 1215)
+            $table->unsignedBigInteger('entreprise_id')->nullable();
             $table->unsignedBigInteger('pricing_plan_id')->nullable();
             $table->timestamp('started_at')->nullable();
             $table->timestamp('expires_at')->nullable();
@@ -38,17 +45,21 @@ return new class extends Migration
             $table->timestamps();
 
             // Foreign keys
-            $table->foreign('entreprise_id')
-                  ->references('id')
-                  ->on('entreprises')
-                  ->onDelete('cascade')
-                  ->onUpdate('cascade');
+            try {
+                $table->foreign('entreprise_id')
+                      ->references('id')
+                      ->on('entreprises')
+                      ->onDelete('cascade')
+                      ->onUpdate('cascade');
+            } catch (\Throwable $e) {}
 
-            $table->foreign('pricing_plan_id')
-                  ->references('id')
-                  ->on('pricing_plans')
-                  ->onDelete('set null')
-                  ->onUpdate('cascade');
+            try {
+                $table->foreign('pricing_plan_id')
+                      ->references('id')
+                      ->on('pricing_plans')
+                      ->onDelete('set null')
+                      ->onUpdate('cascade');
+            } catch (\Throwable $e) {}
         });
     }
 

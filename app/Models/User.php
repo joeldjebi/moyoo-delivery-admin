@@ -21,6 +21,7 @@ class User extends Authenticatable implements JWTSubject
      * @var list<string>
      */
     protected $fillable = [
+        'name',
         'entreprise_id',
         'first_name',
         'last_name',
@@ -155,6 +156,11 @@ class User extends Authenticatable implements JWTSubject
     public function hasPermission($permission)
     {
         if ($this->isSuperAdmin()) {
+            return true;
+        }
+
+        // Les utilisateurs avec le rôle 'admin' ont toutes les permissions
+        if ($this->role === 'admin') {
             return true;
         }
 
